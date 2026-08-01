@@ -6,12 +6,16 @@ android {
     namespace "com.homeops.gymtracker"
     compileSdk 36
 
+    buildFeatures {
+        buildConfig true
+    }
+
     defaultConfig {
         applicationId "com.homeops.gymtracker"
         minSdk 26
         targetSdk 36
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.1"
     }
 }
 

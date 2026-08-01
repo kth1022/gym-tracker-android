@@ -699,6 +699,7 @@ let state = {
   importEnd: '',
   importTargetProfile: '',
   importTargetClient: '',
+  updateStatus: null,
 };
 
 function currentProfile(){ return PROFILES[state.profile]; }
@@ -3046,6 +3047,43 @@ function renderHelpView(){
     </div>`;
 }
 
+function currentAppVersion(){
+  if(window.AndroidBridge && typeof window.AndroidBridge.currentVersionInfo === 'function'){
+    try {
+      const raw = window.AndroidBridge.currentVersionInfo();
+      const parsed = JSON.parse(raw || '{}');
+      return {
+        versionCode: Number(parsed.versionCode || 1),
+        versionName: parsed.versionName || '1.0'
+      };
+    } catch(e){}
+  }
+  return { versionCode: 1, versionName: '1.0' };
+}
+
+function renderUpdatePanel(){
+  const current = currentAppVersion();
+  const update = state.updateStatus || {};
+  const busy = update.status === 'checking' || update.status === 'downloading';
+  const buttonAction = update.status === 'available' ? 'downloadupdate' : 'checkupdate';
+  const buttonText = update.status === 'available' ? 'Download Update' : (busy ? 'Checking...' : 'Check for Update');
+  const latest = update.latestVersionName
+    ? `Latest ${escapeHtml(update.latestVersionName)} (${escapeHtml(String(update.latestVersionCode || ''))})`
+    : 'Latest not checked';
+  const message = update.message || 'Check GitHub for a newer Gym Tracker release.';
+  const notes = update.releaseNotes ? `<div class="muted">${escapeHtml(update.releaseNotes)}</div>` : '';
+  return `
+    <div class="panel"><div class="paneltitle">App Update</div>
+      <div class="kvgrid">
+        <div class="kv"><span>Installed</span><b>${escapeHtml(current.versionName)} (${escapeHtml(String(current.versionCode))})</b></div>
+        <div class="kv"><span>GitHub</span><b>${latest}</b></div>
+      </div>
+      <div class="tinyactions"><button data-action="${buttonAction}" ${busy ? 'disabled' : ''}>${buttonText}</button></div>
+      <div class="muted">${escapeHtml(message)}</div>
+      ${notes}
+    </div>`;
+}
+
 function renderUsersView(){
   const account = accountPerson();
   if(state.client !== account.name){
@@ -3071,7 +3109,8 @@ function renderUsersView(){
     </div>
     <div class="panel"><div class="paneltitle">Theme</div>
       <div class="themegrid">${Object.entries(THEMES).map(([id, theme]) => `<button class="themebtn ${APP_PREFS.theme===id?'active':''}" data-action="settheme" data-theme="${id}">${escapeHtml(theme.label)}</button>`).join('')}</div>
-    </div>`;
+    </div>
+    ${renderUpdatePanel()}`;
 }
 
 function renderFriendCodePreview(){
@@ -3419,6 +3458,28 @@ function handleClick(e){
   else if(action === 'editaccount'){
     editCurrentUserInfo();
   }
+  else if(action === 'checkupdate'){
+    if(window.AndroidBridge && typeof window.AndroidBridge.checkForUpdate === 'function'){
+      state.updateStatus = { status:'checking', message:'Checking for updates...' };
+      render();
+      window.AndroidBridge.checkForUpdate();
+    } else {
+      state.updateStatus = { status:'error', message:'Update checks are only available in the Android app.' };
+      render();
+      showToast('Update checks are only available in the Android app.');
+    }
+  }
+  else if(action === 'downloadupdate'){
+    if(window.AndroidBridge && typeof window.AndroidBridge.downloadUpdate === 'function'){
+      state.updateStatus = { ...(state.updateStatus || {}), status:'downloading', message:'Downloading update...' };
+      render();
+      window.AndroidBridge.downloadUpdate();
+    } else {
+      state.updateStatus = { status:'error', message:'Update downloads are only available in the Android app.' };
+      render();
+      showToast('Update downloads are only available in the Android app.');
+    }
+  }
   else if(action === 'removeperson'){
     removeCurrentPerson();
   }
@@ -3566,6 +3627,15 @@ function handleClick(e){
   }
 }
 
+window.onUpdateStatus = function(payload){
+  try {
+    state.updateStatus = typeof payload === 'string' ? JSON.parse(payload) : payload;
+  } catch(e){
+    state.updateStatus = { status:'error', message:'Could not read update status.' };
+  }
+  render();
+};
+
 async function init(){
   await loadAll();
   await runFirstLaunchOnboarding();
@@ -3608,6 +3678,9 @@ async function init(){
     }
   });
   render();
+  if(window.AndroidBridge && typeof window.AndroidBridge.checkForUpdateQuiet === 'function'){
+    setTimeout(() => window.AndroidBridge.checkForUpdateQuiet(), 1200);
+  }
 }
 function exportWorkbook(destination = 'save'){
   if(!window.XLSX){

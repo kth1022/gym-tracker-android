@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.Settings;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.view.ViewGroup;
@@ -53,20 +54,26 @@ import com.google.zxing.common.BitMatrix;
 
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends Activity {
     private static final int FILE_CHOOSER_REQUEST = 1001;
     private static final int NEARBY_PERMISSION_REQUEST = 2001;
     private static final String SERVICE_ID = "com.homeops.gymtracker.NEARBY_WORKBOOK";
     private static final Strategy NEARBY_STRATEGY = Strategy.P2P_POINT_TO_POINT;
+    private static final String UPDATE_MANIFEST_URL = "https://raw.githubusercontent.com/kth1022/gym-tracker-android/main/latest.json";
 
     private WebView webView;
     private SharedPreferences appStorage;
@@ -78,6 +85,7 @@ public class MainActivity extends Activity {
     private boolean pageReady;
     private String pendingImportBase64;
     private String pendingImportFilename;
+    private File pendingUpdateApk;
 
     @Override
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
@@ -156,6 +164,16 @@ public class MainActivity extends Activity {
     protected void onDestroy() {
         stopNearby();
         super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (pendingUpdateApk != null && pendingUpdateApk.exists() && canInstallPackages()) {
+            File apk = pendingUpdateApk;
+            pendingUpdateApk = null;
+            installDownloadedApk(apk);
+        }
     }
 
     @Override
@@ -257,6 +275,180 @@ public class MainActivity extends Activity {
                 webView.evaluateJavascript("window.onNearbyStatus && window.onNearbyStatus(" + JSONObject.quote(message) + ");", null);
             }
         });
+    }
+
+    private void notifyUpdateStatus(String status, String message) {
+        notifyUpdateStatus(status, message, null, null, 0, true);
+    }
+
+    private void notifyUpdateStatus(String status, String message, String latestVersionName, String releaseNotes, int latestVersionCode) {
+        notifyUpdateStatus(status, message, latestVersionName, releaseNotes, latestVersionCode, true);
+    }
+
+    private void notifyUpdateStatus(String status, String message, String latestVersionName, String releaseNotes, int latestVersionCode, boolean showToast) {
+        try {
+            JSONObject json = new JSONObject();
+            json.put("status", status);
+            json.put("message", message);
+            json.put("currentVersionCode", BuildConfig.VERSION_CODE);
+            json.put("currentVersionName", BuildConfig.VERSION_NAME);
+            if (latestVersionCode > 0) json.put("latestVersionCode", latestVersionCode);
+            if (latestVersionName != null) json.put("latestVersionName", latestVersionName);
+            if (releaseNotes != null) json.put("releaseNotes", releaseNotes);
+            String script = "window.onUpdateStatus && window.onUpdateStatus(" + json + ");";
+            runOnUiThread(() -> {
+                if (webView != null) webView.evaluateJavascript(script, null);
+                if (showToast) Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+            });
+        } catch (Exception ignored) {
+        }
+    }
+
+    private boolean canInstallPackages() {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.O || getPackageManager().canRequestPackageInstalls();
+    }
+
+    private void requestInstallPermission(File apk) {
+        pendingUpdateApk = apk;
+        notifyUpdateStatus("permission", "Allow Gym Tracker to install app updates, then return here.");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+            intent.setData(Uri.parse("package:" + getPackageName()));
+            startActivity(intent);
+        }
+    }
+
+    private void checkForUpdateFromManifest() {
+        checkForUpdateFromManifest(false, false);
+    }
+
+    private void checkForUpdateFromManifest(boolean downloadWhenAvailable, boolean quietCurrent) {
+        new Thread(() -> {
+            try {
+                if (!quietCurrent) notifyUpdateStatus("checking", "Checking for updates...");
+                JSONObject manifest = readJsonUrl(UPDATE_MANIFEST_URL);
+                int latestVersionCode = manifest.optInt("versionCode", 0);
+                String latestVersionName = manifest.optString("versionName", "");
+                String apkUrl = manifest.optString("apkUrl", "");
+                String expectedSha256 = manifest.optString("sha256", "");
+                String releaseNotes = manifest.optString("releaseNotes", "");
+                long expectedSize = manifest.optLong("size", 0);
+
+                if (latestVersionCode <= BuildConfig.VERSION_CODE) {
+                    if (!quietCurrent) {
+                        notifyUpdateStatus("current", "Gym Tracker is up to date.", latestVersionName, releaseNotes, latestVersionCode);
+                    }
+                    return;
+                }
+                if (apkUrl.trim().isEmpty() || expectedSha256.trim().isEmpty()) {
+                    if (!quietCurrent) {
+                        notifyUpdateStatus("error", "Update manifest is missing APK details.", latestVersionName, releaseNotes, latestVersionCode);
+                    }
+                    return;
+                }
+
+                if (!downloadWhenAvailable) {
+                    notifyUpdateStatus(
+                            "available",
+                            "Update " + latestVersionName + " is available.",
+                            latestVersionName,
+                            releaseNotes,
+                            latestVersionCode,
+                            !quietCurrent
+                    );
+                    return;
+                }
+
+                notifyUpdateStatus(
+                        "downloading",
+                        "Update " + latestVersionName + " found. Downloading...",
+                        latestVersionName,
+                        releaseNotes,
+                        latestVersionCode
+                );
+                File apk = downloadUpdateApk(apkUrl, expectedSha256, expectedSize);
+                notifyUpdateStatus("ready", "Update verified. Opening Android installer.", latestVersionName, releaseNotes, latestVersionCode);
+                runOnUiThread(() -> installDownloadedApk(apk));
+            } catch (Exception e) {
+                if (!quietCurrent) notifyUpdateStatus("error", "Update failed: " + e.getMessage());
+            }
+        }, "GymTrackerUpdate").start();
+    }
+
+    private JSONObject readJsonUrl(String url) throws Exception {
+        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+        conn.setConnectTimeout(15000);
+        conn.setReadTimeout(20000);
+        conn.setRequestProperty("Accept", "application/json");
+        conn.setRequestProperty("User-Agent", "GymTracker/" + BuildConfig.VERSION_NAME);
+        try (InputStream in = new BufferedInputStream(conn.getInputStream());
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
+            return new JSONObject(out.toString(StandardCharsets.UTF_8.name()));
+        } finally {
+            conn.disconnect();
+        }
+    }
+
+    private File downloadUpdateApk(String apkUrl, String expectedSha256, long expectedSize) throws Exception {
+        File dir = new File(getCacheDir(), "updates");
+        if (!dir.exists() && !dir.mkdirs()) throw new IllegalStateException("Could not create update folder");
+        File apk = new File(dir, "gym_tracker_update.apk");
+
+        HttpURLConnection conn = (HttpURLConnection) new URL(apkUrl).openConnection();
+        conn.setConnectTimeout(15000);
+        conn.setReadTimeout(60000);
+        conn.setInstanceFollowRedirects(true);
+        conn.setRequestProperty("User-Agent", "GymTracker/" + BuildConfig.VERSION_NAME);
+        try (InputStream in = new BufferedInputStream(conn.getInputStream());
+             FileOutputStream out = new FileOutputStream(apk)) {
+            byte[] buffer = new byte[16384];
+            int read;
+            while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
+        } finally {
+            conn.disconnect();
+        }
+
+        if (expectedSize > 0 && apk.length() != expectedSize) {
+            throw new IllegalStateException("Downloaded APK size did not match manifest");
+        }
+        String actualSha256 = sha256(apk);
+        if (!actualSha256.equalsIgnoreCase(expectedSha256)) {
+            if (!apk.delete()) apk.deleteOnExit();
+            throw new IllegalStateException("Downloaded APK hash did not match manifest");
+        }
+        return apk;
+    }
+
+    private String sha256(File file) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        try (InputStream in = new BufferedInputStream(new java.io.FileInputStream(file))) {
+            byte[] buffer = new byte[16384];
+            int read;
+            while ((read = in.read(buffer)) != -1) digest.update(buffer, 0, read);
+        }
+        StringBuilder sb = new StringBuilder();
+        for (byte b : digest.digest()) sb.append(String.format(Locale.US, "%02X", b));
+        return sb.toString();
+    }
+
+    private void installDownloadedApk(File apk) {
+        if (!apk.exists()) {
+            notifyUpdateStatus("error", "Downloaded update file was not found.");
+            return;
+        }
+        if (!canInstallPackages()) {
+            requestInstallPermission(apk);
+            return;
+        }
+        Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", apk);
+        Intent install = new Intent(Intent.ACTION_VIEW);
+        install.setDataAndType(uri, "application/vnd.android.package-archive");
+        install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(install);
     }
 
     private void ensureNearbyPermissions(Runnable action) {
@@ -571,6 +763,33 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void scanFriendCode() {
             runOnUiThread(MainActivity.this::startFriendCodeScan);
+        }
+
+        @JavascriptInterface
+        public String currentVersionInfo() {
+            try {
+                JSONObject json = new JSONObject();
+                json.put("versionCode", BuildConfig.VERSION_CODE);
+                json.put("versionName", BuildConfig.VERSION_NAME);
+                return json.toString();
+            } catch (Exception e) {
+                return "{}";
+            }
+        }
+
+        @JavascriptInterface
+        public void checkForUpdate() {
+            checkForUpdateFromManifest();
+        }
+
+        @JavascriptInterface
+        public void checkForUpdateQuiet() {
+            checkForUpdateFromManifest(false, true);
+        }
+
+        @JavascriptInterface
+        public void downloadUpdate() {
+            checkForUpdateFromManifest(true, false);
         }
 
         @JavascriptInterface

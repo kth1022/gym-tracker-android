@@ -4,13 +4,13 @@ Gym Tracker is a local-first Android workout tracker built around a WebView app 
 
 ## Current Baseline
 
-- First stable baseline: `1.0`
+- Current update baseline: `1.1`
 - Android package: `com.homeops.gymtracker`
-- Version code: `1`
-- Version name: `1.0`
+- Version code: `2`
+- Version name: `1.1`
 - Primary asset: `app/src/main/assets/gym_tracker_app.html`
 
-The v1.0 baseline is cleaned for broader use:
+The v1.0 baseline was cleaned for broader use:
 
 - no packaged personal workout history
 - no hardcoded personal user names
@@ -48,12 +48,13 @@ Required release invariants:
 
 ## GitHub Updates
 
-The app update plan is:
+The app checks for updates quietly on startup and supports manual checks from the User tab:
 
-1. Publish signed APKs as GitHub Release assets.
-2. Publish `latest.json` with the latest version metadata.
-3. The app checks `latest.json`.
-4. If a newer `versionCode` exists, the app downloads and verifies the APK hash.
-5. Android prompts the user to approve the update install.
+1. Publish APKs as GitHub Release assets.
+2. Publish `latest.json` with the latest version metadata, APK URL, size, and SHA-256 hash.
+3. The app checks `latest.json` quietly on startup and when the user taps `Check for Update`.
+4. If a newer `versionCode` exists, the User tab shows the available update.
+5. When the user taps `Download Update`, the app downloads and verifies the APK hash.
+6. Android prompts the user to approve the update install.
 
 Android does not allow a normal app to silently update itself.

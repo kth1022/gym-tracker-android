@@ -3,6 +3,6 @@
   "versionName": "1.0",
   "channel": "debug-template",
   "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.0/gym_tracker_v1_0_clean_debug.apk",
-  "sha256": "A0BDBF0C5B3C2069DAC66497D4F16BD3EB218A0A8AB815D2760D31003237D245",
-  "releaseNotes": "Clean first stable v1.0 baseline for broader testing. Default profile data now uses generic user naming with legacy storage migration for older installs."
+  "sha256": "30DEC0B532F2969DF7331550AE6871479455999AC2DC011DBCEF2E0D9BB9E04D",
+  "releaseNotes": "Clean first stable v1.0 baseline for broader testing. Default profile data now uses generic user naming with legacy workout storage migration for older installs."
 }

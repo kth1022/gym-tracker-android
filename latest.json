@@ -1,9 +1,9 @@
 {
-  "versionCode": 3,
-  "versionName": "1.2",
+  "versionCode": 4,
+  "versionName": "1.3",
   "channel": "debug-template",
-  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.2/gym_tracker_v1_2_v24_repair_debug.apk",
-  "sha256": "17F5E14247762DF85C87E39A1843E1783F06EC3DCE439F5177FE1BA4F76E161A",
-  "size": 3907626,
-  "releaseNotes": "Urgent repair for users updating from gym_tracker_v24_debug.apk. Restores legacy v24 workout plan days, preserves group-member logs under friend profiles, keeps old reference weights/reps when present, and adds all-data plus recovery snapshot exports."
+  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.3/gym_tracker_v1_3_log_repair_debug.apk",
+  "sha256": "DCDC4FC6811D808DB693BD592D4C06821E793B40A6DA348C1B9C1E8699F9F8EE",
+  "size": 4319244,
+  "releaseNotes": "Repairs older-revision migrations where completed beginning-of-week workouts existed in the log but v1.2 kept generic legacy plan templates. Logged exercises now replace generic legacy or rest-day templates on affected dates."
 }

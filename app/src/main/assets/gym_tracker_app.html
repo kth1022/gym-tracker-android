@@ -1374,7 +1374,7 @@ function sessionHasLoggedExercises(sess){
 
 function recoveredExercisesFromSession(sess){
   return Object.entries((sess && sess.sets) || {})
-    .filter(([, sets]) => Array.isArray(sets) && sets.length)
+    .filter(([, sets]) => Array.isArray(sets) && sets.some(setHasValue))
     .map(([name, sets]) => {
       const filled = sets.filter(setHasValue);
       const reps = filled.map(s => Number(s.r)).filter(n => Number.isFinite(n) && n > 0);
@@ -1472,7 +1472,14 @@ function recoverPlanDaysFromLoggedData(){
       const entries = Object.entries(day || {}).filter(([person, sess]) => person !== 'stretch' && sessionHasLoggedExercises(sess));
       if(!entries.length) return;
       const existing = CUSTOM_PLAN[pid];
-      if(existing && existing.sessions && existing.sessions[iso] && (existing.sessions[iso].exercises || []).length) return;
+      const existingSession = existing && existing.sessions && existing.sessions[iso];
+      const shouldReplaceExisting = existingSession && (
+        existingSession.kind === 'legacy-v24' ||
+        existingSession.kind === 'recovered-log' ||
+        existingSession.rest ||
+        !(existingSession.exercises || []).length
+      );
+      if(existingSession && (existingSession.exercises || []).length && !shouldReplaceExisting) return;
       const exercises = uniqueExercises(entries.flatMap(([, sess]) => recoveredExercisesFromSession(sess)));
       if(!exercises.length) return;
       const plan = existing || {

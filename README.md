@@ -4,10 +4,10 @@ Gym Tracker is a local-first Android workout tracker built around a WebView app 
 
 ## Current Baseline
 
-- Current update baseline: `1.2`
+- Current update baseline: `1.3`
 - Android package: `com.homeops.gymtracker`
-- Version code: `3`
-- Version name: `1.2`
+- Version code: `4`
+- Version name: `1.3`
 - Primary asset: `app/src/main/assets/gym_tracker_app.html`
 
 The v1.0 baseline was cleaned for broader use:
@@ -64,3 +64,5 @@ Android does not allow a normal app to silently update itself.
 Version `1.2` includes a repair migration for users updating from `gym_tracker_v24_debug.apk`.
 
 The migration preserves old `log-kb-all`, `plan-kb`, and `stretch-kb-all` data, reconstructs missing v24 built-in workout days when no saved plan exists, keeps group-member logs under friend profiles, and adds export tools for all workout data plus a raw recovery snapshot.
+
+Version `1.3` tightens the repair so completed logged workouts replace generic legacy templates on affected dates. This helps recover beginning-of-week sessions from older revisions after v1.2 has already run.

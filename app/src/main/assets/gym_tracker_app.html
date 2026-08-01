@@ -393,6 +393,48 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 </div>
 <script>
 const APPDATA = {"stretches":[{"time":"0:00-2:00","name":"Cat-cow plus thoracic open-book rotations","focus":"Spine / shoulders","note":"Move gently and breathe through the ribs."},{"time":"2:00-4:00","name":"Doorway pec stretch","focus":"Chest / shoulders","note":"Hold a mild stretch without shoulder pain."},{"time":"4:00-6:00","name":"Cross-body shoulder or lat stretch","focus":"Shoulders / lats","note":"Keep the shoulder relaxed and breathe slowly."},{"time":"6:00-8:00","name":"Half-kneeling hip flexor stretch","focus":"Hips","note":"Squeeze the back-leg glute and keep ribs down."},{"time":"8:00-10:00","name":"90/90 hip switches and holds","focus":"Hips","note":"Move slowly and use hands for support if needed."},{"time":"10:00-12:00","name":"Hamstring stretch","focus":"Hamstrings","note":"Use a soft knee and tall posture."},{"time":"12:00-14:00","name":"Calf stretch plus ankle rocks","focus":"Calves / ankles","note":"Keep the heel down during the calf stretch."},{"time":"14:00-15:00","name":"Easy breathing in child pose or on back","focus":"Recovery","note":"Slow nasal breathing and relax tension."}]};
+const LEGACY_V24_KB_DAYS = {
+  Monday: {label:'Upper Strength + Shoulder Stability', exercises:[
+    {n:'Machine chest press (neutral grip if available)',s:'4',r:'6-8',note:'Pain-free shoulder range; stop before shoulder pinch',kw:165,kr:6,bw:165,br:6},
+    {n:'Neutral-grip lat pulldown',s:'4',r:'8-10',note:'Pull elbows toward ribs; no shrugging',kw:130,kr:6,bw:140,br:10},
+    {n:'Seated cable row (neutral grip)',s:'3',r:'8-10',note:'Proud chest; pause at squeeze',kw:130,kr:12,bw:160,br:12},
+    {n:'Dumbbell incline press',s:'3',r:'8-10',note:'Use low incline; keep elbows 30-45 degrees',kw:140,kr:8,bw:140,br:10},
+    {n:'Cable external rotation',s:'3',r:'12-15 each side',note:'Light load; elbow stays pinned',kw:null,kr:null,bw:null,br:null},
+    {n:'Rear delt fly machine',s:'3',r:'12-15',note:'Control; shoulder blades move smoothly',kw:70,kr:12,bw:70,br:12},
+    {n:'Cable triceps pressdown',s:'2-3',r:'10-12',note:'Full lockout without shoulder roll',kw:140,kr:15,bw:140,br:15},
+    {n:'Dumbbell hammer curl',s:'2-3',r:'10-12',note:'Neutral wrist; no swing',kw:50,kr:12,bw:50,br:12}
+  ]},
+  Tuesday: {label:'Lower Strength + Knee/Hip Stability', exercises:[
+    {n:'45-degree leg press',s:'4',r:'8-10',note:'Knees track over toes; controlled depth',kw:270,kr:8,bw:270,br:8},
+    {n:'Smith machine Romanian deadlift',s:'4',r:'6-8',note:'Hips back; slight knee bend; neutral spine',kw:165,kr:8,bw:165,br:8},
+    {n:'Supported split squat or reverse lunge',s:'3',r:'8 each leg',note:'Hold rail if needed; pain-free depth',kw:25,kr:8,bw:45,br:10},
+    {n:'Seated or lying leg curl',s:'3',r:'10-12',note:'Pause at curl; slow return',kw:95,kr:10,bw:95,br:12},
+    {n:'Leg extension - slow pain-free range',s:'2-3',r:'10-12',note:'No knee pain; 2 sec squeeze',kw:105,kr:10,bw:105,br:12},
+    {n:'Hip abductor machine',s:'3',r:'12-15',note:'Glute med focus; do not bounce',kw:null,kr:null,bw:null,br:null},
+    {n:'Calf press on leg press or standing calf raise',s:'3',r:'10-15',note:'Full ankle range; pause at top',kw:160,kr:10,bw:160,br:10},
+    {n:'Pallof press',s:'3',r:'10-12 each side',note:'Brace; resist rotation',kw:35,kr:10,bw:35,br:10}
+  ]},
+  Wednesday: {label:'Upper Volume + Shoulder Mobility', exercises:[
+    {n:'Machine shoulder press - neutral grip, pain-free ROM',s:'3',r:'8-10',note:'Light-moderate; stop before shoulder discomfort',kw:75,kr:10,bw:80,br:10},
+    {n:'Chest-supported row',s:'3',r:'10-12',note:'No momentum; squeeze upper back',kw:150,kr:10,bw:150,br:10},
+    {n:'Assisted pull-up or neutral-grip pulldown',s:'3',r:'10-12',note:'Smooth shoulder blade motion',kw:110,kr:10,bw:110,br:10},
+    {n:'Cable face pull',s:'3',r:'12-15',note:'Pull to nose/forehead; elbows high',kw:40,kr:12,bw:40,br:12},
+    {n:'Dumbbell lateral raise in scaption plane',s:'3',r:'12-15',note:'Raise slightly forward; thumbs slightly up',kw:15,kr:12,bw:15,br:12},
+    {n:'Cable straight-arm pulldown',s:'3',r:'10-12',note:'Lats plus shoulder control',kw:null,kr:null,bw:null,br:null},
+    {n:'Serratus wall slide or cable serratus punch',s:'2-3',r:'12-15',note:'Reach long; ribs down',kw:null,kr:null,bw:null,br:null},
+    {n:'Captains chair knee raise or dead bug',s:'3',r:'10-15',note:'Slow, controlled core',kw:null,kr:null,bw:null,br:null}
+  ]},
+  Thursday: {label:'Lower + Full Body Joint Strength', exercises:[
+    {n:'Smith machine box squat',s:'4',r:'6-8',note:'Sit to box/bench; knees track cleanly',kw:110,kr:8,bw:140,br:8},
+    {n:'Smith hip thrust or glute bridge machine',s:'3',r:'8-12',note:'Pause at lockout; ribs down',kw:100,kr:10,bw:110,br:10},
+    {n:'Dumbbell step-up to low box',s:'3',r:'8 each leg',note:'Low height; control descent',kw:null,kr:null,bw:null,br:null},
+    {n:'Back extension machine or cable pull-through',s:'3',r:'10-12',note:'Hip hinge, not low-back crank',kw:165,kr:8,bw:165,br:8},
+    {n:'Hip adductor machine',s:'2-3',r:'12-15',note:'Controlled inner-thigh strength',kw:null,kr:null,bw:null,br:null},
+    {n:'Machine row',s:'3',r:'10-12',note:'Upper-back posture work',kw:130,kr:12,bw:160,br:12},
+    {n:'Incline push-up or machine chest press',s:'3',r:'10-15',note:'Clean reps; shoulder-friendly range',kw:85,kr:15,bw:100,br:12},
+    {n:'Dead bug or cable anti-rotation hold',s:'3',r:'8-10 each side',note:'Core stiffness for hips/knees/back',kw:null,kr:null,bw:null,br:null}
+  ]}
+};
 const DEFAULT_PROFILE_ID = 'main';
 const PROFILES = {
   main: {
@@ -1326,6 +1368,149 @@ function recoverClientsFromData(){
   });
 }
 
+function sessionHasLoggedExercises(sess){
+  return !!(sess && sess.sets && Object.values(sess.sets).some(arr => Array.isArray(arr) && arr.some(setHasValue)));
+}
+
+function recoveredExercisesFromSession(sess){
+  return Object.entries((sess && sess.sets) || {})
+    .filter(([, sets]) => Array.isArray(sets) && sets.length)
+    .map(([name, sets]) => {
+      const filled = sets.filter(setHasValue);
+      const reps = filled.map(s => Number(s.r)).filter(n => Number.isFinite(n) && n > 0);
+      const minRep = reps.length ? Math.min(...reps) : '';
+      const maxRep = reps.length ? Math.max(...reps) : '';
+      return {
+        n: name,
+        s: String(Math.max(sets.length, filled.length || 1)),
+        r: minRep && maxRep ? (minRep === maxRep ? String(minRep) : `${minRep}-${maxRep}`) : '',
+        note: 'Recovered from saved workout history.'
+      };
+    });
+}
+
+function hasLegacyV24KbEvidence(profileId){
+  const keys = storageKeySnapshot();
+  if(keys.has('log-kb-all') || keys.has('plan-kb') || keys.has('stretch-kb-all')) return true;
+  const names = new Set();
+  Object.values(DB[profileId] || {}).forEach(day => {
+    Object.keys(day || {}).forEach(name => {
+      if(name !== 'stretch') names.add(name);
+    });
+  });
+  Object.keys(APP_PREFS.profiles || {}).forEach(name => names.add(name));
+  Object.keys(APP_PREFS.friends || {}).forEach(name => names.add(name));
+  return names.has('Kevin') || names.has('Brandon');
+}
+
+function recoverLegacyV24KbPlan(profileId = DEFAULT_PROFILE_ID){
+  if(profileId !== DEFAULT_PROFILE_ID || !hasLegacyV24KbEvidence(profileId)) return false;
+  const profile = PROFILES[profileId];
+  const dbDates = Object.keys(DB[profileId] || {}).sort();
+  const plan = CUSTOM_PLAN[profileId] || {
+    source: 'Recovered from Gym Tracker v24 built-in plan',
+    clients: (profile.clients || []).slice(),
+    days: ['Monday','Tuesday','Wednesday','Thursday'],
+    hasStretchTab: true,
+    dateMin: dbDates[0] || '2026-07-01',
+    dateMax: dbDates[dbDates.length - 1] || '2026-07-31',
+    sessions: {},
+    stretches: APPDATA.stretches || []
+  };
+  plan.source = plan.source || 'Recovered from Gym Tracker v24 built-in plan';
+  plan.clients = mergeUniqueLists(plan.clients || [], (profile.clients || []), ['Kevin','Brandon'].filter(name => {
+    return Object.values(DB[profileId] || {}).some(day => day && day[name]);
+  }));
+  plan.days = mergeUniqueLists(plan.days || [], ['Monday','Tuesday','Wednesday','Thursday']);
+  plan.hasStretchTab = !!(plan.hasStretchTab || profile.hasStretchTab);
+  plan.sessions = plan.sessions || {};
+  const candidateDates = uniqueStrings([
+    dbDates,
+    Object.keys(plan.sessions || {}),
+    ['2026-07-01','2026-07-31']
+  ]).sort();
+  let start = candidateDates[0] || '2026-07-01';
+  let end = candidateDates[candidateDates.length - 1] || '2026-07-31';
+  if(start > '2026-07-01' && end <= '2026-07-31') start = '2026-07-01';
+  if(end < '2026-07-31' && start >= '2026-07-01') end = '2026-07-31';
+  let changed = false;
+  let d = start;
+  while(d <= end){
+    const day = weekdayName(d);
+    const legacy = LEGACY_V24_KB_DAYS[day];
+    if(legacy && !(plan.sessions[d] && (plan.sessions[d].exercises || []).length)){
+      plan.sessions[d] = {
+        day,
+        label: legacy.label,
+        kind: 'legacy-v24',
+        warmup: null,
+        cooldown: null,
+        sourceTitle: 'Recovered from Gym Tracker v24 built-in plan.',
+        exercises: legacy.exercises.map(ex => ({...ex}))
+      };
+      changed = true;
+    }
+    d = addDays(d, 1);
+  }
+  if(changed || !CUSTOM_PLAN[profileId]){
+    plan.dateMin = mergeUniqueLists(plan.dateMin, start).sort()[0] || start;
+    plan.dateMax = mergeUniqueLists(plan.dateMax, end).sort().slice(-1)[0] || end;
+    applyCustomPlan(profileId, plan);
+    APP_PREFS.lastLegacyV24RecoveryAt = new Date().toISOString();
+    savePrefs();
+    return true;
+  }
+  return false;
+}
+
+function recoverPlanDaysFromLoggedData(){
+  let changed = false;
+  Object.keys(PROFILES).forEach(pid => {
+    const profile = PROFILES[pid];
+    const db = DB[pid] || {};
+    Object.entries(db).forEach(([iso, day]) => {
+      const entries = Object.entries(day || {}).filter(([person, sess]) => person !== 'stretch' && sessionHasLoggedExercises(sess));
+      if(!entries.length) return;
+      const existing = CUSTOM_PLAN[pid];
+      if(existing && existing.sessions && existing.sessions[iso] && (existing.sessions[iso].exercises || []).length) return;
+      const exercises = uniqueExercises(entries.flatMap(([, sess]) => recoveredExercisesFromSession(sess)));
+      if(!exercises.length) return;
+      const plan = existing || {
+        source: 'Recovered from workout history',
+        clients: (profile.clients || []).slice(),
+        days: [],
+        hasStretchTab: !!profile.hasStretchTab,
+        dateMin: iso,
+        dateMax: iso,
+        sessions: {},
+        stretches: APPDATA.stretches || []
+      };
+      plan.source = plan.source || 'Recovered from workout history';
+      plan.clients = mergeUniqueLists(plan.clients || [], entries.map(([person]) => person));
+      plan.days = mergeUniqueLists(plan.days || [], [weekdayName(iso)]);
+      plan.dateMin = mergeUniqueLists(plan.dateMin, iso).sort()[0] || iso;
+      plan.dateMax = mergeUniqueLists(plan.dateMax, iso).sort().slice(-1)[0] || iso;
+      plan.sessions = plan.sessions || {};
+      plan.sessions[iso] = {
+        day: weekdayName(iso),
+        label: `${weekdayName(iso)} Recovered Workout`,
+        kind: 'recovered-log',
+        warmup: '',
+        cooldown: '',
+        sourceTitle: 'Recovered from saved workout history after app update.',
+        exercises
+      };
+      applyCustomPlan(pid, plan);
+      changed = true;
+    });
+  });
+  if(changed){
+    APP_PREFS.lastPlanRecoveryAt = new Date().toISOString();
+    savePrefs();
+  }
+  return changed;
+}
+
 function firstDayOfCurrentMonth(){
   const d = dateFromIso(todayIso());
   return isoDate(new Date(d.getFullYear(), d.getMonth(), 1));
@@ -1866,7 +2051,11 @@ function getSessionTemplate(profileId, iso){
         n: ex.n || ex.name || '',
         s: ex.s || ex.sets || '',
         r: ex.r || ex.reps || '',
-        note: ex.note || ex.notes || ''
+        note: ex.note || ex.notes || '',
+        kw: ex.kw ?? null,
+        kr: ex.kr ?? null,
+        bw: ex.bw ?? null,
+        br: ex.br ?? null
       })),
       warmup: tpl.warmup || null,
       cooldown: tpl.cooldown || null,
@@ -2470,7 +2659,9 @@ async function loadAll(){
     STRETCH_DB = value ? JSON.parse(value) : {};
   } catch(e){ STRETCH_DB = {}; }
   recoverClientsFromData();
+  recoverLegacyV24KbPlan();
   migrateExtraUsersToFriends();
+  recoverPlanDaysFromLoggedData();
   const account = accountPerson();
   state.client = account.name;
   state.profile = account.profile;
@@ -2571,8 +2762,8 @@ function renderExerciseCard(ex, iso, client){
   const setsArr = sess.sets[ex.n];
 
   const last = findLastSession(state.profile, iso, client, ex.n);
-  const prevW = null;
-  const prevR = null;
+  const prevW = client === 'Kevin' ? ex.kw : (client === 'Brandon' ? ex.bw : null);
+  const prevR = client === 'Kevin' ? ex.kr : (client === 'Brandon' ? ex.br : null);
   let refText = '';
   if(last){
     refText = 'Last: ' + last.sets.filter(s=>s.w!=='').map(s => `${s.w}\u00d7${s.r}`).join(', ');
@@ -2977,12 +3168,14 @@ function renderPlanView(){
       </div>
       <div class="tinyactions">
         <button data-action="export">Export Workout Data</button>
+        <button data-action="exportall">Export All Data</button>
         <button data-action="exportplan">Export Plan</button>
+        <button data-action="saverecovery">Save Recovery Snapshot</button>
         <button data-action="shareplan">Share Plan</button>
         <button data-action="nearbydata">Nearby Send Data</button>
         <button data-action="nearbyplan">Nearby Send Plan</button>
       </div>
-      <div class="muted">Export plans or workout results for the selected date range, or send them directly to a nearby app user.</div>
+      <div class="muted">Export plans or workout results for the selected date range, including all data when group-member history needs review.</div>
     </div>
     <div class="panel"><div class="paneltitle">Plan tools</div>
       <div class="tinyactions"><button data-action="preloadedplan">Use Preloaded Plan</button><button data-action="repeatmonth">Repeat Next Month</button></div>
@@ -3374,6 +3567,9 @@ function handleClick(e){
     btn.textContent = 'Exported \u2713';
     setTimeout(() => { btn.textContent = original; }, 2200);
   }
+  else if(action === 'exportall'){
+    exportAllWorkoutData();
+  }
   else if(action === 'nearbyreceive'){
     if(window.AndroidBridge && typeof window.AndroidBridge.nearbyReceive === 'function'){
       window.AndroidBridge.nearbyReceive();
@@ -3448,6 +3644,9 @@ function handleClick(e){
   }
   else if(action === 'exportplan'){
     exportPlanWorkbook(false);
+  }
+  else if(action === 'saverecovery'){
+    saveRecoverySnapshot();
   }
   else if(action === 'shareplan'){
     exportPlanWorkbook(true);
@@ -3759,6 +3958,109 @@ function exportWorkbook(destination = 'save'){
   const fname = `Workout_Data_${rangeName(state.exportStart, state.exportEnd)}.xlsx`;
   if(destination === 'nearby') deliverNearbyWorkbook(wb, fname);
   else deliverWorkbook(wb, fname, false);
+}
+
+function exportAllWorkoutData(){
+  if(!window.XLSX){
+    showToast('Spreadsheet export needs SheetJS to load.');
+    return;
+  }
+  const wb = XLSX.utils.book_new();
+  const sessionRows = [['ProfileId','ProfileName','Date','Day','User','BodyWeight','SleepHours','WarmUpDone','CoolDownDone','Status','Notes','DeviceOwner']];
+  const setRows = [['ProfileId','ProfileName','Date','User','Exercise','SetNumber','Weight','Reps','DeviceOwner']];
+  const stretchRows = [['ProfileId','ProfileName','Date','User','Done','Minutes','Notes']];
+  const planRows = [['ProfileId','ProfileName','Date','Day','Label','Kind','Exercises','Source']];
+
+  Object.keys(PROFILES).sort().forEach(pid => {
+    const profile = PROFILES[pid];
+    const db = DB[pid] || {};
+    Object.keys(db).sort().forEach(iso => {
+      if(!inRange(iso, state.exportStart, state.exportEnd)) return;
+      Object.entries(db[iso] || {}).forEach(([person, sess]) => {
+        if(person === 'stretch' || !sess) return;
+        sessionRows.push([pid, profile.name, iso, weekdayName(iso), person, sess.bodyWeight, sess.sleep, sess.warmup, sess.cooldown || '', computeStatus(sess), sess.notes, sess.deviceOwner || '']);
+        Object.entries(sess.sets || {}).forEach(([exName, sets]) => {
+          (sets || []).forEach((s, i) => {
+            if(setHasValue(s)) setRows.push([pid, profile.name, iso, person, exName, i + 1, s.w, s.r, sess.deviceOwner || '']);
+          });
+        });
+      });
+    });
+    const plan = CUSTOM_PLAN[pid];
+    Object.entries((plan && plan.sessions) || {}).forEach(([iso, tpl]) => {
+      if(!inRange(iso, state.exportStart, state.exportEnd)) return;
+      planRows.push([pid, profile.name, iso, tpl.day || weekdayName(iso), tpl.label || '', tpl.kind || '', (tpl.exercises || []).map(ex => ex.n || ex.name || '').filter(Boolean).join('|'), tpl.sourceTitle || plan.source || '']);
+    });
+  });
+
+  Object.keys(STRETCH_DB).sort().forEach(iso => {
+    if(!inRange(iso, state.exportStart, state.exportEnd)) return;
+    Object.entries(STRETCH_DB[iso] || {}).forEach(([person, st]) => {
+      if(st) stretchRows.push(['main', 'Main Plan', iso, person, st.done ? 'Yes' : 'No', st.minutes, st.notes]);
+    });
+  });
+
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sessionRows), 'All Sessions');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(setRows), 'All Sets');
+  if(stretchRows.length > 1) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(stretchRows), 'All Stretching');
+  if(planRows.length > 1) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(planRows), 'All Plans');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+    ['Format','GymTrackerAllDataV1'],
+    ['Export Range', `${state.exportStart || 'all'} to ${state.exportEnd || 'all'}`],
+    ['Profiles', Object.keys(PROFILES).length],
+    ['Exported', todayIso()]
+  ]), 'Summary');
+
+  deliverWorkbook(wb, `Gym_Tracker_All_Data_${rangeName(state.exportStart, state.exportEnd)}.xlsx`, false);
+  showToast('All workout data exported.');
+}
+
+function storageDumpForRecovery(){
+  const local = {};
+  try {
+    for(let i = 0; i < localStorage.length; i++){
+      const key = localStorage.key(i);
+      if(key) local[key] = localStorage.getItem(key);
+    }
+  } catch(e){}
+  let native = {};
+  try {
+    if(window.AndroidStorage && typeof window.AndroidStorage.dumpAll === 'function'){
+      native = JSON.parse(window.AndroidStorage.dumpAll() || '{}');
+    }
+  } catch(e){}
+  return {localStorage: local, androidStorage: native};
+}
+
+function saveTextDownload(filename, text){
+  if(window.AndroidBridge && typeof window.AndroidBridge.saveTextFile === 'function'){
+    window.AndroidBridge.saveTextFile(filename, text);
+    return;
+  }
+  const blob = new Blob([text], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function saveRecoverySnapshot(){
+  const snapshot = {
+    format: 'GymTrackerRecoveryV1',
+    exportedAt: new Date().toISOString(),
+    appVersion: currentAppVersion(),
+    state,
+    appPrefs: APP_PREFS,
+    profiles: PROFILES,
+    customPlans: CUSTOM_PLAN,
+    workoutData: DB,
+    stretchData: STRETCH_DB,
+    storage: storageDumpForRecovery()
+  };
+  saveTextDownload(`Gym_Tracker_Recovery_${todayIso()}.json`, JSON.stringify(snapshot, null, 2));
+  showToast('Recovery snapshot saved.');
 }
 
 function deliverWorkbook(wb, filename, share){

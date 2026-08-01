@@ -1,9 +1,9 @@
 {
-  "versionCode": 2,
-  "versionName": "1.1",
+  "versionCode": 3,
+  "versionName": "1.2",
   "channel": "debug-template",
-  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.1/gym_tracker_v1_1_update_debug.apk",
-  "sha256": "61633233C195F1840C1574975E62F0B107E08B51208856928400D72297697F39",
-  "size": 4309511,
-  "releaseNotes": "Adds SocketAgent-style in-app update checks. The app checks latest.json quietly on startup, shows update availability in the User tab, downloads only after user action, verifies the SHA-256 hash, and launches the Android installer prompt."
+  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.2/gym_tracker_v1_2_v24_repair_debug.apk",
+  "sha256": "17F5E14247762DF85C87E39A1843E1783F06EC3DCE439F5177FE1BA4F76E161A",
+  "size": 3907626,
+  "releaseNotes": "Urgent repair for users updating from gym_tracker_v24_debug.apk. Restores legacy v24 workout plan days, preserves group-member logs under friend profiles, keeps old reference weights/reps when present, and adds all-data plus recovery snapshot exports."
 }

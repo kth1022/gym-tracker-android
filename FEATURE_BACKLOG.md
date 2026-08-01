@@ -24,6 +24,11 @@ Add new ideas below using this format:
   - Priority: low / medium / high
 ```
 
+- [ ] Rest timer between sets
+  - Source: user suggestion
+  - Notes: Add a timer button on each workout screen with configurable duration.
+  - Priority: medium
+
 ## Later Ideas
 
 Use this section for useful ideas that are not ready for the next release.

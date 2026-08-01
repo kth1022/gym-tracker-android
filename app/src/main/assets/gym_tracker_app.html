@@ -399,7 +399,7 @@ const PROFILES = {
     id:'main', name:'Main Plan', clients:[],
     days:['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'],
     hasStretchTab:true, dateMin:'2000-01-01', dateMax:'2099-12-31',
-    storageKey:'log-main-all', legacyStorageKey:'log-kb-all', legacyStorageKeys:['log-kb-all','log-kb-2026-07'], stretchStorageKey:'stretch-main-all', legacyStretchStorageKey:'stretch-kb-all', legacyStretchStorageKeys:['stretch-kb-all','stretch-kb-2026-07'],
+    storageKey:'log-main-all', legacyStorageKey:'log-kb-all', legacyStorageKeys:['log-kb-all','log-kb-2026-07'], planStorageKey:'plan-main', legacyPlanKeys:['plan-kb'], stretchStorageKey:'stretch-main-all', legacyStretchStorageKey:'stretch-kb-all', legacyStretchStorageKeys:['stretch-kb-all','stretch-kb-2026-07'],
   },
 };
 
@@ -716,6 +716,121 @@ function ensurePrefsShape(){
 function savePrefs(){
   ensurePrefsShape();
   storageAPI.set('app-prefs', JSON.stringify(APP_PREFS));
+}
+
+function uniqueStrings(items){
+  const out = [];
+  const seen = new Set();
+  (items || []).flat().forEach(item => {
+    const value = String(item || '').trim();
+    if(value && !seen.has(value)){
+      seen.add(value);
+      out.push(value);
+    }
+  });
+  return out;
+}
+
+function storageKeySnapshot(){
+  const keys = new Set();
+  try {
+    for(let i = 0; i < localStorage.length; i++){
+      const key = localStorage.key(i);
+      if(key) keys.add(key);
+    }
+  } catch(e){}
+  try {
+    if(window.AndroidStorage && typeof window.AndroidStorage.dumpAll === 'function'){
+      const dump = JSON.parse(window.AndroidStorage.dumpAll() || '{}');
+      Object.keys(dump || {}).forEach(key => keys.add(key));
+    }
+  } catch(e){}
+  return keys;
+}
+
+function displayNameFromSlug(slug){
+  return String(slug || '')
+    .split('-')
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ') || 'User';
+}
+
+function legacyProfileAliases(profileId){
+  const aliases = [profileId];
+  if(profileId === DEFAULT_PROFILE_ID) aliases.push('kb');
+  if(profileId && profileId.startsWith('user-')) aliases.push(profileId);
+  return uniqueStrings(aliases);
+}
+
+function logStorageCandidates(profileId, profile){
+  const aliases = legacyProfileAliases(profileId);
+  return uniqueStrings([
+    profile.storageKey,
+    profile.legacyStorageKeys || [],
+    profile.legacyStorageKey,
+    aliases.map(alias => `log-${alias}-all`)
+  ]);
+}
+
+function planStorageKey(profileId, profile = PROFILES[profileId] || {}){
+  return profile.planStorageKey || `plan-${profileId}`;
+}
+
+function planStorageCandidates(profileId, profile){
+  const aliases = legacyProfileAliases(profileId);
+  return uniqueStrings([
+    planStorageKey(profileId, profile),
+    profile.legacyPlanKeys || [],
+    profile.legacyPlanKey,
+    aliases.map(alias => `plan-${alias}`)
+  ]);
+}
+
+function stretchStorageCandidates(profileId, profile){
+  const aliases = legacyProfileAliases(profileId);
+  return uniqueStrings([
+    profile.stretchStorageKey,
+    profile.legacyStretchStorageKeys || [],
+    profile.legacyStretchStorageKey,
+    aliases.map(alias => `stretch-${alias}-all`)
+  ]);
+}
+
+function registerProfilesFromStoredKeys(keys){
+  ensurePrefsShape();
+  Array.from(keys || []).forEach(key => {
+    let match = key.match(/^plan-(user-[A-Za-z0-9-]+)$/) || key.match(/^log-(user-[A-Za-z0-9-]+)-all$/) || key.match(/^stretch-(user-[A-Za-z0-9-]+)-all$/);
+    if(!match) return;
+    const id = match[1];
+    if(PROFILES[id]) return;
+    const name = displayNameFromSlug(id.replace(/^user-/, ''));
+    PROFILES[id] = {
+      id,
+      name: `${name} Plan`,
+      clients: [name],
+      days: PROFILES[DEFAULT_PROFILE_ID].days.slice(),
+      hasStretchTab: true,
+      dateMin: PROFILES[DEFAULT_PROFILE_ID].dateMin,
+      dateMax: PROFILES[DEFAULT_PROFILE_ID].dateMax,
+      storageKey: `log-${id}-all`,
+      planStorageKey: `plan-${id}`,
+      stretchStorageKey: `stretch-${id}-all`
+    };
+    DB[id] = DB[id] || {};
+    CUSTOM_PLAN[id] = CUSTOM_PLAN[id] || null;
+  });
+}
+
+async function loadFirstStoredValue(keys, canonicalKey){
+  for(const key of uniqueStrings(keys)){
+    const res = await storageAPI.get(key);
+    if(res && res.value){
+      if(canonicalKey && key !== canonicalKey) await storageAPI.set(canonicalKey, res.value);
+      return res.value;
+    }
+  }
+  return '';
 }
 
 function monthRangeForIso(iso){
@@ -1165,6 +1280,7 @@ function registerDynamicProfile(id, name, seedProfileId = state.profile){
     dateMin: seed.dateMin,
     dateMax: seed.dateMax,
     storageKey: `log-${id}-all`,
+    planStorageKey: `plan-${id}`,
     stretchStorageKey: `stretch-${id}-all`
   };
   DB[id] = DB[id] || {};
@@ -1179,6 +1295,7 @@ function registerDynamicProfile(id, name, seedProfileId = state.profile){
     dateMin: PROFILES[id].dateMin,
     dateMax: PROFILES[id].dateMax,
     storageKey: PROFILES[id].storageKey,
+    planStorageKey: PROFILES[id].planStorageKey,
     stretchStorageKey: PROFILES[id].stretchStorageKey
   };
   savePrefs();
@@ -2312,7 +2429,7 @@ function scheduleSave(){
     try {
       for(const pid of Object.keys(PROFILES)){
         await storageAPI.set(PROFILES[pid].storageKey, JSON.stringify(DB[pid] || {}));
-        if(CUSTOM_PLAN[pid]) await storageAPI.set(`plan-${pid}`, JSON.stringify(CUSTOM_PLAN[pid]));
+        if(CUSTOM_PLAN[pid]) await storageAPI.set(planStorageKey(pid, PROFILES[pid]), JSON.stringify(CUSTOM_PLAN[pid]));
       }
       await storageAPI.set(PROFILES[DEFAULT_PROFILE_ID].stretchStorageKey, JSON.stringify(STRETCH_DB));
       await storageAPI.set('app-prefs', JSON.stringify(APP_PREFS));
@@ -2333,41 +2450,23 @@ async function loadAll(){
       CUSTOM_PLAN[id] = null;
     }
   });
+  registerProfilesFromStoredKeys(storageKeySnapshot());
   for(const pid of Object.keys(PROFILES)){
+    const profile = PROFILES[pid];
     try {
-      let res = await storageAPI.get(PROFILES[pid].storageKey);
-      if(!res || !res.value){
-        const legacyLogKeys = PROFILES[pid].legacyStorageKeys || [PROFILES[pid].legacyStorageKey].filter(Boolean);
-        for(const key of legacyLogKeys){
-          const legacyRes = await storageAPI.get(key);
-          if(legacyRes && legacyRes.value){
-            res = legacyRes;
-            await storageAPI.set(PROFILES[pid].storageKey, res.value);
-            break;
-          }
-        }
-      }
-      DB[pid] = res && res.value ? JSON.parse(res.value) : {};
+      const value = await loadFirstStoredValue(logStorageCandidates(pid, profile), profile.storageKey);
+      DB[pid] = value ? JSON.parse(value) : {};
     } catch(e){ DB[pid] = {}; }
     try {
-      const plan = await storageAPI.get(`plan-${pid}`);
-      if(plan && plan.value) applyCustomPlan(pid, JSON.parse(plan.value));
+      const canonicalPlanKey = planStorageKey(pid, profile);
+      const value = await loadFirstStoredValue(planStorageCandidates(pid, profile), canonicalPlanKey);
+      if(value) applyCustomPlan(pid, JSON.parse(value));
     } catch(e){ console.warn('plan load failed', e); }
   }
   try {
-    let res = await storageAPI.get(PROFILES[DEFAULT_PROFILE_ID].stretchStorageKey);
-    if(!res || !res.value){
-      const legacyStretchKeys = PROFILES[DEFAULT_PROFILE_ID].legacyStretchStorageKeys || [PROFILES[DEFAULT_PROFILE_ID].legacyStretchStorageKey].filter(Boolean);
-      for(const key of legacyStretchKeys){
-        const legacyRes = await storageAPI.get(key);
-        if(legacyRes && legacyRes.value){
-          res = legacyRes;
-          await storageAPI.set(PROFILES[DEFAULT_PROFILE_ID].stretchStorageKey, res.value);
-          break;
-        }
-      }
-    }
-    STRETCH_DB = res && res.value ? JSON.parse(res.value) : {};
+    const profile = PROFILES[DEFAULT_PROFILE_ID];
+    const value = await loadFirstStoredValue(stretchStorageCandidates(DEFAULT_PROFILE_ID, profile), profile.stretchStorageKey);
+    STRETCH_DB = value ? JSON.parse(value) : {};
   } catch(e){ STRETCH_DB = {}; }
   recoverClientsFromData();
   migrateExtraUsersToFriends();
@@ -3502,7 +3601,7 @@ async function init(){
       clearTimeout(saveTimer);
       Object.keys(PROFILES).forEach(pid => {
         storageAPI.set(PROFILES[pid].storageKey, JSON.stringify(DB[pid] || {}));
-        if(CUSTOM_PLAN[pid]) storageAPI.set(`plan-${pid}`, JSON.stringify(CUSTOM_PLAN[pid]));
+        if(CUSTOM_PLAN[pid]) storageAPI.set(planStorageKey(pid, PROFILES[pid]), JSON.stringify(CUSTOM_PLAN[pid]));
       });
       storageAPI.set(PROFILES[DEFAULT_PROFILE_ID].stretchStorageKey, JSON.stringify(STRETCH_DB));
       storageAPI.set('app-prefs', JSON.stringify(APP_PREFS));

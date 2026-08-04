@@ -11,25 +11,7 @@ Use this file to collect feature ideas between releases. Add ideas here as they 
 
 ## Planned For Next Update
 
-- [ ] Rest timer between sets
-  - Source: user suggestion
-  - Notes: Add a timer button on each workout screen with configurable rest duration. Include a timer mode for time-based exercises, such as planks, so users can time the exercise inside the app instead of leaving to use another timer.
-  - Priority: medium
-
-- [ ] Rest-day body weight and sleep tracking
-  - Source: user suggestion
-  - Notes: Allow users to enter body weight and sleep data on rest days so recovery metrics can be captured even when no workout is scheduled.
-  - Priority: medium
-
-- [ ] Show previous set values during group workouts
-  - Source: user suggestion
-  - Notes: When logging a group workout, show the user's previous weight and reps for that exercise just like the normal workout flow does.
-  - Priority: medium
-
-- [ ] Time-based rep input for timed exercises
-  - Source: user suggestion
-  - Notes: When an exercise target uses time instead of reps, such as planks with 3 sets of 30-45 sec, show the reps field as a time input. For bodyweight timed exercises, users can enter 0 for weight and enter the held time in the time/reps field. Pair this with the in-app timer so the completed time can be recorded without switching apps.
-  - Priority: medium
+No items selected yet.
 
 ## Candidate Features
 
@@ -59,3 +41,19 @@ Use this section for useful ideas that are not ready for the next release.
 ## Completed
 
 Move shipped items here with the release version.
+
+- [x] Rest timer between sets
+  - Shipped: v1.4
+  - Notes: Added quick in-app rest timers and timed-exercise timer support.
+
+- [x] Rest-day body weight and sleep tracking
+  - Shipped: v1.4
+  - Notes: Added rest-day body weight, sleep, and notes entry.
+
+- [x] Show previous set values during group workouts
+  - Shipped: v1.4
+  - Notes: Group workout logging now shows each member's previous values for the exercise.
+
+- [x] Time-based rep input for timed exercises
+  - Shipped: v1.4
+  - Notes: Timed targets use a seconds-style input and can record elapsed timer time.

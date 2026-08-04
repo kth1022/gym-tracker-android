@@ -1,9 +1,9 @@
 {
-  "versionCode": 5,
-  "versionName": "1.4",
+  "versionCode": 6,
+  "versionName": "1.5",
   "channel": "debug-template",
-  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.4/gym_tracker_v1_4_backlog_update_debug.apk",
-  "sha256": "4D6D8213AD0FB7EA9344B78C43ED8DD1184593F24830A7C5BB447290EB3700E0",
-  "size": 4324351,
-  "releaseNotes": "Adds in-app rest timers, timed exercise timers with recording for movements such as planks, time-style inputs for timed sets, rest-day body weight and sleep tracking, prior set values during group workouts, and support for single-person workout plan workbook imports."
+  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.5/gym_tracker_v1_5_timer_fix_debug.apk",
+  "sha256": "C542103BB05218357D21DA1DADF8D465F72DA468F00D7DFB5DD6D6D0ADA85394",
+  "size": 3910358,
+  "releaseNotes": "Fixes the v1.4 timer bar position so it no longer overlaps the date controls, and makes timed exercise Record write elapsed seconds directly into the original set."
 }

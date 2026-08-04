@@ -204,7 +204,7 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 }
 .addset:active{ background:var(--surface2); }
 .timerbar{
-  position:sticky; top:68px; z-index:18; display:flex; align-items:center; justify-content:space-between; gap:10px;
+  position:sticky; top:calc(92px + env(safe-area-inset-top)); z-index:18; display:flex; align-items:center; justify-content:space-between; gap:10px;
   background:var(--surface); border:1px solid var(--teal); border-radius:var(--radius); padding:10px 12px; margin:0 0 12px;
   box-shadow:0 10px 22px rgba(0,0,0,.24);
 }
@@ -285,7 +285,7 @@ textarea:focus{ outline:none; border-color:var(--amber); }
   .exhead{ flex-direction:column; align-items:stretch; }
   .exactions{ max-width:100%; justify-content:flex-start; }
   .setrow{ display:grid; grid-template-columns:36px minmax(0,1fr) minmax(0,.9fr) 30px 30px; gap:6px; }
-  .timerbar{ top:58px; align-items:flex-start; }
+  .timerbar{ top:calc(84px + env(safe-area-inset-top)); align-items:flex-start; }
   .timerclock{ font-size:22px; }
   .setnum{ width:auto; }
   .stepper button{ width:28px; }
@@ -1639,6 +1639,15 @@ function getSessionForPerson(iso, person){
   return DB[pid][iso][person];
 }
 
+function getSessionInProfile(profileId, iso, client){
+  const pid = profileId || state.profile;
+  if(!DB[pid]) DB[pid] = {};
+  if(!DB[pid][iso]) DB[pid][iso] = {};
+  if(!DB[pid][iso][client]) DB[pid][iso][client] = emptySession();
+  if(!DB[pid][iso][client].sets) DB[pid][iso][client].sets = {};
+  return DB[pid][iso][client];
+}
+
 function getTemplateForPerson(person, iso){
   return getSessionTemplate(findProfileForPerson(person), iso);
 }
@@ -2789,7 +2798,7 @@ function startWorkoutTimer(config){
     client: config.client || state.client,
     date: config.date || state.date,
     profile: config.profile || state.profile,
-    idx: Number.isFinite(config.idx) ? config.idx : null
+    idx: Number.isFinite(Number(config.idx)) ? Number(config.idx) : null
   };
   workoutTimerTick = setInterval(updateTimerDom, 500);
   render();
@@ -2820,14 +2829,14 @@ function stopWorkoutTimer(record = false){
   const timer = state.timer;
   const elapsed = timerElapsed(timer);
   if(record && timer.mode === 'exercise' && timer.exercise && timer.idx != null){
-    const prevProfile = state.profile;
-    if(timer.profile && PROFILES[timer.profile]) state.profile = timer.profile;
-    const sess = timer.person ? getSessionForPerson(timer.date || state.date, timer.person) : getSession(timer.date || state.date, timer.client || state.client);
+    const targetClient = timer.person || timer.client || state.client;
+    const targetProfile = timer.person ? findProfileForPerson(timer.person) : (timer.profile || state.profile);
+    const sess = getSessionInProfile(targetProfile, timer.date || state.date, targetClient);
+    if(timer.person) sess.deviceOwner = state.deviceOwner || state.client;
     if(!sess.sets[timer.exercise]) sess.sets[timer.exercise] = [];
     if(!sess.sets[timer.exercise][timer.idx]) sess.sets[timer.exercise][timer.idx] = {w:'', r:''};
     sess.sets[timer.exercise][timer.idx].r = String(elapsed);
     if(sess.status === 'Scheduled') sess.status = 'Complete';
-    state.profile = prevProfile;
     scheduleSave();
   }
   state.timer = null;

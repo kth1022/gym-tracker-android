@@ -185,10 +185,12 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 .setnum{ width:38px; font-size:12px; color:var(--text-dim); flex:none; }
 .stepper{ display:flex; align-items:center; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; flex:1; }
 .stepper.small{ flex:0.85; }
+.stepper.timeinput{ border-color:rgba(73,194,180,0.45); }
 .stepper button{
   width:32px; height:38px; flex:none; background:transparent; border:none; color:var(--text);
   font-size:18px; cursor:pointer;
 }
+.stepper .timerstart{ width:52px; color:var(--teal); font-size:13px; font-weight:900; }
 .stepper button:active{ background:rgba(255,255,255,0.06); }
 .stepper .numin{ border:none; background:transparent; padding:8px 2px; width:100%; -moz-appearance:textfield; }
 .stepper .numin::-webkit-outer-spin-button,.stepper .numin::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
@@ -201,6 +203,22 @@ textarea:focus{ outline:none; border-color:var(--amber); }
   background:transparent; color:var(--text-dim); font-size:13px; cursor:pointer;
 }
 .addset:active{ background:var(--surface2); }
+.timerbar{
+  position:sticky; top:68px; z-index:18; display:flex; align-items:center; justify-content:space-between; gap:10px;
+  background:var(--surface); border:1px solid var(--teal); border-radius:var(--radius); padding:10px 12px; margin:0 0 12px;
+  box-shadow:0 10px 22px rgba(0,0,0,.24);
+}
+.timerbar b{ display:block; font-size:13px; }
+.timerbar span{ display:block; color:var(--text-dim); font-size:11.5px; margin-top:2px; }
+.timerclock{ font-family:'Oswald',sans-serif; font-size:26px; color:var(--teal); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.timeractions{ display:flex; gap:6px; }
+.timeractions button,.timerquick button{
+  border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface2); color:var(--text); padding:8px 10px;
+  font-weight:800; font-size:12px; cursor:pointer;
+}
+.timeractions .primary{ border-color:var(--teal); color:var(--teal); }
+.timerquick{ display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin:8px 0 10px; }
+.restmetrics{ margin:12px 0; }
 
 .sectiongap{ height:6px; }
 
@@ -266,7 +284,9 @@ textarea:focus{ outline:none; border-color:var(--amber); }
   .tinyactions{ grid-template-columns:repeat(auto-fit,minmax(92px,1fr)); }
   .exhead{ flex-direction:column; align-items:stretch; }
   .exactions{ max-width:100%; justify-content:flex-start; }
-  .setrow{ display:grid; grid-template-columns:36px minmax(0,1fr) minmax(0,.8fr) 30px; gap:6px; }
+  .setrow{ display:grid; grid-template-columns:36px minmax(0,1fr) minmax(0,.9fr) 30px 30px; gap:6px; }
+  .timerbar{ top:58px; align-items:flex-start; }
+  .timerclock{ font-size:22px; }
   .setnum{ width:auto; }
   .stepper button{ width:28px; }
   .stime{ width:48px; }
@@ -451,6 +471,7 @@ let CUSTOM_PLAN = { main: null };
 let APP_PREFS = { onboarded:false, theme:'strength', primaryUser:'', profiles:{}, friends:{}, tempGroupMembers:[] };
 let saveTimer = null;
 let toastTimer = null;
+let workoutTimerTick = null;
 let groupImportPromptOpen = false;
 
 const THEMES = {
@@ -742,6 +763,7 @@ let state = {
   importTargetProfile: '',
   importTargetClient: '',
   updateStatus: null,
+  timer: null,
 };
 
 function currentProfile(){ return PROFILES[state.profile]; }
@@ -2715,6 +2737,124 @@ function parseTargetSets(s){
   const m = String(s).match(/\d+/);
   return m ? parseInt(m[0], 10) : 3;
 }
+
+function isTimedExercise(ex){
+  const target = String((ex && (ex.r || ex.reps)) || '').toLowerCase();
+  return /\b(sec|secs|second|seconds|min|mins|minute|minutes)\b/.test(target) || /\d+\s*:\s*\d+/.test(target);
+}
+
+function targetSeconds(ex){
+  const target = String((ex && (ex.r || ex.reps)) || '').toLowerCase();
+  const mmss = target.match(/(\d+)\s*:\s*(\d{2})/);
+  if(mmss) return parseInt(mmss[1], 10) * 60 + parseInt(mmss[2], 10);
+  const values = [];
+  const re = /(\d+(?:\.\d+)?)/g;
+  let match;
+  while((match = re.exec(target))) values.push(parseFloat(match[1]));
+  const numericValues = values.filter(n => !Number.isNaN(n));
+  if(!numericValues.length) return 0;
+  const max = Math.max(...numericValues);
+  return /\b(min|mins|minute|minutes)\b/.test(target) ? Math.round(max * 60) : Math.round(max);
+}
+
+function formatTimer(seconds){
+  seconds = Math.max(0, Math.floor(seconds || 0));
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${pad(s)}`;
+}
+
+function timerElapsed(timer = state.timer){
+  if(!timer) return 0;
+  const started = timer.startedAt || Date.now();
+  return Math.floor((Date.now() - started) / 1000) + (timer.baseElapsed || 0);
+}
+
+function timerRemaining(timer = state.timer){
+  if(!timer) return 0;
+  return Math.max(0, (timer.duration || 0) - timerElapsed(timer));
+}
+
+function startWorkoutTimer(config){
+  stopWorkoutTimerTick();
+  state.timer = {
+    mode: config.mode,
+    label: config.label || '',
+    detail: config.detail || '',
+    duration: Number(config.duration) || 0,
+    startedAt: Date.now(),
+    baseElapsed: 0,
+    exercise: config.exercise || '',
+    person: config.person || '',
+    client: config.client || state.client,
+    date: config.date || state.date,
+    profile: config.profile || state.profile,
+    idx: Number.isFinite(config.idx) ? config.idx : null
+  };
+  workoutTimerTick = setInterval(updateTimerDom, 500);
+  render();
+}
+
+function stopWorkoutTimerTick(){
+  if(workoutTimerTick){
+    clearInterval(workoutTimerTick);
+    workoutTimerTick = null;
+  }
+}
+
+function updateTimerDom(){
+  if(!state.timer){
+    stopWorkoutTimerTick();
+    return;
+  }
+  const clock = document.querySelector('[data-timer-clock]');
+  if(clock) clock.textContent = state.timer.mode === 'rest' ? formatTimer(timerRemaining()) : formatTimer(timerElapsed());
+  if(state.timer.mode === 'rest' && timerRemaining() <= 0){
+    stopWorkoutTimerTick();
+    showToast('Rest timer finished.');
+  }
+}
+
+function stopWorkoutTimer(record = false){
+  if(!state.timer) return;
+  const timer = state.timer;
+  const elapsed = timerElapsed(timer);
+  if(record && timer.mode === 'exercise' && timer.exercise && timer.idx != null){
+    const prevProfile = state.profile;
+    if(timer.profile && PROFILES[timer.profile]) state.profile = timer.profile;
+    const sess = timer.person ? getSessionForPerson(timer.date || state.date, timer.person) : getSession(timer.date || state.date, timer.client || state.client);
+    if(!sess.sets[timer.exercise]) sess.sets[timer.exercise] = [];
+    if(!sess.sets[timer.exercise][timer.idx]) sess.sets[timer.exercise][timer.idx] = {w:'', r:''};
+    sess.sets[timer.exercise][timer.idx].r = String(elapsed);
+    if(sess.status === 'Scheduled') sess.status = 'Complete';
+    state.profile = prevProfile;
+    scheduleSave();
+  }
+  state.timer = null;
+  stopWorkoutTimerTick();
+  render();
+}
+
+function renderTimerBar(){
+  const timer = state.timer;
+  if(!timer) return '';
+  const value = timer.mode === 'rest' ? timerRemaining(timer) : timerElapsed(timer);
+  const primary = timer.mode === 'exercise'
+    ? `<button class="primary" data-action="stoptimerrecord">Record</button>`
+    : '';
+  return `
+  <div class="timerbar">
+    <div>
+      <b>${escapeHtml(timer.label || 'Timer')}</b>
+      ${timer.detail ? `<span>${escapeHtml(timer.detail)}</span>` : ''}
+    </div>
+    <div class="timerclock" data-timer-clock>${formatTimer(value)}</div>
+    <div class="timeractions">
+      ${primary}
+      <button data-action="stoptimer">Stop</button>
+    </div>
+  </div>`;
+}
 function escapeHtml(s){
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
@@ -2743,19 +2883,24 @@ function renderClientToggle(){
   return '';
 }
 
-function renderSetRow(exName, idx, s){
+function renderSetRow(ex, idx, s, options = {}){
+  const exName = typeof ex === 'string' ? ex : ex.n;
+  const timed = typeof ex === 'object' && isTimedExercise(ex);
+  const duration = timed ? targetSeconds(ex) : 0;
+  const personAttr = options.person ? ` data-person="${escapeHtml(options.person)}"` : '';
+  const timerButton = timed ? `<button class="timerstart" data-action="startsettimer" data-targetseconds="${duration}" title="Start timer">Timer</button>` : `<button data-action="nudge" data-field="r" data-delta="-1">\u2013</button>`;
   return `
-  <div class="setrow" data-exercise="${escapeHtml(exName)}" data-idx="${idx}">
+  <div class="setrow" data-exercise="${escapeHtml(exName)}" data-idx="${idx}"${personAttr}>
     <span class="setnum">Set ${idx+1}</span>
     <div class="stepper">
       <button data-action="nudge" data-field="w" data-delta="-5">\u2013</button>
       <input type="number" inputmode="decimal" class="numin" data-field="w" value="${s.w ?? ''}" placeholder="lb">
       <button data-action="nudge" data-field="w" data-delta="5">+</button>
     </div>
-    <div class="stepper small">
-      <button data-action="nudge" data-field="r" data-delta="-1">\u2013</button>
-      <input type="number" inputmode="numeric" class="numin" data-field="r" value="${s.r ?? ''}" placeholder="reps">
-      <button data-action="nudge" data-field="r" data-delta="1">+</button>
+    <div class="stepper small ${timed ? 'timeinput' : ''}">
+      ${timerButton}
+      <input type="${timed ? 'text' : 'number'}" inputmode="${timed ? 'decimal' : 'numeric'}" class="numin" data-field="r" value="${s.r ?? ''}" placeholder="${timed ? 'sec' : 'reps'}">
+      <button data-action="nudge" data-field="r" data-delta="${timed ? '5' : '1'}">+</button>
     </div>
     <button class="clearset" data-action="clearset" title="Clear set">&times;</button>
     <button class="clearset" data-action="deleteset" title="Delete set">Del</button>
@@ -2794,7 +2939,7 @@ function renderExerciseCard(ex, iso, client){
     ${ex.note ? `<div class="exnote">${escapeHtml(ex.note)}</div>` : ''}
     ${refText ? `<div class="exref">${escapeHtml(refText)}</div>` : ''}
     <div class="setlist">
-      ${setsArr.map((s,i) => renderSetRow(ex.n, i, s)).join('')}
+      ${setsArr.map((s,i) => renderSetRow(ex, i, s)).join('')}
     </div>
     <button class="addset" data-action="addset" data-exercise="${escapeHtml(ex.n)}">+ Add set</button>
   </div>`;
@@ -2810,7 +2955,9 @@ function renderGroupExerciseCard(ex, iso, members){
       sess.deviceOwner = state.deviceOwner || state.client;
       const targetSets = parseTargetSets(ex.s);
       if(!sess.sets[ex.n]) sess.sets[ex.n] = Array.from({length: targetSets}, () => ({w:'', r:''}));
-      return `<div class="groupmember"><h4>${escapeHtml(person)}</h4>${sess.sets[ex.n].map((s,i) => renderSetRow(ex.n, i, s).replace('class="setrow"', `class="setrow" data-person="${escapeHtml(person)}"`)).join('')}<button class="addset" data-action="addset" data-exercise="${escapeHtml(ex.n)}" data-person="${escapeHtml(person)}">+ Add set</button></div>`;
+      const last = findLastSession(findProfileForPerson(person), iso, person, ex.n);
+      const refText = last ? 'Last: ' + last.sets.filter(setHasValue).map(s => `${s.w}\u00d7${s.r}`).join(', ') : '';
+      return `<div class="groupmember"><h4>${escapeHtml(person)}</h4>${refText ? `<div class="exref">${escapeHtml(refText)}</div>` : ''}${sess.sets[ex.n].map((s,i) => renderSetRow(ex, i, s, {person})).join('')}<button class="addset" data-action="addset" data-exercise="${escapeHtml(ex.n)}" data-person="${escapeHtml(person)}">+ Add set</button></div>`;
     }).join('')}
   </div>`;
 }
@@ -2842,7 +2989,24 @@ function renderSessionHeader(iso, client, showCooldown){
     <div class="statusrow">
       ${['Scheduled','Complete','Modified','Missed'].map(s => `<button class="pill sm ${status===s?'active':''}" data-action="setstatus" data-val="${s}">${s}</button>`).join('')}
     </div>
+    <div class="timerquick">
+      <button data-action="startresttimer" data-seconds="60">Rest 1:00</button>
+      <button data-action="startresttimer" data-seconds="90">Rest 1:30</button>
+      <button data-action="startresttimer" data-seconds="120">Rest 2:00</button>
+    </div>
     <label class="noteslabel">Workout notes<textarea data-field="notes" placeholder="How it felt, swaps made...">${escapeHtml(sess.notes)}</textarea></label>
+  </div>`;
+}
+
+function renderRestDayMetrics(iso, client){
+  const sess = getSession(iso, client);
+  return `
+  <div class="sesscard restmetrics">
+    <div class="sessrow">
+      <label>Body weight (lb)<input type="number" inputmode="decimal" class="numin wide" data-field="bodyWeight" value="${sess.bodyWeight}"></label>
+      <label>Sleep (hrs)<input type="number" inputmode="decimal" class="numin wide" data-field="sleep" value="${sess.sleep}"></label>
+    </div>
+    <label class="noteslabel">Rest-day notes<textarea data-field="notes" placeholder="Recovery, soreness, schedule notes...">${escapeHtml(sess.notes)}</textarea></label>
   </div>`;
 }
 
@@ -2888,6 +3052,11 @@ function renderLogView(){
           <div class="weekcue">Group: ${escapeHtml(members.join(', '))} | Device: ${escapeHtml(state.deviceOwner || state.client)}</div>
           <div class="statuschip modified">Group</div>
         </div>
+        <div class="timerquick">
+          <button data-action="startresttimer" data-seconds="60">Rest 1:00</button>
+          <button data-action="startresttimer" data-seconds="90">Rest 1:30</button>
+          <button data-action="startresttimer" data-seconds="120">Rest 2:00</button>
+        </div>
         <button class="addexercise" data-action="clearworkout">Delete prefilled workout</button>
         <div class="exlist">${tpl.exercises.map(ex => renderGroupExerciseCard(ex, iso, members)).join('')}</div>
         <button class="addexercise" data-action="addexercise">+ Add exercise</button>
@@ -2907,6 +3076,7 @@ function renderLogView(){
       <div class="weekcue">Marked as a planned rest day.</div>
     </div>
     <label class="checkpill restcheck"><input type="checkbox" data-action="restday" checked> Rest day</label>
+    ${renderRestDayMetrics(iso, client)}
     <button class="addexercise" data-action="createworkout">+ Create workout</button>
     <button class="addexercise" data-action="loadpreloadedday">Load premade workout day</button>`;
     html += `<div class="sectiongap"></div>`;
@@ -2922,6 +3092,7 @@ function renderLogView(){
     <button class="addexercise" data-action="createworkout">+ Create workout</button>
     <button class="addexercise" data-action="loadpreloadedday">Load premade workout day</button>
     <button class="addexercise" data-action="addtoplan">Add to plan</button>`;
+    html += renderRestDayMetrics(iso, client);
   }
   else if(tpl){
     const sess = getSession(iso, client);
@@ -2954,6 +3125,7 @@ function renderLogView(){
     html += `<button class="addexercise" data-action="createworkout">+ Create workout</button>`;
     html += `<button class="addexercise" data-action="loadpreloadedday">Load premade workout day</button>`;
     html += `<label class="checkpill restcheck"><input type="checkbox" data-action="restday"> Rest day</label>`;
+    html += renderRestDayMetrics(iso, client);
   }
   html += `<div class="sectiongap"></div>`;
   html += stretchRoutine.length ? renderStretchCard(iso, client, stretchRoutine) : `<button class="addexercise" data-action="addstretchroutine">+ Add stretching routine</button>`;
@@ -3491,6 +3663,7 @@ function render(){
     <input type="file" id="importPlanFile" accept=".xlsx" style="display:none">
     <input type="file" id="importDataFile" accept=".xlsx" style="display:none">
     <div class="content">
+      ${renderTimerBar()}
       ${state.tab === 'log' ? renderLogView() : state.tab === 'progress' ? renderProgressView() : state.tab === 'trends' ? renderTrendsView() : state.tab === 'plan' ? renderPlanView() : state.tab === 'friends' ? renderFriendsView() : state.tab === 'help' ? renderHelpView() : renderUsersView()}
     </div>
     <div class="bottomnav">
@@ -3763,6 +3936,40 @@ function handleClick(e){
   else if(action === 'setstatus'){
     getSession(iso, client).status = btn.dataset.val; scheduleSave(); render();
   }
+  else if(action === 'startresttimer'){
+    const seconds = parseInt(btn.dataset.seconds || '90', 10);
+    startWorkoutTimer({
+      mode: 'rest',
+      duration: seconds,
+      label: 'Rest timer',
+      detail: `Rest for ${formatTimer(seconds)}`
+    });
+  }
+  else if(action === 'startsettimer'){
+    const row = btn.closest('.setrow');
+    const exName = row.dataset.exercise;
+    const idx = parseInt(row.dataset.idx, 10);
+    const person = row.dataset.person || '';
+    const target = parseInt(btn.dataset.targetseconds || '0', 10);
+    startWorkoutTimer({
+      mode: 'exercise',
+      duration: target,
+      label: exName,
+      detail: target ? `Target ${formatTimer(target)}${person ? ` | ${person}` : ''}` : `Timed set${person ? ` | ${person}` : ''}`,
+      exercise: exName,
+      person,
+      client,
+      idx,
+      date: iso,
+      profile: state.profile
+    });
+  }
+  else if(action === 'stoptimerrecord'){
+    stopWorkoutTimer(true);
+  }
+  else if(action === 'stoptimer'){
+    stopWorkoutTimer(false);
+  }
   else if(action === 'nudge'){
     const row = btn.closest('.setrow');
     const exName = row.dataset.exercise;
@@ -3870,7 +4077,7 @@ async function init(){
     }
   });
   app.addEventListener('input', (e) => {
-    if(e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type==='number')) handleInputChange(e);
+    if(e.target.dataset.field || e.target.tagName === 'TEXTAREA') handleInputChange(e);
   });
   window.addEventListener('beforeunload', () => {
     if(saveTimer){
@@ -4479,7 +4686,19 @@ function parsePlanWorkbook(wb, profileId, sourceName){
       const clientRows = [];
       for(let r = titleRow + 1; r < blockEnd; r++){
         const clientCol = clientHeaderCol(ws, r);
-        if(clientCol) clientRows.push({row:r, col:clientCol});
+        if(clientCol) clientRows.push({row:r, col:clientCol, layout:'client'});
+      }
+      if(!clientRows.length){
+        const headerRow = findExerciseHeader(ws, titleRow + 1, blockEnd);
+        if(headerRow){
+          clientRows.push({
+            row: titleRow + 1,
+            col: 0,
+            layout: 'single',
+            headerRow,
+            nextRow: blockEnd
+          });
+        }
       }
       if(!clientRows.length) continue;
 
@@ -4488,11 +4707,14 @@ function parsePlanWorkbook(wb, profileId, sourceName){
       days.add(dayName);
 
       clientRows.forEach((clientRow, idx) => {
-        const nextClient = idx + 1 < clientRows.length ? clientRows[idx + 1].row : blockEnd;
-        const client = String(cellVal(ws, clientRow.row, clientRow.col + 1) || currentProfile().clients[idx] || 'User').trim();
+        const nextClient = clientRow.nextRow || (idx + 1 < clientRows.length ? clientRows[idx + 1].row : blockEnd);
+        const fallbackClient = currentProfile().clients[idx] || currentProfile().clients[0] || state.client || 'User';
+        const client = clientRow.layout === 'single'
+          ? fallbackClient
+          : String(cellVal(ws, clientRow.row, clientRow.col + 1) || fallbackClient).trim();
         clients.add(client);
 
-        const headerRow = findExerciseHeader(ws, clientRow.row + 1, nextClient);
+        const headerRow = clientRow.headerRow || findExerciseHeader(ws, clientRow.row + 1, nextClient);
         if(!headerRow) return;
         const headers = tableHeaderMap(ws, headerRow);
         const exerciseCol = headerCol(headers, 'Exercise', 'Movement') || 1;
@@ -4528,13 +4750,14 @@ function parsePlanWorkbook(wb, profileId, sourceName){
         }
 
         const sess = ensureImportedSession(logs, iso, client);
-        const status = valueAfterLabel(ws, clientRow.row, 'Status') || cellVal(ws, clientRow.row, 8);
+        const useLegacyFallbacks = clientRow.layout !== 'single';
+        const status = valueAfterLabel(ws, clientRow.row, 'Status') || (useLegacyFallbacks ? cellVal(ws, clientRow.row, 8) : undefined);
         if(['Scheduled','Complete','Modified','Missed'].includes(status)) sess.status = status;
-        assignIfPresent(sess, 'bodyWeight', valueAfterLabel(ws, clientRow.row, 'Body Weight', 'Bodyweight') || cellVal(ws, clientRow.row, 6));
-        assignIfPresent(sess, 'sleep', valueAfterLabel(ws, clientRow.row + 1, 'Sleep', 'Sleep Hours') || cellVal(ws, clientRow.row + 1, 3));
-        assignIfPresent(sess, 'warmup', valueAfterLabel(ws, clientRow.row + 1, 'Warm-Up Done', 'Warmup Done', 'Warm Up Done') || cellVal(ws, clientRow.row + 1, 5));
-        assignIfPresent(sess, 'cooldown', valueAfterLabel(ws, clientRow.row + 1, 'Cool-Down Done', 'Cooldown Done', 'Cool Down Done') || cellVal(ws, clientRow.row + 1, 7));
-        assignIfPresent(sess, 'notes', valueAfterLabel(ws, clientRow.row, 'Workout Notes', 'Notes') || cellVal(ws, clientRow.row, 14));
+        assignIfPresent(sess, 'bodyWeight', valueAfterLabel(ws, clientRow.row, 'Body Weight', 'Bodyweight') || (useLegacyFallbacks ? cellVal(ws, clientRow.row, 6) : undefined));
+        assignIfPresent(sess, 'sleep', valueAfterLabel(ws, clientRow.row + 1, 'Sleep', 'Sleep Hours') || (useLegacyFallbacks ? cellVal(ws, clientRow.row + 1, 3) : undefined));
+        assignIfPresent(sess, 'warmup', valueAfterLabel(ws, clientRow.row + 1, 'Warm-Up Done', 'Warmup Done', 'Warm Up Done') || (useLegacyFallbacks ? cellVal(ws, clientRow.row + 1, 5) : undefined));
+        assignIfPresent(sess, 'cooldown', valueAfterLabel(ws, clientRow.row + 1, 'Cool-Down Done', 'Cooldown Done', 'Cool Down Done') || (useLegacyFallbacks ? cellVal(ws, clientRow.row + 1, 7) : undefined));
+        assignIfPresent(sess, 'notes', valueAfterLabel(ws, clientRow.row, 'Workout Notes', 'Notes') || (useLegacyFallbacks ? cellVal(ws, clientRow.row, 14) : undefined));
 
         for(let r = headerRow + 1; r <= exerciseEnd; r++){
           const name = cellVal(ws, r, exerciseCol);

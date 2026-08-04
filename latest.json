@@ -1,9 +1,9 @@
 {
-  "versionCode": 4,
-  "versionName": "1.3",
+  "versionCode": 5,
+  "versionName": "1.4",
   "channel": "debug-template",
-  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.3/gym_tracker_v1_3_log_repair_debug.apk",
-  "sha256": "DCDC4FC6811D808DB693BD592D4C06821E793B40A6DA348C1B9C1E8699F9F8EE",
-  "size": 4319244,
-  "releaseNotes": "Repairs older-revision migrations where completed beginning-of-week workouts existed in the log but v1.2 kept generic legacy plan templates. Logged exercises now replace generic legacy or rest-day templates on affected dates."
+  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.4/gym_tracker_v1_4_backlog_update_debug.apk",
+  "sha256": "4D6D8213AD0FB7EA9344B78C43ED8DD1184593F24830A7C5BB447290EB3700E0",
+  "size": 4324351,
+  "releaseNotes": "Adds in-app rest timers, timed exercise timers with recording for movements such as planks, time-style inputs for timed sets, rest-day body weight and sleep tracking, prior set values during group workouts, and support for single-person workout plan workbook imports."
 }

@@ -11,7 +11,25 @@ Use this file to collect feature ideas between releases. Add ideas here as they 
 
 ## Planned For Next Update
 
-No items selected yet.
+- [ ] Rest timer between sets
+  - Source: user suggestion
+  - Notes: Add a timer button on each workout screen with configurable rest duration. Include a timer mode for time-based exercises, such as planks, so users can time the exercise inside the app instead of leaving to use another timer.
+  - Priority: medium
+
+- [ ] Rest-day body weight and sleep tracking
+  - Source: user suggestion
+  - Notes: Allow users to enter body weight and sleep data on rest days so recovery metrics can be captured even when no workout is scheduled.
+  - Priority: medium
+
+- [ ] Show previous set values during group workouts
+  - Source: user suggestion
+  - Notes: When logging a group workout, show the user's previous weight and reps for that exercise just like the normal workout flow does.
+  - Priority: medium
+
+- [ ] Time-based rep input for timed exercises
+  - Source: user suggestion
+  - Notes: When an exercise target uses time instead of reps, such as planks with 3 sets of 30-45 sec, show the reps field as a time input. For bodyweight timed exercises, users can enter 0 for weight and enter the held time in the time/reps field. Pair this with the in-app timer so the completed time can be recorded without switching apps.
+  - Priority: medium
 
 ## Candidate Features
 
@@ -24,9 +42,14 @@ Add new ideas below using this format:
   - Priority: low / medium / high
 ```
 
-- [ ] Rest timer between sets
+- [ ] Google Drive and Google Sheets export/import
   - Source: user suggestion
-  - Notes: Add a timer button on each workout screen with configurable duration.
+  - Notes: Allow users to export plans, workout logs, group member data, and recovery data to Google Drive in a Google Sheets-accessible format without leaving the app. Also evaluate importing plans or data directly from Google Sheets inside the app with validation, preview, duplicate detection, and conflict handling.
+  - Priority: medium
+
+- [ ] In-app feedback and feature request link
+  - Source: user suggestion
+  - Notes: Add Feedback and Request Feature forms that are completed inside the app rather than sending users to a browser. Route submissions to GitHub Issues or another reviewable backend queue without embedding GitHub credentials in the APK. Use structured fields for bug reports, feature requests, data recovery issues, and general feedback. Include non-sensitive app context such as app version and device details where practical.
   - Priority: medium
 
 ## Later Ideas

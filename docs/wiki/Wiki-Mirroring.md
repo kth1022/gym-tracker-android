@@ -27,7 +27,16 @@ Mirror `docs/wiki/` to the GitHub Wiki when:
 4. Commit the copied files.
 5. Push to the wiki repository.
 
+## Helper Script
+
+After the wiki repository exists, run this from the main repo:
+
+```powershell
+.\scripts\mirror-wiki.ps1
+```
+
+The script clones the wiki repository into a temporary folder, replaces the root Markdown files with the contents of `docs/wiki/`, commits the changes if needed, and pushes them to the wiki.
+
 ## Notes
 
 GitHub Wiki pages use file names as page slugs. Keep names stable so links do not break.
-

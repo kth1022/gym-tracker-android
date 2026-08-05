@@ -10,6 +10,8 @@ $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $sourcePath = Resolve-Path (Join-Path $repoRoot $SourceDir)
 $workRoot = Join-Path ([System.IO.Path]::GetTempPath()) "gym-tracker-wiki-mirror"
 $wikiPath = Join-Path $workRoot "wiki"
+$repoUserName = git -C $repoRoot config user.name
+$repoUserEmail = git -C $repoRoot config user.email
 
 if (Test-Path $workRoot) {
   Remove-Item -LiteralPath $workRoot -Recurse -Force
@@ -24,6 +26,13 @@ Copy-Item -Path (Join-Path $sourcePath "*.md") -Destination $wikiPath
 
 Push-Location $wikiPath
 try {
+  if ($repoUserName) {
+    git config user.name $repoUserName
+  }
+  if ($repoUserEmail) {
+    git config user.email $repoUserEmail
+  }
+
   git add -- "*.md"
 
   $changes = git status --porcelain
@@ -38,4 +47,3 @@ try {
 finally {
   Pop-Location
 }
-

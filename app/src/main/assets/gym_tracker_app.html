@@ -190,9 +190,10 @@ textarea:focus{ outline:none; border-color:var(--amber); }
   width:32px; height:38px; flex:none; background:transparent; border:none; color:var(--text);
   font-size:18px; cursor:pointer;
 }
-.stepper .timerstart{ width:52px; color:var(--teal); font-size:13px; font-weight:900; }
+.stepper .timerstart{ width:46px; color:var(--teal); font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:0; }
 .stepper button:active{ background:rgba(255,255,255,0.06); }
 .stepper .numin{ border:none; background:transparent; padding:8px 2px; width:100%; -moz-appearance:textfield; }
+.stepper.timeinput .numin{ text-align:left; padding-left:8px; min-width:52px; }
 .stepper .numin::-webkit-outer-spin-button,.stepper .numin::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
 .clearset{
   flex:none; width:30px; height:30px; border-radius:50%; border:1px solid var(--border);
@@ -284,7 +285,7 @@ textarea:focus{ outline:none; border-color:var(--amber); }
   .tinyactions{ grid-template-columns:repeat(auto-fit,minmax(92px,1fr)); }
   .exhead{ flex-direction:column; align-items:stretch; }
   .exactions{ max-width:100%; justify-content:flex-start; }
-  .setrow{ display:grid; grid-template-columns:36px minmax(0,1fr) minmax(0,.9fr) 30px 30px; gap:6px; }
+  .setrow{ display:grid; grid-template-columns:36px minmax(0,1fr) minmax(0,1.05fr) 30px; gap:6px; }
   .timerbar{ top:calc(84px + env(safe-area-inset-top)); align-items:flex-start; }
   .timerclock{ font-size:22px; }
   .setnum{ width:auto; }
@@ -342,7 +343,8 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 .modaltext{ color:var(--text-dim); font-size:13px; line-height:1.45; margin-bottom:14px; }
 .modalfields{ display:grid; gap:12px; }
 .modalfields label{ display:grid; gap:6px; color:var(--text-dim); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
-.modalfields input,.modalfields select{ width:100%; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface2); color:var(--text); padding:11px 12px; font-size:15px; }
+.modalfields input,.modalfields select,.modalfields textarea{ width:100%; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface2); color:var(--text); padding:11px 12px; font-size:15px; }
+.modalfields textarea{ min-height:120px; text-transform:none; letter-spacing:0; font-weight:500; }
 .modalactions{ display:flex; justify-content:flex-end; gap:10px; margin-top:16px; }
 .modalactions button{ border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface2); color:var(--text); padding:10px 13px; font-weight:800; }
 .modalactions button.primary{ background:var(--teal); border-color:var(--teal); color:#071110; }
@@ -456,6 +458,9 @@ const LEGACY_V24_KB_DAYS = {
   ]}
 };
 const DEFAULT_PROFILE_ID = 'main';
+const GOOGLE_CLOUD_READY = false;
+const GITHUB_FEEDBACK_REPO = 'kth1022/gym-tracker-android';
+const FEEDBACK_ENDPOINT = 'https://kevin-pc.taile05f72.ts.net/api/gym-tracker/feedback';
 const PROFILES = {
   main: {
     id:'main', name:'Main Plan', clients:[],
@@ -468,7 +473,7 @@ const PROFILES = {
 let DB = { main: {} };
 let STRETCH_DB = {};
 let CUSTOM_PLAN = { main: null };
-let APP_PREFS = { onboarded:false, theme:'strength', primaryUser:'', profiles:{}, friends:{}, tempGroupMembers:[] };
+let APP_PREFS = { onboarded:false, theme:'strength', primaryUser:'', profiles:{}, friends:{}, tempGroupMembers:[], feedbackQueue:[] };
 let saveTimer = null;
 let toastTimer = null;
 let workoutTimerTick = null;
@@ -776,6 +781,7 @@ function ensurePrefsShape(){
   APP_PREFS.friends = APP_PREFS.friends || {};
   APP_PREFS.tempGroupMembers = APP_PREFS.tempGroupMembers || [];
   APP_PREFS.profileDefs = APP_PREFS.profileDefs || {};
+  APP_PREFS.feedbackQueue = APP_PREFS.feedbackQueue || [];
 }
 
 function savePrefs(){
@@ -1752,6 +1758,9 @@ function showFormDialog({title, message='', fields=[], submitText='Continue', ca
         }).join('');
         return `<label>${escapeHtml(field.label)}<select name="${escapeHtml(field.name)}" ${required}>${options}</select></label>`;
       }
+      if(field.type === 'textarea'){
+        return `<label>${escapeHtml(field.label)}<textarea name="${escapeHtml(field.name)}" ${required}>${escapeHtml(value)}</textarea></label>`;
+      }
       return `<label>${escapeHtml(field.label)}<input name="${escapeHtml(field.name)}" type="${escapeHtml(field.type || 'text')}" value="${escapeHtml(value)}" ${required}></label>`;
     }).join('');
     backdrop.innerHTML = `
@@ -1780,7 +1789,7 @@ function showFormDialog({title, message='', fields=[], submitText='Continue', ca
     const cancel = backdrop.querySelector('[data-modal-cancel]');
     if(cancel) cancel.addEventListener('click', () => close(null));
     document.body.appendChild(backdrop);
-    const first = backdrop.querySelector('input,select');
+    const first = backdrop.querySelector('input,select,textarea');
     if(first) first.focus();
   });
 }
@@ -2099,7 +2108,11 @@ function getSessionTemplate(profileId, iso){
       cooldown: tpl.cooldown || null,
       kind: tpl.kind || 'imported',
       sourceTitle: tpl.sourceTitle || '',
-      rest: !!tpl.rest
+      rest: !!tpl.rest,
+      stretchOnly: !!tpl.stretchOnly,
+      stretchRemoved: !!tpl.stretchRemoved,
+      stretches: Array.isArray(tpl.stretches) ? cloneStretchRoutine(tpl.stretches) : undefined,
+      replacedTemplate: tpl.replacedTemplate ? JSON.parse(JSON.stringify(tpl.replacedTemplate)) : undefined
     };
   }
   return null;
@@ -2216,6 +2229,61 @@ function markRestDayCurrent(checked){
   applyCustomPlan(state.profile, plan);
   scheduleSave();
   render();
+}
+
+function clearStrengthDataForDate(profileId, iso){
+  const day = DB[profileId] && DB[profileId][iso];
+  if(!day) return;
+  Object.values(day).forEach(sess => {
+    if(!sess) return;
+    sess.sets = {};
+    sess.warmup = '';
+    sess.cooldown = '';
+    sess.status = 'Scheduled';
+  });
+}
+
+async function clearCurrentDayToRest(){
+  const existing = getSessionTemplate(state.profile, state.date);
+  const result = await showFormDialog({
+    title: 'Set Rest Day',
+    message: 'Replace the planned workout on this date with a rest day. The original workout is saved so it can be loaded onto another day.',
+    fields: [
+      {name:'clearLog', label:'Logged workout data', type:'select', value:'keep', options:[
+        {value:'keep', label:'Keep existing log data'},
+        {value:'clear', label:'Clear set data for this date'}
+      ]}
+    ],
+    submitText:'Set Rest Day',
+    cancelText:'Cancel'
+  });
+  if(!result) return;
+  const plan = ensureEditablePlan(state.profile);
+  const existingStretches = existing && Array.isArray(existing.stretches) ? cloneStretchRoutine(existing.stretches) : null;
+  const existingStretchRemoved = existing && existing.stretchRemoved;
+  const replacedTemplate = existing && !existing.rest && !existing.stretchOnly
+    ? JSON.parse(JSON.stringify(existing))
+    : existing && existing.replacedTemplate
+      ? JSON.parse(JSON.stringify(existing.replacedTemplate))
+      : null;
+  plan.sessions[state.date] = {
+    day: weekdayName(state.date),
+    label: 'Rest Day',
+    kind: 'rest',
+    rest: true,
+    warmup: '',
+    cooldown: '',
+    sourceTitle: 'Marked rest day in app',
+    exercises: [],
+    ...(replacedTemplate ? {replacedTemplate} : {}),
+    ...(existingStretches ? {stretches: existingStretches} : {}),
+    ...(existingStretchRemoved ? {stretchRemoved: true} : {})
+  };
+  if(result.clearLog === 'clear') clearStrengthDataForDate(state.profile, state.date);
+  applyCustomPlan(state.profile, plan);
+  scheduleSave();
+  render();
+  showToast('Rest day set.');
 }
 
 function cloneStretchRoutine(routine){
@@ -2459,6 +2527,104 @@ async function addCurrentDayToPlan(){
   scheduleSave();
   render();
   showToast(`Updated ${count} workout days.`);
+}
+
+const WEEKDAY_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+function weekdayOrderIndex(day){
+  const idx = WEEKDAY_ORDER.indexOf(day);
+  return idx < 0 ? 99 : idx;
+}
+function sourceWorkoutFromPlanSession(tpl){
+  const source = tpl && tpl.rest && tpl.replacedTemplate ? tpl.replacedTemplate : tpl;
+  if(!source || source.rest || source.stretchOnly || !(source.exercises || []).length) return null;
+  return source;
+}
+function plannedWorkoutWeekdayOptions(){
+  const days = new Set();
+  const plan = ensureEditablePlan(state.profile);
+  Object.keys(plan.sessions || {}).sort().forEach(iso => {
+    if(sourceWorkoutFromPlanSession(plan.sessions[iso])) days.add(weekdayName(iso));
+  });
+  return [...days]
+    .sort((a,b) => weekdayOrderIndex(a) - weekdayOrderIndex(b))
+    .map(day => ({value:day, label:day}));
+}
+function isoForWeekdayNearDate(targetIso, dayName){
+  const targetDow = dateFromIso(targetIso).getDay();
+  const wantedDow = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].indexOf(dayName);
+  if(wantedDow < 0) return targetIso;
+  return addDays(targetIso, wantedDow - targetDow);
+}
+function findPlanWorkoutForWeekday(dayName, targetIso){
+  const plan = ensureEditablePlan(state.profile);
+  const sameWeekIso = isoForWeekdayNearDate(targetIso, dayName);
+  const sameWeekTemplate = sourceWorkoutFromPlanSession(plan.sessions[sameWeekIso]);
+  if(sameWeekTemplate){
+    return {iso:sameWeekIso, template:sameWeekTemplate};
+  }
+  const targetTime = dateFromIso(targetIso).getTime();
+  const candidates = Object.keys(plan.sessions || {})
+    .filter(iso => weekdayName(iso) === dayName)
+    .map(iso => ({iso, template:sourceWorkoutFromPlanSession(plan.sessions[iso])}))
+    .filter(item => item.template)
+    .sort((a,b) => {
+      const distA = Math.abs(dateFromIso(a.iso).getTime() - targetTime);
+      const distB = Math.abs(dateFromIso(b.iso).getTime() - targetTime);
+      if(distA !== distB) return distA - distB;
+      return a.iso.localeCompare(b.iso);
+    });
+  return candidates[0] || null;
+}
+
+async function loadPlannedWorkoutOntoCurrentDay(){
+  const options = plannedWorkoutWeekdayOptions();
+  if(!options.length){
+    showToast('No planned workout weekdays are available to load.');
+    return;
+  }
+  const existing = getSessionTemplate(state.profile, state.date);
+  const result = await showFormDialog({
+    title: 'Load Plan Day',
+    message: 'Load a workout from one weekday in the current plan onto the selected date.',
+    fields: [
+      {name:'sourceDay', label:'Workout day', type:'select', value:options[0].value, options},
+      {name:'clearLog', label:'Current day log data', type:'select', value:'keep', options:[
+        {value:'keep', label:'Keep existing log data'},
+        {value:'clear', label:'Clear set data for this date'}
+      ]}
+    ],
+    submitText:'Load Workout',
+    cancelText:'Cancel'
+  });
+  if(!result || !result.sourceDay) return;
+  const selected = findPlanWorkoutForWeekday(result.sourceDay, state.date);
+  if(!selected) return;
+  if(existing && !existing.rest && !existing.stretchOnly){
+    const ok = await showConfirmDialog({
+      title: 'Replace Workout',
+      message: 'This date already has a planned workout. Replace it with the selected workout?',
+      confirmText: 'Replace'
+    });
+    if(!ok) return;
+  }
+  const plan = ensureEditablePlan(state.profile);
+  const existingStretches = existing && Array.isArray(existing.stretches) ? cloneStretchRoutine(existing.stretches) : null;
+  const existingStretchRemoved = existing && existing.stretchRemoved;
+  const copy = JSON.parse(JSON.stringify(selected.template));
+  copy.day = weekdayName(state.date);
+  copy.kind = 'rescheduled';
+  copy.rest = false;
+  copy.stretchOnly = false;
+  copy.sourceTitle = `Loaded from ${result.sourceDay} plan (${selected.iso})`;
+  if(existingStretches && !Array.isArray(copy.stretches)) copy.stretches = existingStretches;
+  if(existingStretchRemoved) copy.stretchRemoved = true;
+  plan.sessions[state.date] = copy;
+  if(!plan.days.includes(weekdayName(state.date))) plan.days.push(weekdayName(state.date));
+  if(result.clearLog === 'clear') clearStrengthDataForDate(state.profile, state.date);
+  applyCustomPlan(state.profile, plan);
+  scheduleSave();
+  render();
+  showToast('Workout loaded onto selected date.');
 }
 
 async function addPerson(){
@@ -2897,7 +3063,9 @@ function renderSetRow(ex, idx, s, options = {}){
   const timed = typeof ex === 'object' && isTimedExercise(ex);
   const duration = timed ? targetSeconds(ex) : 0;
   const personAttr = options.person ? ` data-person="${escapeHtml(options.person)}"` : '';
-  const timerButton = timed ? `<button class="timerstart" data-action="startsettimer" data-targetseconds="${duration}" title="Start timer">Timer</button>` : `<button data-action="nudge" data-field="r" data-delta="-1">\u2013</button>`;
+  const repsControl = timed
+    ? `<input type="text" inputmode="decimal" class="numin" data-field="r" value="${s.r ?? ''}" placeholder="sec"><button class="timerstart" data-action="startsettimer" data-targetseconds="${duration}" title="Start timer">Start</button>`
+    : `<button data-action="nudge" data-field="r" data-delta="-1">\u2013</button><input type="number" inputmode="numeric" class="numin" data-field="r" value="${s.r ?? ''}" placeholder="reps"><button data-action="nudge" data-field="r" data-delta="1">+</button>`;
   return `
   <div class="setrow" data-exercise="${escapeHtml(exName)}" data-idx="${idx}"${personAttr}>
     <span class="setnum">Set ${idx+1}</span>
@@ -2907,12 +3075,9 @@ function renderSetRow(ex, idx, s, options = {}){
       <button data-action="nudge" data-field="w" data-delta="5">+</button>
     </div>
     <div class="stepper small ${timed ? 'timeinput' : ''}">
-      ${timerButton}
-      <input type="${timed ? 'text' : 'number'}" inputmode="${timed ? 'decimal' : 'numeric'}" class="numin" data-field="r" value="${s.r ?? ''}" placeholder="${timed ? 'sec' : 'reps'}">
-      <button data-action="nudge" data-field="r" data-delta="${timed ? '5' : '1'}">+</button>
+      ${repsControl}
     </div>
-    <button class="clearset" data-action="clearset" title="Clear set">&times;</button>
-    <button class="clearset" data-action="deleteset" title="Delete set">Del</button>
+    <button class="clearset" data-action="setmenu" title="Set actions">...</button>
   </div>`;
 }
 
@@ -3047,6 +3212,20 @@ function renderStretchCard(iso, client, routine = getStretchRoutineForDay(state.
     </div>
   </div>`;
 }
+
+function renderPlanDayTools(tpl){
+  const isRest = !!(tpl && tpl.rest);
+  const isWorkout = !!(tpl && !tpl.rest && !tpl.stretchOnly && (tpl.exercises || []).length);
+  return `
+  <div class="panel">
+    <div class="paneltitle">Plan day</div>
+    <div class="tinyactions">
+      <button data-action="clearrestday">${isWorkout ? 'Clear to Rest Day' : 'Set Rest Day'}</button>
+      <button data-action="loadplanday">Load Plan Day</button>
+    </div>
+    <div class="muted">${isRest && tpl.replacedTemplate ? 'The replaced workout is saved and can be loaded onto another day.' : 'Move planned workouts without losing the original plan day.'}</div>
+  </div>`;
+}
 function renderLogView(){
   const iso = state.date;
   const client = state.client;
@@ -3085,6 +3264,7 @@ function renderLogView(){
       <div class="weekcue">Marked as a planned rest day.</div>
     </div>
     <label class="checkpill restcheck"><input type="checkbox" data-action="restday" checked> Rest day</label>
+    ${renderPlanDayTools(tpl)}
     ${renderRestDayMetrics(iso, client)}
     <button class="addexercise" data-action="createworkout">+ Create workout</button>
     <button class="addexercise" data-action="loadpreloadedday">Load premade workout day</button>`;
@@ -3101,6 +3281,7 @@ function renderLogView(){
     <button class="addexercise" data-action="createworkout">+ Create workout</button>
     <button class="addexercise" data-action="loadpreloadedday">Load premade workout day</button>
     <button class="addexercise" data-action="addtoplan">Add to plan</button>`;
+    html += renderPlanDayTools(tpl);
     html += renderRestDayMetrics(iso, client);
   }
   else if(tpl){
@@ -3117,6 +3298,7 @@ function renderLogView(){
       html += `<div class="wublock">Warm-up (5 min): ${escapeHtml(tpl.warmup)}</div>`;
     }
     html += renderSessionHeader(iso, client, showCooldown);
+    html += renderPlanDayTools(tpl);
     html += `<button class="addexercise" data-action="clearworkout">Delete prefilled workout</button>`;
     html += `<div class="exlist">` + (tpl.exercises || []).map(ex => renderExerciseCard(ex, iso, client)).join('') + `</div>`;
     if(!(tpl.exercises || []).length) html += `<button class="addexercise" data-action="loadpreloadedday">Load premade workout day</button>`;
@@ -3133,6 +3315,7 @@ function renderLogView(){
     </div>`;
     html += `<button class="addexercise" data-action="createworkout">+ Create workout</button>`;
     html += `<button class="addexercise" data-action="loadpreloadedday">Load premade workout day</button>`;
+    html += renderPlanDayTools(tpl);
     html += `<label class="checkpill restcheck"><input type="checkbox" data-action="restday"> Rest day</label>`;
     html += renderRestDayMetrics(iso, client);
   }
@@ -3358,6 +3541,7 @@ function renderPlanView(){
         <button data-action="export">Export Workout Data</button>
         <button data-action="exportall">Export All Data</button>
         <button data-action="exportplan">Export Plan</button>
+        <button data-action="exportblankplan">Export Blank Plan Template</button>
         <button data-action="saverecovery">Save Recovery Snapshot</button>
         <button data-action="shareplan">Share Plan</button>
         <button data-action="nearbydata">Nearby Send Data</button>
@@ -3365,6 +3549,7 @@ function renderPlanView(){
       </div>
       <div class="muted">Export plans or workout results for the selected date range, including all data when group-member history needs review.</div>
     </div>
+    ${renderGoogleDrivePanel()}
     <div class="panel"><div class="paneltitle">Plan tools</div>
       <div class="tinyactions"><button data-action="preloadedplan">Use Preloaded Plan</button><button data-action="repeatmonth">Repeat Next Month</button></div>
       <div class="muted">Apply a built-in one-month plan to the current month, or repeat the current routine into the following month.</div>
@@ -3435,11 +3620,14 @@ function currentAppVersion(){
       const parsed = JSON.parse(raw || '{}');
       return {
         versionCode: Number(parsed.versionCode || 1),
-        versionName: parsed.versionName || '1.0'
+        versionName: parsed.versionName || '1.0',
+        androidSdk: parsed.androidSdk || '',
+        manufacturer: parsed.manufacturer || '',
+        model: parsed.model || ''
       };
     } catch(e){}
   }
-  return { versionCode: 1, versionName: '1.0' };
+  return { versionCode: 1, versionName: '1.0', androidSdk:'', manufacturer:'', model:'' };
 }
 
 function renderUpdatePanel(){
@@ -3462,6 +3650,46 @@ function renderUpdatePanel(){
       <div class="tinyactions"><button data-action="${buttonAction}" ${busy ? 'disabled' : ''}>${buttonText}</button></div>
       <div class="muted">${escapeHtml(message)}</div>
       ${notes}
+    </div>`;
+}
+
+function renderGoogleDrivePanel(){
+  const status = GOOGLE_CLOUD_READY ? 'Configured' : 'Needs Google Cloud OAuth setup';
+  return `
+    <div class="panel"><div class="paneltitle">Google Drive / Sheets</div>
+      <div class="kvgrid">
+        <div class="kv"><span>Status</span><b>${escapeHtml(status)}</b></div>
+        <div class="kv"><span>Mode</span><b>${GOOGLE_CLOUD_READY ? 'In-app cloud sync' : 'Local test workflow'}</b></div>
+      </div>
+      <div class="tinyactions">
+        <button data-action="driveexportdata">Export Data to Sheets</button>
+        <button data-action="driveexportall">Export All to Sheets</button>
+        <button data-action="driveexportplan">Export Plan to Sheets</button>
+        <button data-action="driveimport">Import from Sheets</button>
+      </div>
+      <div class="muted">${GOOGLE_CLOUD_READY ? 'Exports and imports run inside the app using the signed-in Google account.' : 'The in-app screens are ready for testing, but direct Google Drive/Sheets upload and import require Google Cloud OAuth configuration for this Android app. Until configured, these buttons prepare or import the same Sheets-compatible workbook files locally.'}</div>
+    </div>`;
+}
+
+function renderFeedbackPanel(){
+  ensurePrefsShape();
+  const queued = APP_PREFS.feedbackQueue.length;
+  const pending = APP_PREFS.feedbackQueue.filter(item => item.status !== 'sent').length;
+  return `
+    <div class="panel"><div class="paneltitle">Feedback</div>
+      <div class="kvgrid">
+        <div class="kv"><span>Queue</span><b>${queued} saved</b></div>
+        <div class="kv"><span>GitHub</span><b>${FEEDBACK_ENDPOINT ? 'Issue relay configured' : 'Issue relay needed'}</b></div>
+      </div>
+      <div class="tinyactions">
+        <button data-action="feedbackfeature">Request Feature</button>
+        <button data-action="feedbackbug">Report Bug</button>
+        <button data-action="feedbackrecovery">Data Recovery</button>
+        <button data-action="feedbackgeneral">General Feedback</button>
+        <button data-action="submitfeedbackqueue">Submit Saved (${pending})</button>
+        <button data-action="exportfeedbackqueue">Export Queue</button>
+      </div>
+      <div class="muted">${FEEDBACK_ENDPOINT ? `Feedback is completed in the app and submitted to GitHub Issues in ${GITHUB_FEEDBACK_REPO}.` : `Feedback is completed in the app and saved locally as GitHub Issue payloads for ${GITHUB_FEEDBACK_REPO}. Automatic submission needs a secure GitHub issue relay or user GitHub OAuth; the APK must not contain a GitHub token.`}</div>
     </div>`;
 }
 
@@ -3491,8 +3719,318 @@ function renderUsersView(){
     <div class="panel"><div class="paneltitle">Theme</div>
       <div class="themegrid">${Object.entries(THEMES).map(([id, theme]) => `<button class="themebtn ${APP_PREFS.theme===id?'active':''}" data-action="settheme" data-theme="${id}">${escapeHtml(theme.label)}</button>`).join('')}</div>
     </div>
+    ${renderFeedbackPanel()}
     ${renderUpdatePanel()}`;
 }
+
+function feedbackKindConfig(kind){
+  const map = {
+    feature: {title:'Request Feature', label:'feature request', prefix:'Feature request'},
+    bug: {title:'Report Bug', label:'bug', prefix:'Bug report'},
+    recovery: {title:'Data Recovery Issue', label:'data recovery', prefix:'Data recovery'},
+    general: {title:'General Feedback', label:'feedback', prefix:'Feedback'}
+  };
+  return map[kind] || map.general;
+}
+
+function countSetsInSession(sess){
+  return Object.values((sess && sess.sets) || {}).reduce((sum, sets) => sum + (Array.isArray(sets) ? sets.length : 0), 0);
+}
+
+function summarizeProfileWorkoutData(profileId){
+  const profileDb = DB[profileId] || {};
+  const dates = Object.keys(profileDb).sort();
+  let sessionCount = 0;
+  let setCount = 0;
+  const people = new Set();
+  dates.forEach(iso => {
+    Object.entries(profileDb[iso] || {}).forEach(([person, sess]) => {
+      people.add(person);
+      sessionCount++;
+      setCount += countSetsInSession(sess);
+    });
+  });
+  return {
+    dateCount: dates.length,
+    firstDate: dates[0] || '',
+    lastDate: dates[dates.length - 1] || '',
+    recentDates: dates.slice(-14),
+    sessionCount,
+    setCount,
+    peopleCount: people.size
+  };
+}
+
+function summarizeProfilePlan(profileId){
+  const plan = CUSTOM_PLAN[profileId];
+  if(!plan) return {present:false};
+  const sessions = Object.entries(plan.sessions || {}).map(([date, tpl]) => ({date, ...(tpl || {})}));
+  const exerciseNames = new Set();
+  sessions.forEach(sess => {
+    (sess.exercises || []).forEach(ex => exerciseNames.add(typeof ex === 'string' ? ex : (ex.n || ex.name || '')));
+  });
+  return {
+    present: true,
+    name: plan.name || '',
+    startDate: plan.startDate || '',
+    weeks: plan.weeks || '',
+    clientCount: (plan.clients || []).length,
+    sessionCount: sessions.length,
+    exerciseCount: exerciseNames.size,
+    sessionDates: sessions.map(sess => sess.date).filter(Boolean).slice(0, 35)
+  };
+}
+
+function selectedWeekRecoveryMatrix(){
+  const start = addDays(state.date, -3);
+  const rows = [];
+  for(let i = 0; i < 7; i++){
+    const iso = addDays(start, i);
+    const template = getSessionTemplate(state.profile, iso);
+    const logged = DB[state.profile] && DB[state.profile][iso] && DB[state.profile][iso][state.client];
+    rows.push({
+      date: iso,
+      weekday: weekdayName(iso),
+      plannedTitle: template ? (template.title || template.kind || 'Workout') : 'Rest day',
+      plannedExerciseCount: template && Array.isArray(template.exercises) ? template.exercises.length : 0,
+      hasLoggedSession: !!logged,
+      loggedExerciseCount: logged && logged.sets ? Object.keys(logged.sets).length : 0,
+      loggedSetCount: countSetsInSession(logged)
+    });
+  }
+  return rows;
+}
+
+function storageInventoryForRecovery(){
+  const inventory = {localStorage: [], androidStorage: []};
+  try {
+    for(let i = 0; i < localStorage.length; i++){
+      const key = localStorage.key(i);
+      if(key) inventory.localStorage.push({key, length: String(localStorage.getItem(key) || '').length});
+    }
+  } catch(e){}
+  try {
+    if(window.AndroidStorage && typeof window.AndroidStorage.dumpAll === 'function'){
+      const native = JSON.parse(window.AndroidStorage.dumpAll() || '{}');
+      inventory.androidStorage = Object.keys(native || {}).sort().map(key => ({key, length: String(native[key] || '').length}));
+    }
+  } catch(e){}
+  return inventory;
+}
+
+function recoveryDiagnosticsSnapshot(){
+  ensurePrefsShape();
+  const profiles = Object.keys(PROFILES).sort().map(profileId => ({
+    id: profileId,
+    name: PROFILES[profileId].name || profileId,
+    dateMin: PROFILES[profileId].dateMin || '',
+    dateMax: PROFILES[profileId].dateMax || '',
+    workoutData: summarizeProfileWorkoutData(profileId),
+    plan: summarizeProfilePlan(profileId)
+  }));
+  return {
+    format: 'GymTrackerRecoveryDiagnosticsV1',
+    generatedAt: new Date().toISOString(),
+    appVersion: currentAppVersion(),
+    selected: {
+      profile: state.profile,
+      profileName: currentProfile().name || state.profile,
+      date: state.date,
+      weekday: weekdayName(state.date),
+      user: state.client,
+      groupActive: !!state.groupActive,
+      groupMemberCount: (state.groupMembers || []).length,
+      groupPlanMode: state.groupPlanMode || '',
+      groupPlanOwner: state.groupPlanOwner || ''
+    },
+    prefs: {
+      onboarded: !!APP_PREFS.onboarded,
+      theme: APP_PREFS.theme || '',
+      primaryUserSet: !!APP_PREFS.primaryUser,
+      profileContactCount: Object.keys(APP_PREFS.profiles || {}).length,
+      friendCount: Object.keys(APP_PREFS.friends || {}).length,
+      tempGroupMemberCount: (APP_PREFS.tempGroupMembers || []).length,
+      feedbackQueueCount: (APP_PREFS.feedbackQueue || []).length,
+      lastLegacyV24RecoveryAt: APP_PREFS.lastLegacyV24RecoveryAt || '',
+      lastPlanRecoveryAt: APP_PREFS.lastPlanRecoveryAt || ''
+    },
+    profiles,
+    selectedWeek: selectedWeekRecoveryMatrix()
+  };
+}
+
+function appendRecoveryDiagnosticsToBody(body, diagnostics, storageInventory){
+  return [
+    body,
+    '',
+    '## Diagnostic Attachments',
+    'GitHub API file uploads are not available from this in-app relay, so Gym Tracker embedded the useful diagnostic files below. Full workout history is not uploaded automatically.',
+    '',
+    '<details><summary>recovery-diagnostics.json</summary>',
+    '',
+    '```json',
+    JSON.stringify(diagnostics, null, 2),
+    '```',
+    '',
+    '</details>',
+    '',
+    '<details><summary>storage-inventory.json</summary>',
+    '',
+    '```json',
+    JSON.stringify(storageInventory, null, 2),
+    '```',
+    '',
+    '</details>',
+    '',
+    'If full data is needed, ask the user to use Plan > Save Recovery Snapshot and share that JSON privately.'
+  ].join('\n');
+}
+
+function githubIssueBodyFromFeedback(item){
+  const app = item.app || {};
+  const contact = item.contact || {};
+  return [
+    '## Summary',
+    item.summary || '',
+    '',
+    '## Details',
+    item.details || '',
+    '',
+    '## Context',
+    `- App version: ${app.versionName || ''} (${app.versionCode || ''})`,
+    `- Device: ${app.manufacturer || ''} ${app.model || ''}`,
+    `- Android SDK: ${app.androidSdk || ''}`,
+    `- Date in app: ${item.appDate || ''}`,
+    `- User: ${item.user || ''}`,
+    '',
+    '## Contact',
+    `- Email: ${contact.email || ''}`
+  ].join('\n');
+}
+
+function queueFeedbackItem(item){
+  ensurePrefsShape();
+  APP_PREFS.feedbackQueue.unshift(item);
+  savePrefs();
+  render();
+}
+
+async function createFeedback(kind){
+  const cfg = feedbackKindConfig(kind);
+  const info = currentUserInfo();
+  const fields = [
+    {name:'summary', label:'Short summary', type:'text', required:true},
+    {name:'details', label:'Details', type:'textarea', required:true},
+    {name:'email', label:'Email for follow-up', type:'email', value:info.email || ''}
+  ];
+  if(kind === 'recovery'){
+    fields.push({
+      name:'includeDiagnostics',
+      label:'Include diagnostic files',
+      type:'select',
+      value:'yes',
+      options:[
+        {value:'yes', label:'Yes, include diagnostics'},
+        {value:'no', label:'No, issue text only'}
+      ]
+    });
+  }
+  const result = await showFormDialog({
+    title: cfg.title,
+    message: kind === 'recovery'
+      ? `This will stay inside Gym Tracker and be saved as a GitHub Issue payload for ${GITHUB_FEEDBACK_REPO}. Diagnostics include metadata only, not full workout history.`
+      : `This will stay inside Gym Tracker and be saved as a GitHub Issue payload for ${GITHUB_FEEDBACK_REPO}.`,
+    fields,
+    submitText:'Save Feedback',
+    cancelText:'Cancel'
+  });
+  if(!result || !result.summary || !result.details) return;
+  const app = currentAppVersion();
+  const item = {
+    type: 'GymTrackerGitHubIssueV1',
+    id: `fb-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+    repo: GITHUB_FEEDBACK_REPO,
+    kind,
+    title: `${cfg.prefix}: ${result.summary}`,
+    summary: result.summary,
+    details: result.details,
+    labels: ['user feedback', cfg.label],
+    state: 'queued',
+    status: 'queued',
+    createdAt: new Date().toISOString(),
+    appDate: state.date,
+    user: state.client,
+    app,
+    contact: {email: result.email || ''}
+  };
+  item.body = githubIssueBodyFromFeedback(item);
+  if(kind === 'recovery' && result.includeDiagnostics !== 'no'){
+    item.diagnostics = recoveryDiagnosticsSnapshot();
+    item.storageInventory = storageInventoryForRecovery();
+    item.body = appendRecoveryDiagnosticsToBody(item.body, item.diagnostics, item.storageInventory);
+  }
+  queueFeedbackItem(item);
+  showToast(FEEDBACK_ENDPOINT ? 'Feedback saved. Use Submit Saved to send to GitHub.' : 'Feedback saved locally. GitHub issue relay is not configured yet.');
+}
+
+function submitFeedbackQueue(){
+  ensurePrefsShape();
+  const pending = APP_PREFS.feedbackQueue.filter(item => item.status !== 'sent');
+  if(!pending.length){
+    showToast('No saved feedback to submit.');
+    return;
+  }
+  if(!FEEDBACK_ENDPOINT){
+    showToast('GitHub issue relay endpoint is not configured yet.');
+    return;
+  }
+  if(!window.AndroidBridge || typeof window.AndroidBridge.postJson !== 'function'){
+    showToast('Feedback submission is only available in the Android app.');
+    return;
+  }
+  pending.forEach(item => {
+    item.status = 'sending';
+    item.submittedAt = new Date().toISOString();
+    const payload = {
+      type: 'GymTrackerGitHubIssueSubmitV1',
+      repo: item.repo,
+      title: item.title,
+      body: item.body,
+      labels: item.labels,
+      source: item
+    };
+    window.AndroidBridge.postJson(item.id, FEEDBACK_ENDPOINT, JSON.stringify(payload));
+  });
+  savePrefs();
+  render();
+  showToast(`Submitting ${pending.length} GitHub issue payload${pending.length === 1 ? '' : 's'}...`);
+}
+
+function exportFeedbackQueue(){
+  ensurePrefsShape();
+  const payload = {
+    type: 'GymTrackerFeedbackQueueV1',
+    repo: GITHUB_FEEDBACK_REPO,
+    exportedAt: new Date().toISOString(),
+    items: APP_PREFS.feedbackQueue
+  };
+  saveTextDownload(`Gym_Tracker_GitHub_Feedback_${todayIso()}.json`, JSON.stringify(payload, null, 2));
+}
+
+window.onBridgePostResult = function(result){
+  ensurePrefsShape();
+  const id = result && result.requestId;
+  const item = APP_PREFS.feedbackQueue.find(entry => entry.id === id);
+  if(!item) return;
+  item.status = result.ok ? 'sent' : 'failed';
+  item.responseStatus = result.statusCode || 0;
+  item.responseBody = result.body || '';
+  item.error = result.error || '';
+  item.finishedAt = new Date().toISOString();
+  savePrefs();
+  render();
+  showToast(result.ok ? 'Feedback submitted to GitHub.' : `Feedback submit failed: ${item.error || item.responseStatus || 'unknown error'}`);
+};
 
 function renderFriendCodePreview(){
   const code = encodeFriendPayload(friendPayloadForCurrentUser());
@@ -3717,7 +4255,7 @@ function handleInputChange(e){
   }
 }
 
-function handleClick(e){
+async function handleClick(e){
   const btn = e.target.closest('[data-action]');
   if(!btn) return;
   const action = btn.dataset.action;
@@ -3758,6 +4296,38 @@ function handleClick(e){
   }
   else if(action === 'exportall'){
     exportAllWorkoutData();
+  }
+  else if(action === 'driveexportdata'){
+    if(!GOOGLE_CLOUD_READY) showToast('Google OAuth is not configured yet. Saving a Sheets-compatible workbook locally for testing.');
+    exportWorkbook();
+  }
+  else if(action === 'driveexportall'){
+    if(!GOOGLE_CLOUD_READY) showToast('Google OAuth is not configured yet. Saving a Sheets-compatible all-data workbook locally for testing.');
+    exportAllWorkoutData();
+  }
+  else if(action === 'driveexportplan'){
+    if(!GOOGLE_CLOUD_READY) showToast('Google OAuth is not configured yet. Saving a Sheets-compatible plan workbook locally for testing.');
+    exportPlanWorkbook(false);
+  }
+  else if(action === 'driveimport'){
+    const choice = await showFormDialog({
+      title: 'Import from Google Sheets',
+      message: GOOGLE_CLOUD_READY ? 'Choose what type of Google Sheets workbook to import.' : 'Google OAuth is not configured yet. Use a downloaded Google Sheets .xlsx file to test the in-app import flow.',
+      fields: [
+        {name:'type', label:'Import type', type:'select', value:'plan', options:[
+          {value:'plan', label:'Workout plan'},
+          {value:'results', label:'Workout data'}
+        ]}
+      ],
+      submitText:'Choose File',
+      cancelText:'Cancel'
+    });
+    if(!choice) return;
+    state.importMode = choice.type === 'results' ? 'results' : 'plan';
+    state.importTargetProfile = '';
+    state.importTargetClient = '';
+    const input = document.getElementById(state.importMode === 'results' ? 'importDataFile' : 'importPlanFile');
+    if(input) input.click();
   }
   else if(action === 'nearbyreceive'){
     if(window.AndroidBridge && typeof window.AndroidBridge.nearbyReceive === 'function'){
@@ -3834,6 +4404,9 @@ function handleClick(e){
   else if(action === 'exportplan'){
     exportPlanWorkbook(false);
   }
+  else if(action === 'exportblankplan'){
+    exportBlankPlanTemplate();
+  }
   else if(action === 'saverecovery'){
     saveRecoverySnapshot();
   }
@@ -3845,6 +4418,24 @@ function handleClick(e){
   }
   else if(action === 'editaccount'){
     editCurrentUserInfo();
+  }
+  else if(action === 'feedbackfeature'){
+    createFeedback('feature');
+  }
+  else if(action === 'feedbackbug'){
+    createFeedback('bug');
+  }
+  else if(action === 'feedbackrecovery'){
+    createFeedback('recovery');
+  }
+  else if(action === 'feedbackgeneral'){
+    createFeedback('general');
+  }
+  else if(action === 'submitfeedbackqueue'){
+    submitFeedbackQueue();
+  }
+  else if(action === 'exportfeedbackqueue'){
+    exportFeedbackQueue();
   }
   else if(action === 'checkupdate'){
     if(window.AndroidBridge && typeof window.AndroidBridge.checkForUpdate === 'function'){
@@ -3939,6 +4530,12 @@ function handleClick(e){
   else if(action === 'restday'){
     markRestDayCurrent(btn.checked);
   }
+  else if(action === 'clearrestday'){
+    clearCurrentDayToRest();
+  }
+  else if(action === 'loadplanday'){
+    loadPlannedWorkoutOntoCurrentDay();
+  }
   else if(action === 'setfield'){
     getSession(iso, client)[btn.dataset.fieldname] = btn.dataset.val; scheduleSave(); render();
   }
@@ -3990,6 +4587,31 @@ function handleClick(e){
     const cur = parseFloat(sess.sets[exName][idx][field]) || 0;
     sess.sets[exName][idx][field] = Math.max(0, cur + delta);
     if(sess.status === 'Scheduled') sess.status = 'Complete';
+    scheduleSave(); render();
+  }
+  else if(action === 'setmenu'){
+    const row = btn.closest('.setrow');
+    const exName = row.dataset.exercise;
+    const idx = parseInt(row.dataset.idx, 10);
+    const result = await showFormDialog({
+      title: `Set ${idx + 1}`,
+      message: 'Choose what to do with this set.',
+      fields: [
+        {name:'action', label:'Action', type:'select', value:'clear', options:[
+          {value:'clear', label:'Clear set data'},
+          {value:'delete', label:'Delete set'}
+        ]}
+      ],
+      submitText:'Apply',
+      cancelText:'Cancel'
+    });
+    if(!result || !result.action) return;
+    const sess = row.dataset.person ? getSessionForPerson(iso, row.dataset.person) : getSession(iso, client);
+    if(result.action === 'delete' && sess.sets[exName] && sess.sets[exName].length > 1){
+      sess.sets[exName].splice(idx, 1);
+    } else if(sess.sets[exName]){
+      sess.sets[exName][idx] = {w:'', r:''};
+    }
     scheduleSave(); render();
   }
   else if(action === 'clearset'){
@@ -4345,6 +4967,46 @@ function buildPlanWorkbook(start = state.exportStart, end = state.exportEnd){
   return wb;
 }
 
+function buildBlankPlanTemplateWorkbook(){
+  const profile = currentProfile();
+  const wb = XLSX.utils.book_new();
+  const meta = [
+    ['Format','GymTrackerPlanV1'],
+    ['ProfileId',state.profile],
+    ['ProfileName',profile.name || 'My Workout Plan'],
+    ['Users',(profile.clients && profile.clients[0]) || state.client || 'User'],
+    ['Days',''],
+    ['DateMin',''],
+    ['DateMax',''],
+    ['HasStretchTab','No'],
+    ['Source','Blank template']
+  ];
+  const sessions = [['Date','Day','Label','Kind','Warmup','Cooldown','SourceTitle','StretchOnly','StretchRemoved']];
+  const exercises = [['Date','Exercise','TargetSets','TargetRepsTime','Note','Order']];
+  const stretches = [['Date','Time','Name','Focus','Note','Order','Removed']];
+  const instructions = [
+    ['Gym Tracker Blank Plan Template'],
+    ['Fill PlanSessions with one row per workout date. Use YYYY-MM-DD dates.'],
+    ['Fill PlanExercises with one row per exercise. Date must match a PlanSessions date.'],
+    ['Use TargetRepsTime for reps or timed targets, for example 10-12 or 30-45 sec.'],
+    ['PlanStretches is optional. Leave it blank if the plan does not include stretching.'],
+    ['Do not rename the sheet tabs or header row labels.'],
+    ['Import this workbook from Gym Tracker > Plan > Import Plan.'],
+    [''],
+    ['Example PlanSessions row'],
+    ['2026-08-10','Monday','Upper Body','custom','5 min walk','Stretch','Blank template example','No',''],
+    ['Example PlanExercises rows'],
+    ['2026-08-10','Bench Press','3','8-10','Controlled reps',1],
+    ['2026-08-10','Plank','3','30-45 sec','Enter 0 weight and seconds held',2]
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(meta), 'PlanMeta');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sessions), 'PlanSessions');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(exercises), 'PlanExercises');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(stretches), 'PlanStretches');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(instructions), 'Instructions');
+  return wb;
+}
+
 function exportPlanWorkbook(share){
   if(!window.XLSX){
     showToast('Spreadsheet export needs SheetJS to load.');
@@ -4353,6 +5015,15 @@ function exportPlanWorkbook(share){
   const fname = `Workout_Plan_${rangeName(state.exportStart, state.exportEnd)}.xlsx`;
   deliverWorkbook(buildPlanWorkbook(state.exportStart, state.exportEnd), fname, !!share);
   showToast(share ? 'Plan ready to share.' : 'Plan exported.');
+}
+
+function exportBlankPlanTemplate(){
+  if(!window.XLSX){
+    showToast('Spreadsheet export needs SheetJS to load.');
+    return;
+  }
+  deliverWorkbook(buildBlankPlanTemplateWorkbook(), 'Gym_Tracker_Blank_Workout_Plan_Template.xlsx', false);
+  showToast('Blank workout plan template exported.');
 }
 
 function sendNearbyPlanWorkbook(){

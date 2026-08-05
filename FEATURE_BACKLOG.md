@@ -11,7 +11,27 @@ Use this file to collect feature ideas between releases. Add ideas here as they 
 
 ## Planned For Next Update
 
-No items selected yet.
+No additional items selected yet.
+
+## Implemented In Current Test Build
+
+These are implemented locally for the next APK test, but are not published yet.
+
+- [x] In-app feedback and feature request link
+  - Test build: v1.6-test series
+  - Notes: Feedback, bug reports, data recovery requests, and general feedback are completed inside the app and submitted to GitHub Issues through a secure HomeOps relay without embedding a GitHub token in the APK.
+
+- [x] Reschedule a planned workout to another day
+  - Test build: v1.6-test series
+  - Notes: Users can clear the selected date to a rest day while preserving the replaced workout template for later use. Users can load an existing planned workout day onto the selected date.
+
+- [x] Export blank workout plan template for import
+  - Test build: v1.6-test series
+  - Notes: Users can export a blank `GymTrackerPlanV1` workbook template with the same sheet names and headers accepted by the plan importer.
+
+- [x] Data recovery report diagnostics
+  - Test build: v1.6-test series
+  - Notes: Data Recovery issues include useful diagnostic context and storage inventory metadata. Full workout history is not posted automatically to public GitHub Issues.
 
 ## Candidate Features
 
@@ -27,11 +47,6 @@ Add new ideas below using this format:
 - [ ] Google Drive and Google Sheets export/import
   - Source: user suggestion
   - Notes: Allow users to export plans, workout logs, group member data, and recovery data to Google Drive in a Google Sheets-accessible format without leaving the app. Also evaluate importing plans or data directly from Google Sheets inside the app with validation, preview, duplicate detection, and conflict handling.
-  - Priority: medium
-
-- [ ] In-app feedback and feature request link
-  - Source: user suggestion
-  - Notes: Add Feedback and Request Feature forms that are completed inside the app rather than sending users to a browser. Route submissions to GitHub Issues or another reviewable backend queue without embedding GitHub credentials in the APK. Use structured fields for bug reports, feature requests, data recovery issues, and general feedback. Include non-sensitive app context such as app version and device details where practical.
   - Priority: medium
 
 ## Later Ideas

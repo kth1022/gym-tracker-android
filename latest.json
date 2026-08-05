@@ -1,9 +1,9 @@
 {
-  "versionCode": 6,
-  "versionName": "1.5",
+  "versionCode": 14,
+  "versionName": "1.6",
   "channel": "debug-template",
-  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.5/gym_tracker_v1_5_timer_fix_debug.apk",
-  "sha256": "C542103BB05218357D21DA1DADF8D465F72DA468F00D7DFB5DD6D6D0ADA85394",
-  "size": 3910358,
-  "releaseNotes": "Fixes the v1.4 timer bar position so it no longer overlaps the date controls, and makes timed exercise Record write elapsed seconds directly into the original set."
+  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.6/gym_tracker_v1_6_debug.apk",
+  "sha256": "5E98730EBD7529DE99D09426F3E5B5B737FED3C6BB7503C4FD6BE01F8D81C22C",
+  "size": 3919726,
+  "releaseNotes": "Adds in-app feedback and GitHub issue submission through the HomeOps relay, data recovery diagnostics, workout day rescheduling, blank plan template export, group-workout previous values, rest-day body weight and sleep tracking, and timer fixes."
 }

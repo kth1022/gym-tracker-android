@@ -304,6 +304,22 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void notifyBridgePostResult(String requestId, boolean ok, int statusCode, String body, String error) {
+        try {
+            JSONObject json = new JSONObject();
+            json.put("requestId", requestId == null ? "" : requestId);
+            json.put("ok", ok);
+            json.put("statusCode", statusCode);
+            json.put("body", body == null ? "" : body);
+            json.put("error", error == null ? "" : error);
+            String script = "window.onBridgePostResult && window.onBridgePostResult(" + json + ");";
+            runOnUiThread(() -> {
+                if (webView != null) webView.evaluateJavascript(script, null);
+            });
+        } catch (Exception ignored) {
+        }
+    }
+
     private boolean canInstallPackages() {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.O || getPackageManager().canRequestPackageInstalls();
     }
@@ -771,6 +787,9 @@ public class MainActivity extends Activity {
                 JSONObject json = new JSONObject();
                 json.put("versionCode", BuildConfig.VERSION_CODE);
                 json.put("versionName", BuildConfig.VERSION_NAME);
+                json.put("androidSdk", Build.VERSION.SDK_INT);
+                json.put("manufacturer", Build.MANUFACTURER);
+                json.put("model", Build.MODEL);
                 return json.toString();
             } catch (Exception e) {
                 return "{}";
@@ -790,6 +809,47 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void downloadUpdate() {
             checkForUpdateFromManifest(true, false);
+        }
+
+        @JavascriptInterface
+        public void postJson(String requestId, String endpointUrl, String jsonPayload) {
+            new Thread(() -> {
+                HttpURLConnection conn = null;
+                try {
+                    if (endpointUrl == null || !endpointUrl.toLowerCase(Locale.US).startsWith("https://")) {
+                        throw new IllegalArgumentException("Endpoint must use HTTPS.");
+                    }
+                    byte[] bytes = (jsonPayload == null ? "{}" : jsonPayload).getBytes(StandardCharsets.UTF_8);
+                    conn = (HttpURLConnection) new URL(endpointUrl).openConnection();
+                    conn.setConnectTimeout(15000);
+                    conn.setReadTimeout(30000);
+                    conn.setRequestMethod("POST");
+                    conn.setDoOutput(true);
+                    conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+                    conn.setRequestProperty("Accept", "application/json, text/plain, */*");
+                    conn.setRequestProperty("User-Agent", "GymTracker/" + BuildConfig.VERSION_NAME);
+                    conn.setFixedLengthStreamingMode(bytes.length);
+                    try (OutputStream out = conn.getOutputStream()) {
+                        out.write(bytes);
+                    }
+                    int status = conn.getResponseCode();
+                    InputStream in = status >= 200 && status < 400 ? conn.getInputStream() : conn.getErrorStream();
+                    String body = "";
+                    if (in != null) {
+                        try (InputStream input = in; ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                            byte[] buffer = new byte[8192];
+                            int read;
+                            while ((read = input.read(buffer)) != -1) out.write(buffer, 0, read);
+                            body = out.toString(StandardCharsets.UTF_8.name());
+                        }
+                    }
+                    notifyBridgePostResult(requestId, status >= 200 && status < 300, status, body, null);
+                } catch (Exception e) {
+                    notifyBridgePostResult(requestId, false, 0, "", e.getMessage());
+                } finally {
+                    if (conn != null) conn.disconnect();
+                }
+            }, "GymTrackerPostJson").start();
         }
 
         @JavascriptInterface

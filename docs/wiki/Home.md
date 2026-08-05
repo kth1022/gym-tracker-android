@@ -17,6 +17,7 @@ Gym Tracker is a local-first Android workout tracker. It stores workout plans, w
 
 ## Maintainer Docs
 
+- [Backlog And GitHub Issues](Backlog-and-GitHub-Issues.md)
 - [Wiki Mirroring](Wiki-Mirroring.md)
 - Release Checklist: `docs/release-checklist.md` in the main repository
 

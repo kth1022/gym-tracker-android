@@ -5,6 +5,8 @@ Use this checklist for every app build that will be shared with testers or publi
 ## Before Building
 
 - [ ] Move selected items from `FEATURE_BACKLOG.md` into `Planned For Next Update`.
+- [ ] Confirm each backlog item has a linked GitHub Issue.
+- [ ] Confirm issue labels are correct: `bug` for defects, `feature request` plus `enhancement` for features.
 - [ ] Confirm each planned item has a clear test workflow.
 - [ ] Update the in-app Help plan in `docs/in-app-help-next-release.md`.
 - [ ] Update the repo wiki source in `docs/wiki/` for any changed user workflow.
@@ -43,4 +45,3 @@ Use this checklist for every app build that will be shared with testers or publi
 - [ ] Create or update the GitHub Release with the APK and `latest.json`.
 - [ ] Verify the public `latest.json` URL serves the new metadata.
 - [ ] Verify the public APK URL downloads the expected file.
-

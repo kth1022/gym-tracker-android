@@ -5,6 +5,8 @@ Use this file to collect feature ideas between releases. Add ideas here as they 
 ## Release Batching Rule
 
 - Add new ideas to `Candidate Features`.
+- Create or link a GitHub Issue for every backlog item so users can see known bugs and requested features.
+- Categorize GitHub Issues correctly: use `bug` for defects and `feature request` plus `enhancement` for feature ideas.
 - Move items to `Planned For Next Update` when they are clearly useful, scoped, and worth shipping together.
 - Start implementation when the planned list has several worthwhile items or one urgent fix.
 - Every tester build and public release must follow `docs/release-checklist.md`.
@@ -20,12 +22,16 @@ Add new ideas below using this format:
 
 ```markdown
 - [ ] Feature name
+  - GitHub Issue: #123
+  - Category: feature / bug
   - Source: user / trainer / testing / bug report
   - Notes: brief description, workflow, or expected behavior
   - Priority: low / medium / high
 ```
 
 - [ ] Google Drive and Google Sheets export/import
+  - GitHub Issue: #3
+  - Category: feature
   - Source: user suggestion
   - Notes: Allow users to export plans, workout logs, group member data, and recovery data to Google Drive in a Google Sheets-accessible format without leaving the app. Also evaluate importing plans or data directly from Google Sheets inside the app with validation, preview, duplicate detection, and conflict handling.
   - Priority: medium

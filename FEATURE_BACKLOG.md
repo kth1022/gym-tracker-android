@@ -36,6 +36,13 @@ Add new ideas below using this format:
   - Notes: Allow users to export plans, workout logs, group member data, and recovery data to Google Drive in a Google Sheets-accessible format without leaving the app. Also evaluate importing plans or data directly from Google Sheets inside the app with validation, preview, duplicate detection, and conflict handling.
   - Priority: medium
 
+- [ ] Automatic update availability notification
+  - GitHub Issue: #4
+  - Category: feature
+  - Source: user suggestion
+  - Notes: Have the app check for updates on its own and tell the user when an update is available, instead of relying only on manual checks from the User tab. Keep the manual Check for Update action available, and keep Android's normal install approval flow.
+  - Priority: medium
+
 ## Later Ideas
 
 Use this section for useful ideas that are not ready for the next release.

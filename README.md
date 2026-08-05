@@ -59,6 +59,15 @@ The app checks for updates quietly on startup and supports manual checks from th
 
 Android does not allow a normal app to silently update itself.
 
+## Documentation
+
+Release documentation uses two layers:
+
+- In-app Help: short workflow guidance inside `app/src/main/assets/gym_tracker_app.html`.
+- Wiki source: longer guides in `docs/wiki/`, intended to be mirrored to the GitHub Wiki.
+
+Use `docs/release-checklist.md` for every tester build and public release. Future releases that change user workflows must update both the in-app Help plan and the wiki source before publishing.
+
 ## Legacy v24 Migration
 
 Version `1.2` includes a repair migration for users updating from `gym_tracker_v24_debug.apk`.

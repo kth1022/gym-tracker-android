@@ -18,5 +18,8 @@ Workout_Data_*.json
 Workout_Data_*.xlsx
 Workout_Plan_*.xlsx
 
+# Local copied APK artifacts are distributed through GitHub Releases, not the repo.
+/gym_tracker_*.apk
+
 # Keep the public update manifest if it is added at repo root.
 !latest.json

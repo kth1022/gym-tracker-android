@@ -6,7 +6,7 @@ Gym Tracker is a local-first Android workout tracker built around a WebView app 
 
 - Current update baseline: `1.7`
 - Android package: `com.homeops.gymtracker`
-- Version code: `15`
+- Version code: `16`
 - Version name: `1.7`
 - Primary asset: `app/src/main/assets/gym_tracker_app.html`
 

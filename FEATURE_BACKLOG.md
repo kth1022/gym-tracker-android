@@ -43,6 +43,20 @@ Add new ideas below using this format:
   - Notes: Have the app check for updates on its own and tell the user when an update is available, instead of relying only on manual checks from the User tab. Keep the manual Check for Update action available, and keep Android's normal install approval flow.
   - Priority: medium
 
+- [ ] Preserve completed week data when importing a new plan
+  - GitHub Issue: #5
+  - Category: feature
+  - Source: user feedback
+  - Notes: When a user imports a new workout plan in the middle of a week, keep already completed days for that week so the user can still look back on completed workout data instead of seeing those days replaced by empty plan days. Duplicate issue #7 was closed in GitHub.
+  - Priority: medium
+
+- [ ] Provide a sample Excel workout plan file
+  - GitHub Issue: #6
+  - Category: feature
+  - Source: user feedback
+  - Notes: Add a sample Excel workbook showing the format that AI tools or users should produce so the app can read workout plans clearly. Duplicate issue #8 was closed in GitHub.
+  - Priority: medium
+
 ## Later Ideas
 
 Use this section for useful ideas that are not ready for the next release.

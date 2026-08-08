@@ -16,6 +16,31 @@ Use this file to collect feature ideas between releases. Add ideas here as they 
 
 No additional items selected yet.
 
+## Implemented In Current Test Build
+
+These are implemented locally for the next APK test, but are not published yet.
+
+- [x] Automatic update availability notification
+  - GitHub Issue: #4
+  - Category: feature
+  - Source: user suggestion
+  - Test build: v1.7-test1
+  - Notes: The app now checks for updates automatically at startup and periodically while open, shows an in-app update banner when a newer GitHub-hosted version is available, and keeps the manual User tab check.
+
+- [x] Preserve completed week data when importing a new plan
+  - GitHub Issue: #5
+  - Category: feature
+  - Source: user feedback
+  - Test build: v1.7-test1
+  - Notes: Plan imports now preserve dates that already have logged workout data so completed days remain connected to their original workout template.
+
+- [x] Provide a sample Excel workout plan file
+  - GitHub Issue: #6
+  - Category: feature
+  - Source: user feedback
+  - Test build: v1.7-test1
+  - Notes: The Plan tab now exports a filled sample `GymTrackerPlanV1` workbook showing valid plan sheets, headers, dates, exercises, timed targets, and stretching rows.
+
 ## Candidate Features
 
 Add new ideas below using this format:
@@ -34,27 +59,6 @@ Add new ideas below using this format:
   - Category: feature
   - Source: user suggestion
   - Notes: Allow users to export plans, workout logs, group member data, and recovery data to Google Drive in a Google Sheets-accessible format without leaving the app. Also evaluate importing plans or data directly from Google Sheets inside the app with validation, preview, duplicate detection, and conflict handling.
-  - Priority: medium
-
-- [ ] Automatic update availability notification
-  - GitHub Issue: #4
-  - Category: feature
-  - Source: user suggestion
-  - Notes: Have the app check for updates on its own and tell the user when an update is available, instead of relying only on manual checks from the User tab. Keep the manual Check for Update action available, and keep Android's normal install approval flow.
-  - Priority: medium
-
-- [ ] Preserve completed week data when importing a new plan
-  - GitHub Issue: #5
-  - Category: feature
-  - Source: user feedback
-  - Notes: When a user imports a new workout plan in the middle of a week, keep already completed days for that week so the user can still look back on completed workout data instead of seeing those days replaced by empty plan days. Duplicate issue #7 was closed in GitHub.
-  - Priority: medium
-
-- [ ] Provide a sample Excel workout plan file
-  - GitHub Issue: #6
-  - Category: feature
-  - Source: user feedback
-  - Notes: Add a sample Excel workbook showing the format that AI tools or users should produce so the app can read workout plans clearly. Duplicate issue #8 was closed in GitHub.
   - Priority: medium
 
 ## Later Ideas

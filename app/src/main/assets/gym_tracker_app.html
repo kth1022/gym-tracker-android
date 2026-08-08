@@ -337,6 +337,10 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 .trendtable th,.trendtable td{ padding:7px 4px; border-bottom:1px solid var(--border); text-align:left; }
 .trendtable th{ color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:.04em; }
 .toast{ position:fixed; left:50%; bottom:78px; transform:translateX(-50%); z-index:40; max-width:440px; width:calc(100% - 32px); background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; color:var(--text); font-size:13px; box-shadow:0 10px 28px rgba(0,0,0,.35); }
+.updatealert{ margin:0 0 12px; border:1px solid var(--amber); background:rgba(242,184,75,.12); border-radius:var(--radius-sm); padding:12px; display:grid; gap:9px; }
+.updatealert b{ color:var(--amber); font-size:14px; }
+.updatealert span{ color:var(--text-dim); font-size:12.5px; line-height:1.4; }
+.updatealert .tinyactions{ margin-top:0; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); }
 .modalbackdrop{ position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.58); display:flex; align-items:flex-end; justify-content:center; padding:16px; }
 .modalbox{ width:min(480px,100%); max-height:calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow:auto; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 18px 50px rgba(0,0,0,.45); padding:18px; }
 .modalbox h2{ margin:0 0 6px; font-size:19px; line-height:1.2; }
@@ -477,6 +481,7 @@ let APP_PREFS = { onboarded:false, theme:'strength', primaryUser:'', profiles:{}
 let saveTimer = null;
 let toastTimer = null;
 let workoutTimerTick = null;
+let updateCheckTimer = null;
 let groupImportPromptOpen = false;
 
 const THEMES = {
@@ -782,6 +787,8 @@ function ensurePrefsShape(){
   APP_PREFS.tempGroupMembers = APP_PREFS.tempGroupMembers || [];
   APP_PREFS.profileDefs = APP_PREFS.profileDefs || {};
   APP_PREFS.feedbackQueue = APP_PREFS.feedbackQueue || [];
+  APP_PREFS.dismissedUpdateVersionCode = Number(APP_PREFS.dismissedUpdateVersionCode || 0);
+  APP_PREFS.lastAnnouncedUpdateVersionCode = Number(APP_PREFS.lastAnnouncedUpdateVersionCode || 0);
 }
 
 function savePrefs(){
@@ -2043,6 +2050,22 @@ function applyCustomPlan(profileId, plan){
   }
 }
 
+function sessionHasLoggedWorkoutData(sess){
+  if(!sess) return false;
+  if(['Complete','Modified','Missed'].includes(sess.status)) return true;
+  if(sess.bodyWeight || sess.sleep || sess.warmup || sess.cooldown || sess.notes) return true;
+  return Object.values(sess.sets || {}).some(arr => Array.isArray(arr) && arr.some(setHasValue));
+}
+
+function profileHasLoggedWorkoutOnDate(profileId, iso){
+  const day = DB[profileId] && DB[profileId][iso];
+  return Object.values(day || {}).some(sessionHasLoggedWorkoutData);
+}
+
+function shouldPreservePlanDate(profileId, iso, existingTemplate){
+  return !!existingTemplate && profileHasLoggedWorkoutOnDate(profileId, iso);
+}
+
 function mergeCustomPlan(profileId, incoming){
   const existing = CUSTOM_PLAN[profileId];
   if(!existing){
@@ -2064,10 +2087,11 @@ function mergeCustomPlan(profileId, incoming){
   };
   if(start && end){
     Object.keys(merged.sessions).forEach(iso => {
-      if(inRange(iso, start, end)) delete merged.sessions[iso];
+      if(inRange(iso, start, end) && !shouldPreservePlanDate(profileId, iso, merged.sessions[iso])) delete merged.sessions[iso];
     });
   }
   Object.entries(incoming.sessions || {}).forEach(([iso, tpl]) => {
+    if(shouldPreservePlanDate(profileId, iso, merged.sessions[iso])) return;
     merged.sessions[iso] = tpl;
   });
   applyCustomPlan(profileId, merged);
@@ -3542,6 +3566,7 @@ function renderPlanView(){
         <button data-action="exportall">Export All Data</button>
         <button data-action="exportplan">Export Plan</button>
         <button data-action="exportblankplan">Export Blank Plan Template</button>
+        <button data-action="exportsampleplan">Export Sample Plan</button>
         <button data-action="saverecovery">Save Recovery Snapshot</button>
         <button data-action="shareplan">Share Plan</button>
         <button data-action="nearbydata">Nearby Send Data</button>
@@ -3578,6 +3603,7 @@ function renderHelpView(){
         <div class="helpitem"><b>Workout complete</b><span>At the end of a group workout, tap Workout Complete to mark group entries complete, send today's workout data, and remove temporary members.</span></div>
         <div class="helpitem"><b>Device owner</b><span>Set whose device is being used for a group workout. Trends ignore other members' group data unless it belongs to the selected user or was logged on that user's device.</span></div>
         <div class="helpitem"><b>Theme</b><span>Change the app color scheme for this device.</span></div>
+        <div class="helpitem"><b>App updates</b><span>The app checks for newer GitHub-hosted releases automatically and shows an update notice when one is available. The User tab still has a manual Check for Update button, and Android will ask you to approve any APK install.</span></div>
       </div>
     </div>
     <div class="panel"><div class="paneltitle">Log</div>
@@ -3603,10 +3629,11 @@ function renderHelpView(){
     </div>
     <div class="panel"><div class="paneltitle">Plan</div>
       <div class="helplist">
-        <div class="helpitem"><b>Import plan</b><span>Load a spreadsheet workout plan. Importing a new month merges into the saved plan range and should not overwrite previous months.</span></div>
+        <div class="helpitem"><b>Import plan</b><span>Load a spreadsheet workout plan. Importing a new plan merges into the saved plan range and keeps dates that already have logged workout data.</span></div>
         <div class="helpitem"><b>Import workout data</b><span>Load completed workout data from another user or device, then choose the date or range the file should update.</span></div>
         <div class="helpitem"><b>Export workout data</b><span>Choose a date range and export completed logs for review, progress tracking, or plan adjustments.</span></div>
         <div class="helpitem"><b>Export plan</b><span>Export the planned routine for a date range so another user can import the same workout plan.</span></div>
+        <div class="helpitem"><b>Plan templates</b><span>Export a blank workbook when building a new plan from scratch, or export the sample workbook to see a complete import-ready example.</span></div>
         <div class="helpitem"><b>Sharing</b><span>Use Android share when sending a file through another app, Nearby Send and Receive when both users are present, or the Android file receiver when someone opens a shared Gym Tracker workbook on the device.</span></div>
         <div class="helpitem"><b>Repeat next month</b><span>Copy the current routine into the following month without copying completed workout logs.</span></div>
       </div>
@@ -3650,6 +3677,33 @@ function renderUpdatePanel(){
       <div class="tinyactions"><button data-action="${buttonAction}" ${busy ? 'disabled' : ''}>${buttonText}</button></div>
       <div class="muted">${escapeHtml(message)}</div>
       ${notes}
+    </div>`;
+}
+
+function availableUpdateStatus(){
+  const update = state.updateStatus || {};
+  const latestCode = Number(update.latestVersionCode || 0);
+  const currentCode = Number(currentAppVersion().versionCode || 0);
+  if(update.status !== 'available' || !latestCode || latestCode <= currentCode) return null;
+  if(Number(APP_PREFS.dismissedUpdateVersionCode || 0) >= latestCode) return null;
+  return update;
+}
+
+function renderUpdateAlert(){
+  const update = availableUpdateStatus();
+  if(!update) return '';
+  const version = update.latestVersionName || `version ${update.latestVersionCode}`;
+  const message = update.message || 'A newer Gym Tracker APK is available.';
+  const notes = update.releaseNotes ? `<span>${escapeHtml(update.releaseNotes)}</span>` : '';
+  return `
+    <div class="updatealert">
+      <b>Update available: ${escapeHtml(version)}</b>
+      <span>${escapeHtml(message)}</span>
+      ${notes}
+      <div class="tinyactions">
+        <button data-action="downloadupdate">Download Update</button>
+        <button data-action="dismissupdate" data-versioncode="${escapeHtml(String(update.latestVersionCode || 0))}">Later</button>
+      </div>
     </div>`;
 }
 
@@ -4211,6 +4265,7 @@ function render(){
     <input type="file" id="importDataFile" accept=".xlsx" style="display:none">
     <div class="content">
       ${renderTimerBar()}
+      ${renderUpdateAlert()}
       ${state.tab === 'log' ? renderLogView() : state.tab === 'progress' ? renderProgressView() : state.tab === 'trends' ? renderTrendsView() : state.tab === 'plan' ? renderPlanView() : state.tab === 'friends' ? renderFriendsView() : state.tab === 'help' ? renderHelpView() : renderUsersView()}
     </div>
     <div class="bottomnav">
@@ -4407,6 +4462,9 @@ async function handleClick(e){
   else if(action === 'exportblankplan'){
     exportBlankPlanTemplate();
   }
+  else if(action === 'exportsampleplan'){
+    exportSamplePlanWorkbook();
+  }
   else if(action === 'saverecovery'){
     saveRecoverySnapshot();
   }
@@ -4458,6 +4516,11 @@ async function handleClick(e){
       render();
       showToast('Update downloads are only available in the Android app.');
     }
+  }
+  else if(action === 'dismissupdate'){
+    APP_PREFS.dismissedUpdateVersionCode = Number(btn.dataset.versioncode || (state.updateStatus && state.updateStatus.latestVersionCode) || 0);
+    savePrefs();
+    render();
   }
   else if(action === 'removeperson'){
     removeCurrentPerson();
@@ -4677,8 +4740,27 @@ window.onUpdateStatus = function(payload){
   } catch(e){
     state.updateStatus = { status:'error', message:'Could not read update status.' };
   }
+  const available = availableUpdateStatus();
+  const latestCode = available ? Number(available.latestVersionCode || 0) : 0;
+  if(available && Number(APP_PREFS.lastAnnouncedUpdateVersionCode || 0) < latestCode){
+    APP_PREFS.lastAnnouncedUpdateVersionCode = latestCode;
+    savePrefs();
+    showToast(`Gym Tracker ${available.latestVersionName || latestCode} is available.`);
+  }
   render();
 };
+
+function requestAutomaticUpdateCheck(){
+  if(window.AndroidBridge && typeof window.AndroidBridge.checkForUpdateQuiet === 'function'){
+    window.AndroidBridge.checkForUpdateQuiet();
+  }
+}
+
+function scheduleAutomaticUpdateChecks(){
+  if(updateCheckTimer) clearInterval(updateCheckTimer);
+  setTimeout(requestAutomaticUpdateCheck, 1200);
+  updateCheckTimer = setInterval(requestAutomaticUpdateCheck, 6 * 60 * 60 * 1000);
+}
 
 async function init(){
   await loadAll();
@@ -4722,9 +4804,7 @@ async function init(){
     }
   });
   render();
-  if(window.AndroidBridge && typeof window.AndroidBridge.checkForUpdateQuiet === 'function'){
-    setTimeout(() => window.AndroidBridge.checkForUpdateQuiet(), 1200);
-  }
+  scheduleAutomaticUpdateChecks();
 }
 function exportWorkbook(destination = 'save'){
   if(!window.XLSX){
@@ -5007,6 +5087,76 @@ function buildBlankPlanTemplateWorkbook(){
   return wb;
 }
 
+function nextWeekdayIso(baseIso, targetDay){
+  let d = baseIso || todayIso();
+  for(let i = 0; i < 14; i++){
+    if(weekdayName(d) === targetDay) return d;
+    d = addDays(d, 1);
+  }
+  return baseIso || todayIso();
+}
+
+function buildSamplePlanWorkbook(){
+  const profile = currentProfile();
+  const user = (profile.clients && profile.clients[0]) || state.client || 'User';
+  const monday = nextWeekdayIso(todayIso(), 'Monday');
+  const wednesday = addDays(monday, 2);
+  const friday = addDays(monday, 4);
+  const wb = XLSX.utils.book_new();
+  const meta = [
+    ['Format','GymTrackerPlanV1'],
+    ['ProfileId',state.profile],
+    ['ProfileName',profile.name || 'Sample Workout Plan'],
+    ['Users',user],
+    ['Days','Monday, Wednesday, Friday'],
+    ['DateMin',monday],
+    ['DateMax',friday],
+    ['HasStretchTab','Yes'],
+    ['Source','Gym Tracker sample plan']
+  ];
+  const sessions = [
+    ['Date','Day','Label','Kind','Warmup','Cooldown','SourceTitle','StretchOnly','StretchRemoved'],
+    [monday,'Monday','Upper Strength','sample','5 min incline walk; band pull-aparts','Chest and shoulder stretch','Sample three-day plan','No',''],
+    [wednesday,'Wednesday','Lower Strength','sample','5 min bike; hip openers','Hamstring and quad stretch','Sample three-day plan','No',''],
+    [friday,'Friday','Core And Mobility','sample','5 min row; dynamic trunk rotation','Breathing and full-body mobility','Sample three-day plan','No','']
+  ];
+  const exercises = [
+    ['Date','Exercise','TargetSets','TargetRepsTime','Note','Order'],
+    [monday,'Machine Chest Press','3','8-10','Choose a load that leaves 1-2 reps in reserve',1],
+    [monday,'Seated Cable Row','3','10-12','Pause briefly with shoulder blades back',2],
+    [monday,'Dumbbell Shoulder Press','2','8-10','Use controlled reps',3],
+    [monday,'Lat Pulldown','2','10-12','Pull to upper chest',4],
+    [wednesday,'Leg Press','3','10-12','Keep knees tracking over toes',1],
+    [wednesday,'Romanian Deadlift','3','8-10','Hinge at hips and keep back neutral',2],
+    [wednesday,'Walking Lunge','2','10 each side','Use body weight or light dumbbells',3],
+    [wednesday,'Standing Calf Raise','2','12-15','Use a full range of motion',4],
+    [friday,'Plank','3','30-45 sec','Enter 0 weight and log seconds held',1],
+    [friday,'Dead Bug','3','8 each side','Move slowly and keep low back down',2],
+    [friday,'Pallof Press','2','10 each side','Resist rotation',3],
+    [friday,'Incline Walk','1','10 min','Steady pace finish',4]
+  ];
+  const stretches = [
+    ['Date','Time','Name','Focus','Note','Order','Removed'],
+    [monday,'5 min','Doorway chest stretch','Chest','Hold each side 30 sec',1,''],
+    [wednesday,'5 min','Couch stretch','Hips and quads','Breathe slowly',1,''],
+    [friday,'8 min','World greatest stretch','Full body','Move through each side twice',1,'']
+  ];
+  const instructions = [
+    ['Gym Tracker Sample Plan'],
+    ['This workbook is already in GymTrackerPlanV1 format and can be imported from Gym Tracker > Plan > Import Plan.'],
+    ['Edit dates, labels, exercises, sets, reps/time, and notes as needed.'],
+    ['Timed exercises can use values like 30-45 sec. During logging, enter 0 for weight and record the time held.'],
+    ['AI-generated plans should keep these sheet names and header labels exactly.'],
+    ['The blank template is better when building a plan from scratch; this sample is better for seeing a complete example.']
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(meta), 'PlanMeta');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sessions), 'PlanSessions');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(exercises), 'PlanExercises');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(stretches), 'PlanStretches');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(instructions), 'Instructions');
+  return wb;
+}
+
 function exportPlanWorkbook(share){
   if(!window.XLSX){
     showToast('Spreadsheet export needs SheetJS to load.');
@@ -5024,6 +5174,15 @@ function exportBlankPlanTemplate(){
   }
   deliverWorkbook(buildBlankPlanTemplateWorkbook(), 'Gym_Tracker_Blank_Workout_Plan_Template.xlsx', false);
   showToast('Blank workout plan template exported.');
+}
+
+function exportSamplePlanWorkbook(){
+  if(!window.XLSX){
+    showToast('Spreadsheet export needs SheetJS to load.');
+    return;
+  }
+  deliverWorkbook(buildSamplePlanWorkbook(), 'Gym_Tracker_Sample_Workout_Plan.xlsx', false);
+  showToast('Sample workout plan exported.');
 }
 
 function sendNearbyPlanWorkbook(){
@@ -5430,9 +5589,10 @@ function parsePlanWorkbook(wb, profileId, sourceName){
         }
 
         const sess = ensureImportedSession(logs, iso, client);
+        const hadLocalData = sessionHasLoggedWorkoutData(sess);
         const useLegacyFallbacks = clientRow.layout !== 'single';
         const status = valueAfterLabel(ws, clientRow.row, 'Status') || (useLegacyFallbacks ? cellVal(ws, clientRow.row, 8) : undefined);
-        if(['Scheduled','Complete','Modified','Missed'].includes(status)) sess.status = status;
+        if(['Scheduled','Complete','Modified','Missed'].includes(status) && !(hadLocalData && status === 'Scheduled')) sess.status = status;
         assignIfPresent(sess, 'bodyWeight', valueAfterLabel(ws, clientRow.row, 'Body Weight', 'Bodyweight') || (useLegacyFallbacks ? cellVal(ws, clientRow.row, 6) : undefined));
         assignIfPresent(sess, 'sleep', valueAfterLabel(ws, clientRow.row + 1, 'Sleep', 'Sleep Hours') || (useLegacyFallbacks ? cellVal(ws, clientRow.row + 1, 3) : undefined));
         assignIfPresent(sess, 'warmup', valueAfterLabel(ws, clientRow.row + 1, 'Warm-Up Done', 'Warmup Done', 'Warm Up Done') || (useLegacyFallbacks ? cellVal(ws, clientRow.row + 1, 5) : undefined));

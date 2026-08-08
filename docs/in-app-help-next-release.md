@@ -5,7 +5,8 @@ The in-app Help screen lives in `app/src/main/assets/gym_tracker_app.html`. Do n
 ## Required Help Topics
 
 - App updates
-  - Explain that the app can check GitHub-hosted updates from the User tab.
+  - Explain that the app checks GitHub-hosted updates automatically and shows an in-app notice.
+  - Explain that users can still manually check from the User tab.
   - Explain that Android still asks the user to approve APK installation.
 
 - Feedback and feature requests
@@ -19,7 +20,9 @@ The in-app Help screen lives in `app/src/main/assets/gym_tracker_app.html`. Do n
 
 - Plan management
   - Explain importing workout plan workbooks.
+  - Explain that importing a new plan preserves dates that already have logged workout data.
   - Explain exporting a blank workout plan template.
+  - Explain exporting a filled sample workout plan workbook.
   - Explain clearing a day to rest day.
   - Explain loading a weekday plan onto an empty or rest day.
 

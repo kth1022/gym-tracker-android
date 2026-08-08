@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "gym-tracker-feedback-relay",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-08",
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "vars": {
+    "GITHUB_REPO": "kth1022/gym-tracker-android",
+    "RATE_LIMIT_MAX_REQUESTS": "12",
+    "RATE_LIMIT_WINDOW_SECONDS": "3600"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "FEEDBACK_RATE_LIMIT",
+      "id": "a6230af7be674678826f212a74bcd3bb"
+    }
+  ]
+}

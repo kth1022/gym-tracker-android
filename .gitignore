@@ -5,6 +5,11 @@ local.properties
 *.iml
 .idea/
 
+# Node and Cloudflare Worker local artifacts
+node_modules/
+.wrangler/
+.dev.vars
+
 # Signing and secrets
 *.jks
 *.keystore

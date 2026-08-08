@@ -16,31 +16,6 @@ Use this file to collect feature ideas between releases. Add ideas here as they 
 
 No additional items selected yet.
 
-## Implemented In Current Test Build
-
-These are implemented locally for the next APK test, but are not published yet.
-
-- [x] Automatic update availability notification
-  - GitHub Issue: #4
-  - Category: feature
-  - Source: user suggestion
-  - Test build: v1.7-test1
-  - Notes: The app now checks for updates automatically at startup and periodically while open, shows an in-app update banner when a newer GitHub-hosted version is available, and keeps the manual User tab check.
-
-- [x] Preserve completed week data when importing a new plan
-  - GitHub Issue: #5
-  - Category: feature
-  - Source: user feedback
-  - Test build: v1.7-test1
-  - Notes: Plan imports now preserve dates that already have logged workout data so completed days remain connected to their original workout template.
-
-- [x] Provide a sample Excel workout plan file
-  - GitHub Issue: #6
-  - Category: feature
-  - Source: user feedback
-  - Test build: v1.7-test1
-  - Notes: The Plan tab now exports a filled sample `GymTrackerPlanV1` workbook showing valid plan sheets, headers, dates, exercises, timed targets, and stretching rows.
-
 ## Candidate Features
 
 Add new ideas below using this format:
@@ -100,3 +75,18 @@ Move shipped items here with the release version.
 - [x] Export blank workout plan template for import
   - Shipped: v1.6
   - Notes: Users can export a blank `GymTrackerPlanV1` workbook template with the same sheet names and headers accepted by the plan importer.
+
+- [x] Automatic update availability notification
+  - GitHub Issue: #4
+  - Shipped: v1.7
+  - Notes: The app checks for updates automatically at startup and periodically while open, shows an in-app update banner when a newer GitHub-hosted version is available, and keeps the manual User tab check.
+
+- [x] Preserve completed week data when importing a new plan
+  - GitHub Issue: #5
+  - Shipped: v1.7
+  - Notes: Plan imports preserve dates that already have logged workout data so completed days remain connected to their original workout template.
+
+- [x] Provide a sample Excel workout plan file
+  - GitHub Issue: #6
+  - Shipped: v1.7
+  - Notes: The Plan tab exports a filled sample `GymTrackerPlanV1` workbook showing valid plan sheets, headers, dates, exercises, timed targets, and stretching rows.

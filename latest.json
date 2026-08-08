@@ -1,9 +1,9 @@
 {
-  "versionCode": 14,
-  "versionName": "1.6",
+  "versionCode": 15,
+  "versionName": "1.7",
   "channel": "debug-template",
-  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.6/gym_tracker_v1_6_debug.apk",
-  "sha256": "5E98730EBD7529DE99D09426F3E5B5B737FED3C6BB7503C4FD6BE01F8D81C22C",
-  "size": 3919726,
-  "releaseNotes": "Adds in-app feedback and GitHub issue submission through the HomeOps relay, data recovery diagnostics, workout day rescheduling, blank plan template export, group-workout previous values, rest-day body weight and sleep tracking, and timer fixes."
+  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.7/gym_tracker_v1_7_debug.apk",
+  "sha256": "61B003601D976095C82F7403510920ACEF34DCE94AE78BA6BAB9C4B5D0D6D757",
+  "size": 3922314,
+  "releaseNotes": "Adds automatic update notices, preserves logged workout days when importing a new plan, and adds a filled sample workout plan workbook export."
 }

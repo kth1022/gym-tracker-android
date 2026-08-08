@@ -26,8 +26,8 @@ Required release artifacts:
 
 ## Current Public Release
 
+Version `1.7` adds automatic update notices, preserves already logged workout days during plan imports, and adds a filled sample workout plan workbook export.
+
+## Previous Release
+
 Version `1.6` adds in-app feedback, data recovery diagnostics, rest-day body weight and sleep logging, group-workout previous-set references, workout day rescheduling, blank workout plan template export/import support, and timed exercise refinements.
-
-## Next Test Build
-
-Version `1.7-test1` adds automatic update notices, preserves already logged workout days during plan imports, and adds a filled sample workout plan workbook export. This test build is not published until approved after device testing.

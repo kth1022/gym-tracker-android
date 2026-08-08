@@ -4,7 +4,7 @@ Gym Tracker is a local-first Android workout tracker. It stores workout plans, w
 
 ## Current Version
 
-- Current public version: `1.6`
+- Current public version: `1.7`
 - Android package: `com.homeops.gymtracker`
 - Update channel: GitHub Releases
 

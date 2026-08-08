@@ -9,11 +9,15 @@ Gym Tracker can submit feedback from inside the app. Feedback is sent through th
 - Data recovery request
 - General feedback
 
-## Current Endpoint Requirement
+## Feedback Endpoint
 
-The current feedback endpoint uses the HomeOps relay at `kevin-pc.taile05f72.ts.net`. Until a public endpoint is added, the phone must be able to reach that Tailscale address.
+The current feedback endpoint uses a Cloudflare Worker:
 
-For family testers, add the phone to Tailscale. For broader public use, replace the endpoint with a public relay such as a Cloudflare Worker or another hosted API.
+```text
+https://gym-tracker-feedback-relay.kth1022.workers.dev/api/gym-tracker/feedback
+```
+
+The phone does not need to be on Tailscale for feedback submission. The Worker owns the GitHub credential as a Cloudflare secret and creates GitHub Issues without embedding a token in the APK.
 
 ## Data Recovery Requests
 
@@ -26,4 +30,3 @@ If full data is needed, export a recovery snapshot and share it privately.
 ## Privacy Notes
 
 Do not embed GitHub tokens in the Android app. The app should submit feedback to a relay service, and the relay service should own the GitHub credential.
-

@@ -10,6 +10,7 @@ The in-app Help screen lives in `app/src/main/assets/gym_tracker_app.html`. Do n
 
 - Feedback and feature requests
   - Explain how to submit bug reports, feature requests, general feedback, and data recovery requests inside the app.
+  - Explain that feedback now submits through the public Cloudflare relay, so Tailscale is not required.
   - Mention that data recovery reports include diagnostics, not full workout history.
 
 - Data recovery
@@ -34,4 +35,3 @@ The in-app Help screen lives in `app/src/main/assets/gym_tracker_app.html`. Do n
 ## Update Rule
 
 Every future build that changes a user workflow must update this list first, then update the in-app Help screen before the release APK is published.
-

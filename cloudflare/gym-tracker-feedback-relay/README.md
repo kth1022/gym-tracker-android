@@ -31,3 +31,8 @@ npm run check
 npm run deploy
 ```
 
+Production endpoint:
+
+```text
+https://gym-tracker-feedback-relay.kth1022.workers.dev/api/gym-tracker/feedback
+```

@@ -68,6 +68,18 @@ Release documentation uses two layers:
 
 Use `docs/release-checklist.md` for every tester build and public release. Future releases that change user workflows must update both the in-app Help plan and the wiki source before publishing.
 
+## Feedback Relay
+
+In-app feedback and data recovery requests submit to GitHub Issues through the Cloudflare Worker in `cloudflare/gym-tracker-feedback-relay`.
+
+Production endpoint:
+
+```text
+https://gym-tracker-feedback-relay.kth1022.workers.dev/api/gym-tracker/feedback
+```
+
+The Worker stores the GitHub token as a Cloudflare secret. Do not embed GitHub tokens in the APK.
+
 ## Legacy v24 Migration
 
 Version `1.2` includes a repair migration for users updating from `gym_tracker_v24_debug.apk`.

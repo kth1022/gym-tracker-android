@@ -326,7 +326,7 @@ public class MainActivity extends Activity {
 
     private void requestInstallPermission(File apk) {
         pendingUpdateApk = apk;
-        notifyUpdateStatus("permission", "Allow Gym Tracker to install app updates, then return here.");
+        notifyUpdateStatus("permission", "Allow Knurl to install app updates, then return here.");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
             intent.setData(Uri.parse("package:" + getPackageName()));
@@ -352,7 +352,7 @@ public class MainActivity extends Activity {
 
                 if (latestVersionCode <= BuildConfig.VERSION_CODE) {
                     if (!quietCurrent) {
-                        notifyUpdateStatus("current", "Gym Tracker is up to date.", latestVersionName, releaseNotes, latestVersionCode);
+                        notifyUpdateStatus("current", "Knurl is up to date.", latestVersionName, releaseNotes, latestVersionCode);
                     }
                     return;
                 }
@@ -508,7 +508,7 @@ public class MainActivity extends Activity {
     private void startNearbyReceive() {
         stopNearby();
         connectionsClient.startAdvertising(
-                "Gym Tracker",
+                "Knurl",
                 SERVICE_ID,
                 connectionLifecycleCallback,
                 new AdvertisingOptions.Builder().setStrategy(NEARBY_STRATEGY).build()
@@ -537,7 +537,7 @@ public class MainActivity extends Activity {
                 SERVICE_ID,
                 endpointDiscoveryCallback,
                 new DiscoveryOptions.Builder().setStrategy(NEARBY_STRATEGY).build()
-        ).addOnSuccessListener(unused -> notifyStatus("Looking for a nearby Gym Tracker receiver."))
+        ).addOnSuccessListener(unused -> notifyStatus("Looking for a nearby Knurl receiver."))
          .addOnFailureListener(e -> notifyStatus("Nearby discovery failed: " + e.getMessage()));
     }
 
@@ -564,14 +564,14 @@ public class MainActivity extends Activity {
                 SERVICE_ID,
                 endpointDiscoveryCallback,
                 new DiscoveryOptions.Builder().setStrategy(NEARBY_STRATEGY).build()
-        ).addOnSuccessListener(unused -> notifyStatus("Looking for a nearby Gym Tracker receiver."))
+        ).addOnSuccessListener(unused -> notifyStatus("Looking for a nearby Knurl receiver."))
          .addOnFailureListener(e -> notifyStatus("Nearby discovery failed: " + e.getMessage()));
     }
 
     private final EndpointDiscoveryCallback endpointDiscoveryCallback = new EndpointDiscoveryCallback() {
         @Override
         public void onEndpointFound(String endpointId, DiscoveredEndpointInfo info) {
-            connectionsClient.requestConnection("Gym Tracker", endpointId, connectionLifecycleCallback)
+            connectionsClient.requestConnection("Knurl", endpointId, connectionLifecycleCallback)
                     .addOnFailureListener(e -> notifyStatus("Nearby connection failed: " + e.getMessage()));
         }
 
@@ -668,7 +668,7 @@ public class MainActivity extends Activity {
                     ContentValues values = new ContentValues();
                     values.put(MediaStore.Downloads.DISPLAY_NAME, safeFilename(filename));
                     values.put(MediaStore.Downloads.MIME_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-                    values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Gym Tracker");
+                    values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Knurl");
                     ContentResolver resolver = getContentResolver();
                     Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
                     if (uri == null) throw new IllegalStateException("Could not create download");
@@ -676,7 +676,7 @@ public class MainActivity extends Activity {
                         if (out == null) throw new IllegalStateException("Could not open download");
                         out.write(bytes);
                     }
-                    Toast.makeText(MainActivity.this, "Saved to Downloads/Gym Tracker", Toast.LENGTH_LONG).show();
+                    Toast.makeText(MainActivity.this, "Saved to Downloads/Knurl", Toast.LENGTH_LONG).show();
                 } catch (Exception e) {
                     Toast.makeText(MainActivity.this, "Save failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 }
@@ -711,7 +711,7 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> {
                 Intent send = new Intent(Intent.ACTION_SEND);
                 send.setType("text/plain");
-                send.putExtra(Intent.EXTRA_SUBJECT, title == null ? "Gym Tracker" : title);
+                send.putExtra(Intent.EXTRA_SUBJECT, title == null ? "Knurl" : title);
                 send.putExtra(Intent.EXTRA_TEXT, text == null ? "" : text);
                 startActivity(Intent.createChooser(send, title == null ? "Share" : title));
             });
@@ -724,7 +724,7 @@ public class MainActivity extends Activity {
                     ContentValues values = new ContentValues();
                     values.put(MediaStore.Downloads.DISPLAY_NAME, safeTextFilename(filename));
                     values.put(MediaStore.Downloads.MIME_TYPE, "application/json");
-                    values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Gym Tracker/Recovery");
+                    values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Knurl/Recovery");
                     ContentResolver resolver = getContentResolver();
                     Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
                     if (uri == null) throw new IllegalStateException("Could not create download");
@@ -732,7 +732,7 @@ public class MainActivity extends Activity {
                         if (out == null) throw new IllegalStateException("Could not open download");
                         out.write((text == null ? "" : text).getBytes(StandardCharsets.UTF_8));
                     }
-                    Toast.makeText(MainActivity.this, "Saved to Downloads/Gym Tracker/Recovery", Toast.LENGTH_LONG).show();
+                    Toast.makeText(MainActivity.this, "Saved to Downloads/Knurl/Recovery", Toast.LENGTH_LONG).show();
                 } catch (Exception e) {
                     Toast.makeText(MainActivity.this, "Save failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 }

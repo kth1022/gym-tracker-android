@@ -16,7 +16,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:label="Gym Tracker"
+        android:label="Knurl"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
         <meta-data

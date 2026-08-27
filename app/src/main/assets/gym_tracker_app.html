@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Gym Tracker</title>
+<title>Knurl</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -46,8 +46,17 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   --teal:#49c2b4;
   --teal-deep:#2c8f84;
   --danger:#e5637a;
+  --on-amber:#1a1300;
+  --on-teal:#04211e;
   --radius:8px;
   --radius-sm:8px;
+  /* accent tints are written by applyTheme() so every theme recolors them */
+  --amber-02:rgba(242,184,75,0.02); --amber-08:rgba(242,184,75,0.08); --amber-12:rgba(242,184,75,0.12);
+  --amber-14:rgba(242,184,75,0.14); --amber-22:rgba(242,184,75,0.22); --amber-24:rgba(242,184,75,0.24);
+  --amber-35:rgba(242,184,75,0.35);
+  --teal-02:rgba(73,194,180,0.02); --teal-12:rgba(73,194,180,0.12); --teal-14:rgba(73,194,180,0.14);
+  --teal-22:rgba(73,194,180,0.22); --teal-35:rgba(73,194,180,0.35); --teal-40:rgba(73,194,180,0.40);
+  --teal-45:rgba(73,194,180,0.45);
 }
 
 *{ box-sizing:border-box; }
@@ -108,16 +117,16 @@ h1,h2,h3,.display{
   background:var(--surface); color:var(--text-dim); font-weight:600; font-size:14px;
   cursor:pointer; transition:all .15s ease;
 }
-.pill.active{ background:var(--amber); border-color:var(--amber); color:#1a1300; }
+.pill.active{ background:var(--amber); border-color:var(--amber); color:var(--on-amber); }
 .pill.sm{ flex:none; padding:8px 16px; font-size:13px; }
-.pill.accent-teal.active{ background:var(--teal); border-color:var(--teal); color:#04211e; }
+.pill.accent-teal.active{ background:var(--teal); border-color:var(--teal); color:var(--on-teal); }
 
 .content{ padding:0 16px; flex:1; }
 
 /* Day banner */
 .daybanner{
-  background:linear-gradient(135deg, rgba(242,184,75,0.14), rgba(242,184,75,0.02));
-  border:1px solid rgba(242,184,75,0.35);
+  background:linear-gradient(135deg, var(--amber-14), var(--amber-02));
+  border:1px solid var(--amber-35);
   border-radius:var(--radius);
   padding:16px; margin-bottom:14px;
   position:relative;
@@ -133,7 +142,7 @@ h1,h2,h3,.display{
   font-size:11px; text-transform:uppercase; letter-spacing:0.06em;
   padding:4px 10px; border-radius:999px; background:var(--surface2); color:var(--text-dim);
 }
-.statuschip.complete{ background:var(--amber); color:#1a1300; }
+.statuschip.complete{ background:var(--amber); color:var(--on-amber); }
 
 /* Session header card */
 .sesscard{
@@ -185,7 +194,7 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 .setnum{ width:38px; font-size:12px; color:var(--text-dim); flex:none; }
 .stepper{ display:flex; align-items:center; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; flex:1; }
 .stepper.small{ flex:0.85; }
-.stepper.timeinput{ border-color:rgba(73,194,180,0.45); }
+.stepper.timeinput{ border-color:var(--teal-45); }
 .stepper button{
   width:32px; height:38px; flex:none; background:transparent; border:none; color:var(--text);
   font-size:18px; cursor:pointer;
@@ -228,8 +237,8 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 
 /* Stretch card */
 .stretchcard{
-  background:linear-gradient(135deg, rgba(73,194,180,0.12), rgba(73,194,180,0.02));
-  border:1px solid rgba(73,194,180,0.35); border-radius:var(--radius); padding:14px 16px; margin-bottom:20px;
+  background:linear-gradient(135deg, var(--teal-12), var(--teal-02));
+  border:1px solid var(--teal-35); border-radius:var(--radius); padding:14px 16px; margin-bottom:20px;
 }
 .stretchhead{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
 .stretchtitle{ font-family:'Oswald',sans-serif; font-size:15px; letter-spacing:0.03em; }
@@ -261,9 +270,9 @@ textarea:focus{ outline:none; border-color:var(--amber); }
   color:var(--text-dim); font-size:12px; cursor:pointer; position:relative;
 }
 .calcell.strength-pending{ background:var(--surface2); color:var(--text); }
-.calcell.strength-done{ background:rgba(242,184,75,0.22); border-color:var(--amber); color:var(--text); font-weight:700; }
+.calcell.strength-done{ background:var(--amber-22); border-color:var(--amber); color:var(--text); font-weight:700; }
 .calcell.stretch-done{ box-shadow:inset 0 0 0 2px var(--teal); }
-.calcell.today{ outline:2px solid #fff; outline-offset:1px; }
+.calcell.today{ outline:2px solid var(--text); outline-offset:1px; }
 
 /* Bottom nav */
 .bottomnav{
@@ -306,10 +315,10 @@ textarea:focus{ outline:none; border-color:var(--amber); }
   flex:1; padding:9px 12px; border-radius:999px; border:1px solid var(--border);
   background:var(--surface); color:var(--text-dim); font-weight:600; font-size:13px; cursor:pointer;
 }
-.ptab.active{ background:var(--teal); border-color:var(--teal); color:#04211e; }
+.ptab.active{ background:var(--teal); border-color:var(--teal); color:var(--on-teal); }
 .pill.solo{ flex:1; text-align:center; cursor:default; }
-.daybanner.retro{ background:linear-gradient(135deg, rgba(73,194,180,0.14), rgba(73,194,180,0.02)); border-color:rgba(73,194,180,0.4); }
-.statuschip.modified{ background:var(--teal); color:#04211e; }
+.daybanner.retro{ background:linear-gradient(135deg, var(--teal-14), var(--teal-02)); border-color:var(--teal-40); }
+.statuschip.modified{ background:var(--teal); color:var(--on-teal); }
 .statuschip.missed{ background:var(--danger); color:#fff; }
 .wublock,.cdblock{ font-size:12.5px; color:var(--text-dim); font-style:italic; padding:8px 4px; margin-bottom:6px; }
 .cdblock{ margin-top:10px; margin-bottom:0; }
@@ -340,7 +349,7 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 .trendtable th,.trendtable td{ padding:7px 4px; border-bottom:1px solid var(--border); text-align:left; }
 .trendtable th{ color:var(--text-dim); font-size:11px; text-transform:uppercase; letter-spacing:.04em; }
 .toast{ position:fixed; left:50%; bottom:78px; transform:translateX(-50%); z-index:40; max-width:440px; width:calc(100% - 32px); background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; color:var(--text); font-size:13px; box-shadow:0 10px 28px rgba(0,0,0,.35); }
-.updatealert{ margin:0 0 12px; border:1px solid var(--amber); background:rgba(242,184,75,.12); border-radius:var(--radius-sm); padding:12px; display:grid; gap:9px; }
+.updatealert{ margin:0 0 12px; border:1px solid var(--amber); background:var(--amber-12); border-radius:var(--radius-sm); padding:12px; display:grid; gap:9px; }
 .updatealert b{ color:var(--amber); font-size:14px; }
 .updatealert span{ color:var(--text-dim); font-size:12.5px; line-height:1.4; }
 .updatealert .tinyactions{ margin-top:0; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); }
@@ -354,12 +363,12 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 .modalfields textarea{ min-height:120px; text-transform:none; letter-spacing:0; font-weight:500; }
 .modalactions{ display:flex; justify-content:flex-end; gap:10px; margin-top:16px; }
 .modalactions button{ border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface2); color:var(--text); padding:10px 13px; font-weight:800; }
-.modalactions button.primary{ background:var(--teal); border-color:var(--teal); color:#071110; }
+.modalactions button.primary{ background:var(--teal); border-color:var(--teal); color:var(--on-teal); }
 .modalactions button.ghost{ color:var(--text-dim); }
 .helpdiagram{ background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; margin:10px 0 12px; }
 .helpdiagram svg{ width:100%; height:118px; display:block; }
-.helpdiagram .zone{ fill:rgba(242,184,75,.24); stroke:var(--amber); stroke-width:2; }
-.helpdiagram .zone.teal{ fill:rgba(73,194,180,.22); stroke:var(--teal); }
+.helpdiagram .zone{ fill:var(--amber-24); stroke:var(--amber); stroke-width:2; }
+.helpdiagram .zone.teal{ fill:var(--teal-22); stroke:var(--teal); }
 .helpdiagram .line{ stroke:var(--text-dim); stroke-width:5; stroke-linecap:round; fill:none; }
 .helpdiagram text{ fill:var(--text-dim); font-size:10px; font-family:Inter,system-ui,sans-serif; text-transform:uppercase; letter-spacing:.04em; }
 .helpcues{ display:grid; gap:8px; margin-top:10px; }
@@ -374,13 +383,13 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 .peopletabs{ display:flex; gap:8px; padding:12px 16px 0; overflow-x:auto; scrollbar-width:none; }
 .peopletabs::-webkit-scrollbar{ display:none; }
 .personbtn{ flex:0 0 auto; min-width:92px; padding:9px 12px; border-radius:999px; border:1px solid var(--border); background:var(--surface); color:var(--text-dim); font-weight:700; font-size:13px; cursor:pointer; }
-.personbtn.active{ background:var(--amber); border-color:var(--amber); color:#1a1300; }
+.personbtn.active{ background:var(--amber); border-color:var(--amber); color:var(--on-amber); }
 .rangebar{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 0 12px; }
 .rangebar label{ font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em; display:flex; flex-direction:column; gap:5px; }
 .dateinput,.textinput{ background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); padding:9px 10px; font:inherit; width:100%; }
 .tinyactions{ display:grid; grid-template-columns:repeat(auto-fit,minmax(118px,1fr)); gap:8px; margin-top:10px; }
 .tinyactions button{ flex:1; background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:var(--radius-sm); padding:9px; font-size:12px; font-weight:700; cursor:pointer; }
-.addexercise{ margin:14px 0 4px; width:100%; padding:11px; border-radius:var(--radius-sm); border:1px dashed var(--amber); background:rgba(242,184,75,.08); color:var(--amber); font-weight:800; cursor:pointer; }
+.addexercise{ margin:14px 0 4px; width:100%; padding:11px; border-radius:var(--radius-sm); border:1px dashed var(--amber); background:var(--amber-08); color:var(--amber); font-weight:800; cursor:pointer; }
 .dangerbtn{ border-color:rgba(229,99,122,.65) !important; color:var(--danger) !important; background:rgba(229,99,122,.08) !important; }
 .exdelete{ flex:none; background:var(--surface2); border:1px solid var(--border); color:var(--danger); font-size:11.5px; padding:6px 10px; border-radius:999px; cursor:pointer; white-space:nowrap; }
 .themegrid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
@@ -389,7 +398,7 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 .restcheck{ margin-top:10px; }
 .dot.modified{ background:var(--teal); border-color:var(--teal); }
 .dot.missed{ background:var(--danger); border-color:var(--danger); }
-.calcell.modified{ background:rgba(73,194,180,0.22); border-color:var(--teal); color:var(--text); font-weight:700; }
+.calcell.modified{ background:var(--teal-22); border-color:var(--teal); color:var(--text); font-weight:700; }
 .calcell.missed{ background:rgba(229,99,122,0.20); border-color:var(--danger); color:var(--text); font-weight:700; }
 .userlist{ display:flex; flex-direction:column; gap:8px; }
 .userrow{ display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; }
@@ -423,7 +432,7 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 .streakcol b{ display:block; font-family:'Oswald',sans-serif; font-size:20px; color:var(--amber); line-height:1; }
 .streakcol span{ display:block; color:var(--text-dim); font-size:10px; text-transform:uppercase; letter-spacing:.05em; margin-top:3px; }
 .reactbtn{ flex:none; width:34px; height:34px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface); font-size:15px; line-height:1; cursor:pointer; }
-.reactbtn.on{ border-color:var(--amber); background:rgba(242,184,75,.14); }
+.reactbtn.on{ border-color:var(--amber); background:var(--amber-14); }
 
 /* Handoff mode: one lifter at a time */
 .handoffhead{ background:var(--surface); border:1px solid var(--teal); border-radius:var(--radius); padding:18px 16px; margin-bottom:14px; }
@@ -433,7 +442,52 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 .exlist.handoff .groupmember h4{ display:none; }
 .exlist.handoff .stepper .numin{ font-size:20px; padding:11px 2px; }
 .exlist.handoff .stepper button{ height:46px; }
-.handoffpass{ margin:14px 0 4px; width:100%; padding:15px; border-radius:var(--radius-sm); border:1px solid var(--teal); background:rgba(73,194,180,.12); color:var(--teal); font-family:'Oswald',sans-serif; font-size:16px; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; }
+/* Disclosure: a header you tap to open, used for Help, Themes and Feedback */
+.disclose{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:12px; overflow:hidden; }
+.disclosehead{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; background:transparent; border:none; color:var(--text); padding:15px 16px; cursor:pointer; text-align:left; }
+.disclosehead .dtitle{ font-family:'Oswald',sans-serif; font-size:16px; letter-spacing:.03em; text-transform:uppercase; }
+.disclosehead .dnote{ color:var(--text-dim); font-size:11.5px; margin-top:3px; }
+.chev{ flex:none; color:var(--text-dim); font-size:13px; transition:transform .16s ease; }
+.disclose.open .disclosehead > .chev{ transform:rotate(90deg); }
+.disclosebody{ padding:0 16px 15px; }
+.disclose .disclose{ background:var(--surface2); margin-bottom:8px; }
+.disclose .disclose:last-child{ margin-bottom:0; }
+.disclose .disclose .disclosehead{ padding:12px 13px; }
+.disclose .disclose .dtitle{ font-family:'Inter',sans-serif; font-size:13.5px; letter-spacing:0; text-transform:none; font-weight:700; }
+.disclose .disclose .disclosebody{ padding:0 13px 12px; }
+
+/* Theme swatches */
+.themegrid{ grid-template-columns:1fr; }
+.themerow{ display:flex; align-items:center; gap:12px; width:100%; padding:11px 12px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface2); color:var(--text); font-weight:700; font-size:13.5px; cursor:pointer; text-align:left; }
+.themerow.active{ border-color:var(--amber); }
+.swatches{ flex:none; display:flex; gap:0; border-radius:4px; overflow:hidden; border:1px solid var(--border); }
+.swatches i{ display:block; width:17px; height:22px; }
+.themerow .tick{ margin-left:auto; color:var(--amber); font-size:14px; }
+
+/* Rest timer dock: always present on Log, above the tab bar */
+.timerdock{ position:fixed; left:50%; transform:translateX(-50%); bottom:calc(74px + env(safe-area-inset-bottom)); z-index:28; width:min(448px, calc(100% - 32px)); }
+.timerdock .dockidle{ display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+.timerdock .dockidle button{ background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:var(--radius); padding:11px 8px; font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:.03em; text-transform:uppercase; cursor:pointer; box-shadow:0 10px 22px rgba(0,0,0,.28); }
+.timerdock .timerbar{ position:static; left:auto; transform:none; width:100%; }
+
+/* Exercise card: tighter, with an overflow menu */
+.excard{ padding:12px 13px; }
+.exname{ font-size:15.5px; }
+.setlist{ margin-top:10px; gap:7px; }
+.setnum{ font-size:13px; font-weight:700; color:var(--text); }
+.stepper .numin{ font-size:17px; font-weight:600; }
+.exmenubtn{ flex:none; width:30px; height:30px; border-radius:50%; border:1px solid var(--border); background:var(--surface2); color:var(--text-dim); font-size:15px; line-height:1; cursor:pointer; }
+.exmenu{ margin-top:10px; border-top:1px solid var(--border); padding-top:9px; display:grid; gap:6px; }
+.exmenu button{ text-align:left; background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:var(--radius-sm); padding:10px 11px; font-size:13px; font-weight:600; cursor:pointer; }
+.exmenu button.danger{ color:var(--danger); }
+
+/* Day banner as a ruled header rather than a tinted panel */
+.daybanner{ background:none; border:none; border-bottom:1px solid var(--border); border-radius:0; padding:2px 0 12px; margin-bottom:14px; }
+.daybanner.rest,.daybanner.retro,.daybanner.groupbanner{ background:none; border:none; border-bottom:1px solid var(--border); }
+.daybanner .focuslabel{ font-size:23px; }
+.daybanner .statuschip{ top:0; right:0; }
+
+.handoffpass{ margin:14px 0 4px; width:100%; padding:15px; border-radius:var(--radius-sm); border:1px solid var(--teal); background:var(--teal-12); color:var(--teal); font-family:'Oswald',sans-serif; font-size:16px; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -500,7 +554,7 @@ const PROFILES = {
 let DB = { main: {} };
 let STRETCH_DB = {};
 let CUSTOM_PLAN = { main: null };
-let APP_PREFS = { onboarded:false, theme:'strength', primaryUser:'', profiles:{}, friends:{}, tempGroupMembers:[], feedbackQueue:[], reactions:{}, handoffMode:false };
+let APP_PREFS = { onboarded:false, theme:'strength', primaryUser:'', profiles:{}, friends:{}, tempGroupMembers:[], feedbackQueue:[], reactions:{}, handoffMode:false, customTheme:null };
 let saveTimer = null;
 let toastTimer = null;
 let workoutTimerTick = null;
@@ -510,10 +564,39 @@ let groupImportPromptOpen = false;
 const THEMES = {
   strength: { label:'Ember', amber:'#f2b84b', teal:'#49c2b4', bg:'#14161b', surface:'#1d2027', surface2:'#262a33' },
   nocturne: { label:'Nocturne', amber:'#9184d9', teal:'#6fb3c9', bg:'#161826', surface:'#1e2036', surface2:'#262840' },
+  dark: { label:'Dark', amber:'#f2b84b', teal:'#49c2b4', bg:'#0b0c0e', surface:'#15171a', surface2:'#1f2226', text:'#e8eaee', textDim:'#8d95a3', border:'#2b3038' },
+  light: { label:'Light', amber:'#8a5a12', teal:'#16645c', bg:'#f4f2ed', surface:'#ffffff', surface2:'#eae7e0',
+           text:'#201e1d', textDim:'#6b6862', border:'#d5d0c6', onAmber:'#ffffff', onTeal:'#ffffff' },
   forest: { label:'Forest', amber:'#9ccc65', teal:'#26a69a', bg:'#111814', surface:'#1a241e', surface2:'#243228' },
   steel: { label:'Steel', amber:'#7dd3fc', teal:'#a78bfa', bg:'#101419', surface:'#1a2028', surface2:'#252d38' },
   contrast: { label:'Contrast', amber:'#ffd84d', teal:'#5eead4', bg:'#050505', surface:'#151515', surface2:'#242424' },
 };
+
+const THEME_DEFAULTS = { text:'#eceef2', textDim:'#96a0b2', border:'#333947', onAmber:'#1a1300', onTeal:'#04211e' };
+
+function customTheme(){
+  const saved = APP_PREFS.customTheme || {};
+  return Object.assign({
+    label:'Custom', amber:'#f2b84b', teal:'#49c2b4', bg:'#14161b', surface:'#1d2027', surface2:'#262a33'
+  }, saved);
+}
+
+function themeById(themeId){
+  if(themeId === 'custom') return customTheme();
+  return THEMES[themeId] || THEMES.strength;
+}
+
+function themeList(){
+  return Object.entries(THEMES).concat([['custom', customTheme()]]);
+}
+
+function hexToRgba(hex, alpha){
+  const clean = String(hex || '').replace('#', '');
+  const full = clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean;
+  const num = parseInt(full, 16);
+  if(!Number.isFinite(num)) return 'rgba(0,0,0,' + alpha + ')';
+  return 'rgba(' + ((num >> 16) & 255) + ',' + ((num >> 8) & 255) + ',' + (num & 255) + ',' + alpha + ')';
+}
 
 const PRELOADED_LEVELS = {
   beginner: {
@@ -2006,13 +2089,24 @@ function showStretchHelp(index){
 }
 
 function applyTheme(themeId){
-  const theme = THEMES[themeId] || THEMES.strength;
+  const theme = themeById(themeId);
   const root = document.documentElement;
   root.style.setProperty('--amber', theme.amber);
   root.style.setProperty('--teal', theme.teal);
   root.style.setProperty('--bg', theme.bg);
   root.style.setProperty('--surface', theme.surface);
   root.style.setProperty('--surface2', theme.surface2);
+  root.style.setProperty('--text', theme.text || THEME_DEFAULTS.text);
+  root.style.setProperty('--text-dim', theme.textDim || THEME_DEFAULTS.textDim);
+  root.style.setProperty('--border', theme.border || THEME_DEFAULTS.border);
+  root.style.setProperty('--on-amber', theme.onAmber || THEME_DEFAULTS.onAmber);
+  root.style.setProperty('--on-teal', theme.onTeal || THEME_DEFAULTS.onTeal);
+  [2, 8, 12, 14, 22, 24, 35].forEach(step => {
+    root.style.setProperty('--amber-' + String(step).padStart(2, '0'), hexToRgba(theme.amber, step / 100));
+  });
+  [2, 12, 14, 22, 35, 40, 45].forEach(step => {
+    root.style.setProperty('--teal-' + String(step).padStart(2, '0'), hexToRgba(theme.teal, step / 100));
+  });
   root.style.setProperty('color-scheme', 'dark');
   APP_PREFS.theme = themeId;
   if(window.AndroidBridge && typeof window.AndroidBridge.setSystemBarColor === 'function'){
@@ -2521,6 +2615,105 @@ async function clearWorkoutTemplateForCurrentDay(){
   scheduleSave();
   render();
   showToast('Workout template cleared.');
+}
+
+function loggedExerciseNames(){
+  const names = new Set();
+  Object.values(DB).forEach(profileDays => Object.values(profileDays || {}).forEach(day =>
+    Object.values(day || {}).forEach(sess => Object.keys((sess && sess.sets) || {}).forEach(name => names.add(name)))));
+  return Array.from(names).filter(Boolean).sort();
+}
+
+function poolExerciseNames(){
+  const names = new Set();
+  (function walk(node){
+    if(!node || typeof node !== 'object') return;
+    if(Array.isArray(node)){ node.forEach(walk); return; }
+    if(typeof node.n === 'string' && node.n.trim()) names.add(node.n.trim());
+    Object.values(node).forEach(walk);
+  })(PRELOADED_LEVELS);
+  return Array.from(names).sort();
+}
+
+function editableDayTemplate(){
+  const tpl = getSessionTemplate(state.profile, state.date);
+  if(!tpl) return null;
+  const plan = ensureEditablePlan(state.profile);
+  if(!plan.sessions[state.date]) plan.sessions[state.date] = JSON.parse(JSON.stringify(tpl));
+  return plan.sessions[state.date];
+}
+
+async function swapExerciseForCurrentDay(exerciseName){
+  const day = editableDayTemplate();
+  if(!day || !exerciseName) return;
+  const logged = loggedExerciseNames().filter(name => name !== exerciseName);
+  const pool = poolExerciseNames().filter(name => name !== exerciseName && !logged.includes(name));
+  const options = [];
+  if(logged.length) options.push({ value:'', label:'\u2014 Logged before \u2014' });
+  logged.forEach(name => options.push({ value: name, label: name }));
+  if(pool.length) options.push({ value:'', label:'\u2014 Built-in exercises \u2014' });
+  pool.forEach(name => options.push({ value: name, label: name }));
+  if(!options.length){
+    showToast('No other exercises available to swap in.');
+    return;
+  }
+  const result = await showFormDialog({
+    title: 'Swap exercise',
+    message: `Replace ${exerciseName}. Any sets already logged move across to the new exercise.`,
+    fields: [{ name:'target', type:'select', label:'Swap in', options }],
+    submitText: 'Swap'
+  });
+  const target = result && (result.target || '').trim();
+  if(!target) return;
+  (day.exercises || []).forEach(ex => {
+    if((ex.n || ex.name) === exerciseName){
+      if(ex.n != null) ex.n = target;
+      if(ex.name != null) ex.name = target;
+    }
+  });
+  Object.keys(PROFILES).forEach(pid => {
+    const dayLogs = DB[pid] && DB[pid][state.date];
+    if(!dayLogs) return;
+    Object.values(dayLogs).forEach(sess => {
+      if(sess && sess.sets && sess.sets[exerciseName]){
+        sess.sets[target] = sess.sets[exerciseName];
+        delete sess.sets[exerciseName];
+      }
+    });
+  });
+  state.open = state.open || {};
+  delete state.open['exmenu.' + exerciseName];
+  scheduleSave();
+  render();
+  showToast(exerciseName + ' swapped for ' + target + '.');
+}
+
+async function editExerciseTargets(exerciseName){
+  const day = editableDayTemplate();
+  if(!day || !exerciseName) return;
+  const ex = (day.exercises || []).find(item => (item.n || item.name) === exerciseName);
+  if(!ex) return;
+  const result = await showFormDialog({
+    title: 'Edit targets',
+    message: `Target sets and reps for ${exerciseName} on this day.`,
+    fields: [
+      { name:'sets', label:'Sets', value: ex.s == null ? '' : String(ex.s) },
+      { name:'reps', label:'Reps', value: ex.r == null ? '' : String(ex.r) }
+    ],
+    submitText: 'Save'
+  });
+  if(!result) return;
+  if(result.sets) ex.s = result.sets;
+  if(result.reps) ex.r = result.reps;
+  scheduleSave();
+  render();
+  const push = await showConfirmDialog({
+    title: 'Add to plan?',
+    message: `Apply these targets to all ${weekdayName(state.date)} workouts from this date forward?`,
+    confirmText: 'Update Plan',
+    cancelText: 'Today only'
+  });
+  if(push) addCurrentDayToPlan();
 }
 
 async function deleteExerciseForCurrentDay(exerciseName){
@@ -3062,6 +3255,32 @@ function stopWorkoutTimer(record = false){
   render();
 }
 
+function isOpen(key){
+  state.open = state.open || {};
+  return !!state.open[key];
+}
+
+function disclose(key, title, note, body){
+  const open = isOpen(key);
+  return `<div class="disclose ${open ? 'open' : ''}">
+    <button class="disclosehead" data-action="toggleopen" data-open="${escapeHtml(key)}">
+      <span><span class="dtitle">${escapeHtml(title)}</span>${note ? `<span class="dnote">${escapeHtml(note)}</span>` : ''}</span>
+      <span class="chev">&#9656;</span>
+    </button>
+    ${open ? `<div class="disclosebody">${body}</div>` : ''}
+  </div>`;
+}
+
+function renderTimerDock(){
+  if(state.tab !== 'log') return '';
+  const inner = state.timer ? renderTimerBar() : `<div class="dockidle">
+      <button data-action="startresttimer" data-seconds="60">Rest 1:00</button>
+      <button data-action="startresttimer" data-seconds="90">Rest 1:30</button>
+      <button data-action="startresttimer" data-seconds="120">Rest 2:00</button>
+    </div>`;
+  return `<div class="timerdock">${inner}</div>`;
+}
+
 function renderTimerBar(){
   const timer = state.timer;
   if(!timer) return '';
@@ -3157,17 +3376,22 @@ function renderExerciseCard(ex, iso, client){
         <div class="extarget">${escapeHtml(ex.s)} sets \u00d7 ${escapeHtml(ex.r)}</div>
       </div>
       <div class="exactions">
-        <button class="helpbtn" data-action="exercisehelp" data-exercise="${escapeHtml(ex.n)}" aria-label="Exercise help">?</button>
-        <button class="exdelete" data-action="deleteexercise" data-exercise="${escapeHtml(ex.n)}">Delete</button>
         ${last ? `<button class="uselast" data-action="uselast" data-exercise="${escapeHtml(ex.n)}">&#8635; Use last</button>` : ''}
+        <button class="exmenubtn" data-action="toggleopen" data-open="exmenu.${escapeHtml(ex.n)}" aria-label="More actions">&#8943;</button>
       </div>
     </div>
+    ${isOpen('exmenu.' + ex.n) ? `<div class="exmenu">
+      <button data-action="addset" data-exercise="${escapeHtml(ex.n)}">Add set</button>
+      <button data-action="swapexercise" data-exercise="${escapeHtml(ex.n)}">Swap exercise</button>
+      <button data-action="edittargets" data-exercise="${escapeHtml(ex.n)}">Edit target sets and reps</button>
+      <button data-action="exercisehelp" data-exercise="${escapeHtml(ex.n)}">How to do this exercise</button>
+      <button class="danger" data-action="deleteexercise" data-exercise="${escapeHtml(ex.n)}">Delete exercise</button>
+    </div>` : ''}
     ${ex.note ? `<div class="exnote">${escapeHtml(ex.note)}</div>` : ''}
     ${refText ? `<div class="exref">${escapeHtml(refText)}</div>` : ''}
     <div class="setlist">
       ${setsArr.map((s,i) => renderSetRow(ex, i, s)).join('')}
     </div>
-    <button class="addset" data-action="addset" data-exercise="${escapeHtml(ex.n)}">+ Add set</button>
   </div>`;
 }
 
@@ -3191,8 +3415,13 @@ function renderGroupExerciseCard(ex, iso, members){
 function renderSessionHeader(iso, client, showCooldown){
   const sess = getSession(iso, client);
   const status = computeStatus(sess);
-  return `
-  <div class="sesscard">
+  const summary = [
+    sess.bodyWeight ? sess.bodyWeight + ' lb' : '',
+    sess.sleep ? sess.sleep + ' hrs sleep' : '',
+    status
+  ].filter(Boolean).join(' \u00b7 ');
+  return disclose('sessionheader', 'Session details', summary, `
+  <div class="sesscard" style="margin-bottom:0">
     <div class="sessrow">
       <label>Body weight (lb)<input type="number" inputmode="decimal" class="numin wide" data-field="bodyWeight" value="${sess.bodyWeight}"></label>
       <label>Sleep (hrs)<input type="number" inputmode="decimal" class="numin wide" data-field="sleep" value="${sess.sleep}"></label>
@@ -3215,13 +3444,8 @@ function renderSessionHeader(iso, client, showCooldown){
     <div class="statusrow">
       ${['Scheduled','Complete','Modified','Missed'].map(s => `<button class="pill sm ${status===s?'active':''}" data-action="setstatus" data-val="${s}">${s}</button>`).join('')}
     </div>
-    <div class="timerquick">
-      <button data-action="startresttimer" data-seconds="60">Rest 1:00</button>
-      <button data-action="startresttimer" data-seconds="90">Rest 1:30</button>
-      <button data-action="startresttimer" data-seconds="120">Rest 2:00</button>
-    </div>
     <label class="noteslabel">Workout notes<textarea data-field="notes" placeholder="How it felt, swaps made...">${escapeHtml(sess.notes)}</textarea></label>
-  </div>`;
+  </div>`);
 }
 
 function renderRestDayMetrics(iso, client){
@@ -3287,11 +3511,6 @@ function renderHandoffView(iso, tpl, members){
       <div class="handoffwho">${escapeHtml(active)}</div>
       <div class="handoffmeta">${escapeHtml(tpl.label)} &middot; lifter ${idx + 1} of ${members.length}</div>
     </div>
-    <div class="timerquick">
-      <button data-action="startresttimer" data-seconds="60">Rest 1:00</button>
-      <button data-action="startresttimer" data-seconds="90">Rest 1:30</button>
-      <button data-action="startresttimer" data-seconds="120">Rest 2:00</button>
-    </div>
     <div class="exlist handoff">${tpl.exercises.map(ex => renderGroupExerciseCard(ex, iso, [active])).join('')}</div>
     <button class="handoffpass" data-action="handoffpass">Pass to ${escapeHtml(next)}</button>
     <button class="addexercise" data-action="completegroupworkout">Workout complete - send to group</button>`;
@@ -3311,11 +3530,6 @@ function renderLogView(){
           <div class="focuslabel">${escapeHtml(tpl.label)}</div>
           <div class="weekcue">Group: ${escapeHtml(members.join(', '))} | Device: ${escapeHtml(state.deviceOwner || state.client)}</div>
           <div class="statuschip modified">Group</div>
-        </div>
-        <div class="timerquick">
-          <button data-action="startresttimer" data-seconds="60">Rest 1:00</button>
-          <button data-action="startresttimer" data-seconds="90">Rest 1:30</button>
-          <button data-action="startresttimer" data-seconds="120">Rest 2:00</button>
         </div>
         <button class="addexercise" data-action="clearworkout">Delete prefilled workout</button>
         <div class="exlist">${tpl.exercises.map(ex => renderGroupExerciseCard(ex, iso, members)).join('')}</div>
@@ -3617,6 +3831,7 @@ function prHistory(client){
 function renderTrendsView(){
   const client = state.client;
   const bw = collectMetricSeries(client, 'bodyWeight');
+  const sleep = collectMetricSeries(client, 'sleep');
   const vol = weeklyVolumeSeries(client);
   const cons = weeklySessionSeries(client);
   const prs = prHistory(client);
@@ -3626,12 +3841,14 @@ function renderTrendsView(){
       <label>Start <input class="dateinput" type="date" data-field="trendStart" value="${escapeHtml(state.trendStart)}"></label>
       <label>End <input class="dateinput" type="date" data-field="trendEnd" value="${escapeHtml(state.trendEnd)}"></label>
     </div>
+    <div class="panel"><div class="paneltitle">Body weight</div>${renderChart(bw)}
+      <div class="muted">${bw.length ? `${bw.length} weigh-ins, latest ${bw[bw.length-1].value} lb` : 'No weigh-ins logged.'}</div></div>
+    <div class="panel"><div class="paneltitle">Sleep</div>${renderChart(sleep, 'teal')}
+      <div class="muted">${sleep.length ? `${sleep.length} entries, latest ${sleep[sleep.length-1].value} hrs` : 'No sleep entries logged.'}</div></div>
     <div class="panel"><div class="paneltitle">Volume per week</div>${renderChart(vol)}
       <div class="muted">${vol.length ? `${vol.length} weeks logged, latest ${vol[vol.length-1].value.toLocaleString()} lb moved` : 'No sets logged in this range.'}</div></div>
     <div class="panel"><div class="paneltitle">Consistency</div>${renderChart(cons, 'teal')}
       <div class="muted">${cons.length ? `${consAvg} sessions per week on average` : 'No completed sessions in this range.'}</div></div>
-    <div class="panel"><div class="paneltitle">Body weight</div>${renderChart(bw)}
-      <div class="muted">${bw.length ? `${bw.length} weigh-ins, latest ${bw[bw.length-1].value} lb` : 'No weigh-ins logged.'}</div></div>
     <div class="panel"><div class="paneltitle">Personal records</div>
       ${prs.length ? `<table class="trendtable"><thead><tr><th>Lift</th><th>Weight</th><th>Date</th></tr></thead><tbody>${prs.slice(0, 12).map(p => `<tr><td>${escapeHtml(p.name)}</td><td>${p.value}</td><td>${p.date.slice(5)}</td></tr>`).join('')}</tbody></table>` : `<div class="muted">No records set in this range.</div>`}
     </div>`;
@@ -3651,15 +3868,14 @@ function renderPlanView(){
         <div class="kv"><span>Sessions</span><b>${sessions}</b></div>
       </div>
     </div>
-    <div class="panel"><div class="paneltitle">Import</div>
+    ${disclose('plan.import', 'Import', 'Plan, workout data or a nearby file', `
       <div class="tinyactions">
         <button data-action="import">Import Plan</button>
         <button data-action="importworkoutdata">Import Workout Data</button>
         <button data-action="nearbyreceive">Nearby Receive</button>
       </div>
-      <div class="muted">Import a workout plan, import completed workout data, or receive a nearby file directly from another Gym Tracker app.</div>
-    </div>
-    <div class="panel"><div class="paneltitle">Export</div>
+      <div class="muted">Importing a plan merges into the saved range and keeps dates that already have logged workouts.</div>`)}
+    ${disclose('plan.export', 'Export', 'Data, plan, templates and sharing', `
       <div class="rangebar">
         <label>Start <input class="dateinput" type="date" data-field="exportStart" value="${escapeHtml(state.exportStart)}"></label>
         <label>End <input class="dateinput" type="date" data-field="exportEnd" value="${escapeHtml(state.exportEnd)}"></label>
@@ -3675,30 +3891,29 @@ function renderPlanView(){
         <button data-action="nearbydata">Nearby Send Data</button>
         <button data-action="nearbyplan">Nearby Send Plan</button>
       </div>
-      <div class="muted">Export plans or workout results for the selected date range, including all data when group-member history needs review.</div>
-    </div>
-    ${renderGoogleDrivePanel()}
-    <div class="panel"><div class="paneltitle">Plan tools</div>
-      <div class="tinyactions"><button data-action="preloadedplan">Use Preloaded Plan</button><button data-action="repeatmonth">Repeat Next Month</button></div>
+      <div class="muted">Exports cover the selected date range. Export All Data ignores the range when group history needs review.</div>`)}
+    ${disclose('plan.more', 'Plan tools', 'Preloaded plans, repeat, cloud', `
+      <div class="tinyactions">
+        <button data-action="preloadedplan">Use Preloaded Plan</button>
+        <button data-action="repeatmonth">Repeat Next Month</button>
+      </div>
       <div class="muted">Apply a built-in one-month plan to the current month, or repeat the current routine into the following month.</div>
-    </div>`;
+      ${renderGoogleDrivePanel()}`)}`;
 }
 
-function renderHelpView(){
-  return `
-    <div class="panel helpintro"><div class="paneltitle">Help</div>
-      <div class="muted">Use this guide to understand what each tab does, how workout plans and workout data are different, and where to go for common tasks.</div>
-    </div>
-    <div class="panel"><div class="paneltitle">Quick start</div>
-      <div class="helplist">
+const HELP_INTRO = `Use this guide to understand what each tab does, how workout plans and workout data are different, and where to go for common tasks.`;
+
+const HELP_TOPICS = [
+  { title:`Quick start`, body:`
+<div class="helplist">
         <div class="helpitem"><b>First setup</b><span>Enter your name, birthday, and sex. Then import a plan, create a blank plan in the app, or choose a preloaded one-month plan.</span></div>
         <div class="helpitem"><b>Choose a preloaded plan</b><span>Select difficulty, days per week, and workout length. The app builds the matching one-month plan for the current month.</span></div>
         <div class="helpitem"><b>Load a premade day</b><span>On a blank or rest day, choose difficulty, workout length, a labeled daily workout, and the calendar day to place it.</span></div>
         <div class="helpitem"><b>Daily use</b><span>Open Log, enter weight and reps for each set, add body weight or sleep if desired, and mark the workout done, modified, or missed.</span></div>
       </div>
-    </div>
-    <div class="panel"><div class="paneltitle">User</div>
-      <div class="helplist">
+` },
+  { title:`User`, body:`
+<div class="helplist">
         <div class="helpitem"><b>User information</b><span>View and update the account name, birthdate, sex, email, and phone number for the person using this app.</span></div>
         <div class="helpitem"><b>Age</b><span>Age is calculated from the saved birthdate and updates automatically.</span></div>
         <div class="helpitem"><b>Friends</b><span>Use the Friends tab to save workout partners, show your QR friend code, scan another user's QR code, receive a code through Nearby, or add a temporary group member for today's workout only.</span></div>
@@ -3708,39 +3923,45 @@ function renderHelpView(){
         <div class="helpitem"><b>Theme</b><span>Change the app color scheme for this device.</span></div>
         <div class="helpitem"><b>App updates</b><span>The app checks for newer GitHub-hosted releases automatically and shows an update notice when one is available. The User tab still has a manual Check for Update button, and Android will ask you to approve any APK install.</span></div>
       </div>
-    </div>
-    <div class="panel"><div class="paneltitle">Log</div>
-      <div class="helplist">
+` },
+  { title:`Log`, body:`
+<div class="helplist">
         <div class="helpitem"><b>Workout entry</b><span>Use the date controls at the top to move between days. Enter each set's weight and reps, notes, body weight, sleep, and workout status.</span></div>
         <div class="helpitem"><b>Add or delete exercises</b><span>Add an exercise to the selected day, delete an exercise from that day's workout, clear the prefilled workout, or load a single premade day.</span></div>
         <div class="helpitem"><b>Add to plan</b><span>After changing a day's exercises, use Add to Plan to update that weekday from the selected date forward.</span></div>
         <div class="helpitem"><b>Rest days</b><span>For blank days, mark the day as a rest day so the app knows no workout was planned.</span></div>
       </div>
-    </div>
-    <div class="panel"><div class="paneltitle">Progress</div>
-      <div class="helplist">
+` },
+  { title:`Progress`, body:`
+<div class="helplist">
         <div class="helpitem"><b>Calendar view</b><span>Review completed, pending, modified, missed, and stretch-completed days across the active plan range.</span></div>
         <div class="helpitem"><b>Status meanings</b><span>Done means completed as planned, modified means changed but completed, missed means the workout was not completed, and pending means planned but not logged yet.</span></div>
       </div>
-    </div>
-    <div class="panel"><div class="paneltitle">Trends</div>
-      <div class="helplist">
+` },
+  { title:`Trends`, body:`
+<div class="helplist">
         <div class="helpitem"><b>Date range</b><span>Set start and end dates to narrow body weight, sleep, and exercise load charts.</span></div>
         <div class="helpitem"><b>Exercise load</b><span>The exercise dropdown only shows exercises with logged data inside the selected date range.</span></div>
         <div class="helpitem"><b>Group workout data</b><span>Trends use the selected user's own entries and group entries that match the selected device owner rules.</span></div>
       </div>
-    </div>
-    <div class="panel"><div class="paneltitle">Plan</div>
-      <div class="helplist">
+` },
+  { title:`Plan`, body:`
+<div class="helplist">
         <div class="helpitem"><b>Import plan</b><span>Load a spreadsheet workout plan. Importing a new plan merges into the saved plan range and keeps dates that already have logged workout data.</span></div>
         <div class="helpitem"><b>Import workout data</b><span>Load completed workout data from another user or device, then choose the date or range the file should update.</span></div>
         <div class="helpitem"><b>Export workout data</b><span>Choose a date range and export completed logs for review, progress tracking, or plan adjustments.</span></div>
         <div class="helpitem"><b>Export plan</b><span>Export the planned routine for a date range so another user can import the same workout plan.</span></div>
         <div class="helpitem"><b>Plan templates</b><span>Export a blank workbook when building a new plan from scratch, or export the sample workbook to see a complete import-ready example.</span></div>
-        <div class="helpitem"><b>Sharing</b><span>Use Android share when sending a file through another app, Nearby Send and Receive when both users are present, or the Android file receiver when someone opens a shared Gym Tracker workbook on the device.</span></div>
+        <div class="helpitem"><b>Sharing</b><span>Use Android share when sending a file through another app, Nearby Send and Receive when both users are present, or the Android file receiver when someone opens a shared Knurl workbook on the device.</span></div>
         <div class="helpitem"><b>Repeat next month</b><span>Copy the current routine into the following month without copying completed workout logs.</span></div>
       </div>
-    </div>`;
+` }
+];
+
+function renderHelpView(){
+  return disclose('help', 'Help', HELP_TOPICS.length + ' topics', `
+    <div class="muted" style="margin-bottom:10px">${HELP_INTRO}</div>
+    ${HELP_TOPICS.map(topic => disclose('help.' + topic.title, topic.title, '', topic.body)).join('')}`);
 }
 
 function currentAppVersion(){
@@ -3769,7 +3990,7 @@ function renderUpdatePanel(){
   const latest = update.latestVersionName
     ? `Latest ${escapeHtml(update.latestVersionName)} (${escapeHtml(String(update.latestVersionCode || ''))})`
     : 'Latest not checked';
-  const message = update.message || 'Check GitHub for a newer Gym Tracker release.';
+  const message = update.message || 'Check GitHub for a newer Knurl release.';
   const notes = update.releaseNotes ? `<div class="muted">${escapeHtml(update.releaseNotes)}</div>` : '';
   return `
     <div class="panel"><div class="paneltitle">App Update</div>
@@ -3796,7 +4017,7 @@ function renderUpdateAlert(){
   const update = availableUpdateStatus();
   if(!update) return '';
   const version = update.latestVersionName || `version ${update.latestVersionCode}`;
-  const message = update.message || 'A newer Gym Tracker APK is available.';
+  const message = update.message || 'A newer Knurl APK is available.';
   const notes = update.releaseNotes ? `<span>${escapeHtml(update.releaseNotes)}</span>` : '';
   return `
     <div class="updatealert">
@@ -3832,8 +4053,7 @@ function renderFeedbackPanel(){
   ensurePrefsShape();
   const queued = APP_PREFS.feedbackQueue.length;
   const pending = APP_PREFS.feedbackQueue.filter(item => item.status !== 'sent').length;
-  return `
-    <div class="panel"><div class="paneltitle">Feedback</div>
+  return disclose('feedback', 'Feedback', queued ? queued + ' saved' : '', `
       <div class="kvgrid">
         <div class="kv"><span>Queue</span><b>${queued} saved</b></div>
         <div class="kv"><span>GitHub</span><b>${FEEDBACK_ENDPOINT ? 'Issue relay configured' : 'Issue relay needed'}</b></div>
@@ -3846,8 +4066,22 @@ function renderFeedbackPanel(){
         <button data-action="submitfeedbackqueue">Submit Saved (${pending})</button>
         <button data-action="exportfeedbackqueue">Export Queue</button>
       </div>
-      <div class="muted">${FEEDBACK_ENDPOINT ? `Feedback is completed in the app and submitted to GitHub Issues in ${GITHUB_FEEDBACK_REPO}.` : `Feedback is completed in the app and saved locally as GitHub Issue payloads for ${GITHUB_FEEDBACK_REPO}. Automatic submission needs a secure GitHub issue relay or user GitHub OAuth; the APK must not contain a GitHub token.`}</div>
-    </div>`;
+      <div class="muted">${FEEDBACK_ENDPOINT ? `Feedback is completed in the app and submitted to GitHub Issues in ${GITHUB_FEEDBACK_REPO}.` : `Feedback is completed in the app and saved locally as GitHub Issue payloads for ${GITHUB_FEEDBACK_REPO}. Automatic submission needs a secure GitHub issue relay or user GitHub OAuth; the APK must not contain a GitHub token.`}</div>`);
+}
+
+function renderThemePanel(){
+  const activeId = APP_PREFS.theme || 'strength';
+  const active = themeById(activeId);
+  const rows = themeList().map(([id, theme]) => `
+    <button class="themerow ${activeId === id ? 'active' : ''}" data-action="settheme" data-theme="${id}">
+      <span class="swatches"><i style="background:${theme.bg}"></i><i style="background:${theme.surface2}"></i><i style="background:${theme.amber}"></i><i style="background:${theme.teal}"></i></span>
+      <span>${escapeHtml(theme.label)}</span>
+      ${activeId === id ? '<span class="tick">&#10003;</span>' : ''}
+    </button>`).join('');
+  return disclose('theme', 'Theme', escapeHtml(active.label), `
+    <div class="themegrid">${rows}</div>
+    <div class="tinyactions"><button data-action="editcustomtheme">Edit Custom Theme</button></div>
+    <div class="muted">Custom lets you set the accent, ground and surface colours yourself.</div>`);
 }
 
 function renderUsersView(){
@@ -3873,9 +4107,7 @@ function renderUsersView(){
       <div class="tinyactions"><button data-action="editaccount">Edit Information</button></div>
       <div class="muted">Email and phone are optional and are included when you share your friend code.</div>
     </div>
-    <div class="panel"><div class="paneltitle">Theme</div>
-      <div class="themegrid">${Object.entries(THEMES).map(([id, theme]) => `<button class="themebtn ${APP_PREFS.theme===id?'active':''}" data-action="settheme" data-theme="${id}">${escapeHtml(theme.label)}</button>`).join('')}</div>
-    </div>
+    ${renderThemePanel()}
     ${renderHelpView()}
     ${renderFeedbackPanel()}
     ${renderUpdatePanel()}`;
@@ -4022,7 +4254,7 @@ function appendRecoveryDiagnosticsToBody(body, diagnostics, storageInventory){
     body,
     '',
     '## Diagnostic Attachments',
-    'GitHub API file uploads are not available from this in-app relay, so Gym Tracker embedded the useful diagnostic files below. Full workout history is not uploaded automatically.',
+    'GitHub API file uploads are not available from this in-app relay, so Knurl embedded the useful diagnostic files below. Full workout history is not uploaded automatically.',
     '',
     '<details><summary>recovery-diagnostics.json</summary>',
     '',
@@ -4096,8 +4328,8 @@ async function createFeedback(kind){
   const result = await showFormDialog({
     title: cfg.title,
     message: kind === 'recovery'
-      ? `This will stay inside Gym Tracker and be saved as a GitHub Issue payload for ${GITHUB_FEEDBACK_REPO}. Diagnostics include metadata only, not full workout history.`
-      : `This will stay inside Gym Tracker and be saved as a GitHub Issue payload for ${GITHUB_FEEDBACK_REPO}.`,
+      ? `This will stay inside Knurl and be saved as a GitHub Issue payload for ${GITHUB_FEEDBACK_REPO}. Diagnostics include metadata only, not full workout history.`
+      : `This will stay inside Knurl and be saved as a GitHub Issue payload for ${GITHUB_FEEDBACK_REPO}.`,
     fields,
     submitText:'Save Feedback',
     cancelText:'Cancel'
@@ -4225,13 +4457,13 @@ function showFriendCode(){
 
 function shareFriendCode(){
   const code = friendCodeText();
-  const text = `${state.client}'s Gym Tracker friend code:\n${code}`;
+  const text = `${state.client}'s Knurl friend code:\n${code}`;
   if(window.AndroidBridge && typeof window.AndroidBridge.shareText === 'function'){
-    window.AndroidBridge.shareText('Gym Tracker Friend Code', text);
+    window.AndroidBridge.shareText('Knurl Friend Code', text);
     return;
   }
   if(navigator.share){
-    navigator.share({title:'Gym Tracker Friend Code', text}).catch(() => showFriendCode());
+    navigator.share({title:'Knurl Friend Code', text}).catch(() => showFriendCode());
     return;
   }
   showFriendCode();
@@ -4259,7 +4491,7 @@ function applyFriendPayload(payload, options = {}){
 async function importFriendCodeDialog(){
   const result = await showFormDialog({
     title: 'Paste Friend Code',
-    message: 'Paste the code from another Gym Tracker user.',
+    message: 'Paste the code from another Knurl user.',
     fields: [
       {name:'code', label:'Friend code', type:'text', required:true}
     ],
@@ -4410,7 +4642,6 @@ function render(){
     <input type="file" id="importPlanFile" accept=".xlsx" style="display:none">
     <input type="file" id="importDataFile" accept=".xlsx" style="display:none">
     <div class="content">
-      ${renderTimerBar()}
       ${renderUpdateAlert()}
       ${state.tab === 'log' ? renderLogView() : state.tab === 'progress' ? renderProgressView() : state.tab === 'plan' ? renderPlanView() : state.tab === 'friends' ? renderFriendsView() : renderUsersView()}
     </div>
@@ -4421,9 +4652,10 @@ function render(){
       <button class="navtab ${state.tab==='progress'?'active':''}" data-action="tab" data-tab="progress">Progress</button>
       <button class="navtab ${state.tab==='plan'?'active':''}" data-action="tab" data-tab="plan">Plan</button>
     </div>
+    ${renderTimerDock()}
   `;
   const shell = document.querySelector('.app-shell');
-  if(shell) shell.classList.toggle('timeron', !!state.timer);
+  if(shell) shell.classList.toggle('timeron', state.tab === 'log' || !!state.timer);
 }
 
 function handleInputChange(e){
@@ -4462,6 +4694,37 @@ async function handleClick(e){
   const action = btn.dataset.action;
   const iso = state.date, client = state.client;
 
+  if(action === 'toggleopen'){
+    state.open = state.open || {};
+    const key = btn.dataset.open;
+    state.open[key] = !state.open[key];
+    render();
+    return;
+  }
+  if(action === 'editcustomtheme'){
+    const current = customTheme();
+    const result = await showFormDialog({
+      title: 'Custom theme',
+      message: 'Six-digit hex colours, for example #f2b84b.',
+      fields: [
+        { name:'amber', label:'Accent', value: current.amber },
+        { name:'teal', label:'Second accent', value: current.teal },
+        { name:'bg', label:'Ground', value: current.bg },
+        { name:'surface', label:'Surface', value: current.surface },
+        { name:'surface2', label:'Raised surface', value: current.surface2 }
+      ],
+      submitText: 'Save theme'
+    });
+    if(!result) return;
+    const clean = {};
+    ['amber','teal','bg','surface','surface2'].forEach(key => {
+      const value = (result[key] || '').trim();
+      if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value)) clean[key] = value;
+    });
+    APP_PREFS.customTheme = Object.assign({ label:'Custom' }, current, clean);
+    setTheme('custom');
+    return;
+  }
   if(action === 'progresstab'){ state.progressTab = btn.dataset.sub; render(); return; }
   if(action === 'grouphandoff'){
     APP_PREFS.handoffMode = !APP_PREFS.handoffMode;
@@ -4617,6 +4880,12 @@ async function handleClick(e){
   }
   else if(action === 'clearworkout'){
     clearWorkoutTemplateForCurrentDay();
+  }
+  else if(action === 'swapexercise'){
+    await swapExerciseForCurrentDay(btn.dataset.exercise);
+  }
+  else if(action === 'edittargets'){
+    await editExerciseTargets(btn.dataset.exercise);
   }
   else if(action === 'deleteexercise'){
     deleteExerciseForCurrentDay(btn.dataset.exercise);
@@ -4913,7 +5182,7 @@ window.onUpdateStatus = function(payload){
   if(available && Number(APP_PREFS.lastAnnouncedUpdateVersionCode || 0) < latestCode){
     APP_PREFS.lastAnnouncedUpdateVersionCode = latestCode;
     savePrefs();
-    showToast(`Gym Tracker ${available.latestVersionName || latestCode} is available.`);
+    showToast(`Knurl ${available.latestVersionName || latestCode} is available.`);
   }
   render();
 };
@@ -5233,13 +5502,13 @@ function buildBlankPlanTemplateWorkbook(){
   const exercises = [['Date','Exercise','TargetSets','TargetRepsTime','Note','Order']];
   const stretches = [['Date','Time','Name','Focus','Note','Order','Removed']];
   const instructions = [
-    ['Gym Tracker Blank Plan Template'],
+    ['Knurl Blank Plan Template'],
     ['Fill PlanSessions with one row per workout date. Use YYYY-MM-DD dates.'],
     ['Fill PlanExercises with one row per exercise. Date must match a PlanSessions date.'],
     ['Use TargetRepsTime for reps or timed targets, for example 10-12 or 30-45 sec.'],
     ['PlanStretches is optional. Leave it blank if the plan does not include stretching.'],
     ['Do not rename the sheet tabs or header row labels.'],
-    ['Import this workbook from Gym Tracker > Plan > Import Plan.'],
+    ['Import this workbook from Knurl > Plan > Import Plan.'],
     [''],
     ['Example PlanSessions row'],
     ['2026-08-10','Monday','Upper Body','custom','5 min walk','Stretch','Blank template example','No',''],
@@ -5280,7 +5549,7 @@ function buildSamplePlanWorkbook(){
     ['DateMin',monday],
     ['DateMax',friday],
     ['HasStretchTab','Yes'],
-    ['Source','Gym Tracker sample plan']
+    ['Source','Knurl sample plan']
   ];
   const sessions = [
     ['Date','Day','Label','Kind','Warmup','Cooldown','SourceTitle','StretchOnly','StretchRemoved'],
@@ -5310,8 +5579,8 @@ function buildSamplePlanWorkbook(){
     [friday,'8 min','World greatest stretch','Full body','Move through each side twice',1,'']
   ];
   const instructions = [
-    ['Gym Tracker Sample Plan'],
-    ['This workbook is already in GymTrackerPlanV1 format and can be imported from Gym Tracker > Plan > Import Plan.'],
+    ['Knurl Sample Plan'],
+    ['This workbook is already in GymTrackerPlanV1 format and can be imported from Knurl > Plan > Import Plan.'],
     ['Edit dates, labels, exercises, sets, reps/time, and notes as needed.'],
     ['Timed exercises can use values like 30-45 sec. During logging, enter 0 for weight and record the time held.'],
     ['AI-generated plans should keep these sheet names and header labels exactly.'],

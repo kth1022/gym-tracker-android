@@ -43,6 +43,13 @@ Add new ideas below using this format:
   - Notes: When logging a superset, allow a set entry to capture two separate weights instead of only one weight value. This should preserve the normal single-exercise set entry workflow while supporting paired movements in the same set.
   - Priority: medium
 
+- [ ] Online friend streak sharing and encouragement reactions
+  - GitHub Issue: #19
+  - Category: feature
+  - Source: maintainer planning
+  - Notes: Let friends opt in to share lightweight workout streak summaries, including workouts completed this week and consecutive workout weeks. Add in-app encouragement reactions such as thumbs up and fire, backed by a Cloudflare Worker and D1. Firebase Cloud Messaging should be used only if push notifications are added.
+  - Priority: medium
+
 ## Later Ideas
 
 Use this section for useful ideas that are not ready for the next release.

@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gym Tracker Friend Streaks Cloud Setup Guide</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #14161b;
+      --panel: #1d2027;
+      --panel2: #262a33;
+      --text: #f4f1e8;
+      --muted: #b8b0a2;
+      --accent: #f2b84b;
+      --line: rgba(255,255,255,.12);
+      --good: #49c2b4;
+      --warn: #e5a84b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    main {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 32px 20px 56px;
+    }
+    h1, h2, h3 { line-height: 1.18; margin: 0 0 12px; }
+    h1 { font-size: 34px; color: var(--accent); }
+    h2 { font-size: 24px; margin-top: 34px; border-top: 1px solid var(--line); padding-top: 24px; }
+    h3 { font-size: 18px; margin-top: 22px; color: var(--good); }
+    p { margin: 0 0 14px; }
+    a { color: var(--accent); }
+    code, pre {
+      font-family: Consolas, "Courier New", monospace;
+      background: #0f1116;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    code { padding: 2px 5px; }
+    pre { padding: 14px; overflow: auto; }
+    .hero, .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      margin: 16px 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .badge {
+      display: inline-block;
+      border: 1px solid var(--line);
+      background: var(--panel2);
+      border-radius: 999px;
+      padding: 4px 10px;
+      margin: 4px 6px 4px 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .callout {
+      border-left: 4px solid var(--warn);
+      background: rgba(229,168,75,.10);
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+    ol, ul { padding-left: 22px; }
+    li { margin: 8px 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { color: var(--accent); background: var(--panel2); }
+    tr:last-child td { border-bottom: 0; }
+  </style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <h1>Gym Tracker Friend Streaks Cloud Setup Guide</h1>
+    <p>This guide covers the setup needed for online friend streak sharing and encouragement reactions in Gym Tracker.</p>
+    <p><span class="badge">Backlog issue #19</span><span class="badge">Cloudflare Worker</span><span class="badge">D1 database</span><span class="badge">Optional Firebase Cloud Messaging</span></p>
+  </section>
+
+  <section>
+    <h2>Recommended Architecture</h2>
+    <p>Keep the app local-first. Sync only lightweight social data to the cloud, not full workout history.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Cloudflare Worker API</h3>
+        <p>Public HTTPS API used by the Android app for friend identity, friend links, streak summaries, and reactions.</p>
+      </div>
+      <div class="card">
+        <h3>Cloudflare D1</h3>
+        <p>Small relational database for users, devices, friendships, streak summaries, reactions, and optional push tokens.</p>
+      </div>
+      <div class="card">
+        <h3>Firebase Cloud Messaging</h3>
+        <p>Optional push notification channel. Use this only when reactions should appear as Android notifications outside the app.</p>
+      </div>
+    </div>
+    <div class="callout">
+      <strong>Privacy rule:</strong> The cloud service should store summary data only: display name, current week workout count, weekly streak, last workout date, reaction messages, and device notification token if push is enabled.
+    </div>
+  </section>
+
+  <section>
+    <h2>Data To Sync</h2>
+    <table>
+      <thead><tr><th>Data</th><th>Purpose</th><th>Share Full Workout Details?</th></tr></thead>
+      <tbody>
+        <tr><td>Friend profile</td><td>Display name and public friend code.</td><td>No</td></tr>
+        <tr><td>Streak summary</td><td>Workouts this week, consecutive active weeks, and last workout date.</td><td>No</td></tr>
+        <tr><td>Friendship link</td><td>Controls who can view summaries and send reactions.</td><td>No</td></tr>
+        <tr><td>Reaction</td><td>Thumbs up, fire, and short encouragement events.</td><td>No</td></tr>
+        <tr><td>FCM token</td><td>Only needed for push notifications.</td><td>No</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Phase 1: Cloudflare Setup</h2>
+    <ol>
+      <li>Confirm Wrangler is installed and authenticated on the development PC.</li>
+      <li>Create a new Worker project in the repo, for example <code>cloudflare/gym-tracker-social-api</code>.</li>
+      <li>Create a D1 database, for example <code>gym-tracker-social</code>.</li>
+      <li>Bind the D1 database to the Worker as <code>SOCIAL_DB</code>.</li>
+      <li>Create a local migration file for the tables listed in this guide.</li>
+      <li>Run the migration locally for testing.</li>
+      <li>Run the migration remotely when the API is ready for a real test.</li>
+      <li>Deploy the Worker to a <code>workers.dev</code> URL first.</li>
+      <li>After testing, optionally add a custom route/domain.</li>
+    </ol>
+
+    <h3>Suggested Worker Commands</h3>
+    <pre>npm create cloudflare@latest -- gym-tracker-social-api
+cd gym-tracker-social-api
+npx wrangler d1 create gym-tracker-social
+npx wrangler d1 migrations create gym-tracker-social initial_social_schema
+npx wrangler d1 migrations apply gym-tracker-social --local
+npx wrangler d1 migrations apply gym-tracker-social --remote
+npx wrangler deploy</pre>
+
+    <h3>Suggested D1 Tables</h3>
+    <pre>users (
+  id TEXT PRIMARY KEY,
+  display_name TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+devices (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  device_public_id TEXT NOT NULL,
+  device_secret_hash TEXT NOT NULL,
+  fcm_token TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+friendships (
+  id TEXT PRIMARY KEY,
+  user_a_id TEXT NOT NULL,
+  user_b_id TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+streak_summaries (
+  user_id TEXT PRIMARY KEY,
+  week_id TEXT NOT NULL,
+  workouts_this_week INTEGER NOT NULL,
+  consecutive_weeks INTEGER NOT NULL,
+  last_workout_date TEXT,
+  updated_at TEXT NOT NULL
+);
+
+reactions (
+  id TEXT PRIMARY KEY,
+  from_user_id TEXT NOT NULL,
+  to_user_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  message TEXT,
+  workout_date TEXT,
+  created_at TEXT NOT NULL,
+  read_at TEXT
+);</pre>
+  </section>
+
+  <section>
+    <h2>Phase 2: API Design</h2>
+    <table>
+      <thead><tr><th>Endpoint</th><th>Method</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>/v1/register</code></td><td>POST</td><td>Create or recover the user's cloud identity and device record.</td></tr>
+        <tr><td><code>/v1/friend-code</code></td><td>GET</td><td>Return a QR/invite payload for adding a friend.</td></tr>
+        <tr><td><code>/v1/friends/accept</code></td><td>POST</td><td>Create a friendship after QR or invite-code exchange.</td></tr>
+        <tr><td><code>/v1/streak</code></td><td>POST</td><td>Publish the signed-in user's streak summary after workouts change.</td></tr>
+        <tr><td><code>/v1/friends</code></td><td>GET</td><td>Return friends and their visible streak summaries.</td></tr>
+        <tr><td><code>/v1/reactions</code></td><td>POST</td><td>Send thumbs up, fire, or another allowed reaction to a friend.</td></tr>
+        <tr><td><code>/v1/inbox</code></td><td>GET</td><td>Fetch unread reactions for the current user.</td></tr>
+        <tr><td><code>/v1/inbox/read</code></td><td>POST</td><td>Mark reactions as read.</td></tr>
+        <tr><td><code>/v1/push-token</code></td><td>POST</td><td>Save or rotate the device FCM token when push is enabled.</td></tr>
+      </tbody>
+    </table>
+    <p>Do not put a master API secret inside the APK. Each install should generate a device secret, register it once, and sign future requests or present a scoped token issued by the Worker.</p>
+  </section>
+
+  <section>
+    <h2>Phase 3: Android App Changes</h2>
+    <ol>
+      <li>Add a Friend Sync opt-in toggle in the Friends or User section.</li>
+      <li>Generate a cloud user ID and device ID after opt-in.</li>
+      <li>Add QR/invite-code exchange for online friendship linking.</li>
+      <li>After a workout is completed, compute and upload the user's streak summary.</li>
+      <li>Change the Friends roster to show workouts this week, weekly streak, and last workout date.</li>
+      <li>Add thumbs up and fire reaction buttons for online friends.</li>
+      <li>Add an in-app reaction inbox or notification area.</li>
+      <li>Cache the last fetched friend summaries locally so the Friends tab still works offline.</li>
+      <li>Show clear offline or sync-failed status without blocking workout logging.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Phase 4: Firebase Setup For Push Notifications</h2>
+    <p>This phase is optional. The first version can work by showing reactions inside Gym Tracker whenever the app opens or syncs.</p>
+    <ol>
+      <li>Create or open a Firebase project in the Firebase console.</li>
+      <li>Add an Android app to the Firebase project using package name <code>com.homeops.gymtracker</code>.</li>
+      <li>Download <code>google-services.json</code>.</li>
+      <li>Place <code>google-services.json</code> in the Android app module root: <code>app/google-services.json</code>.</li>
+      <li>Add the Google Services Gradle plugin and Firebase Messaging dependency to the Android project.</li>
+      <li>Add a Firebase messaging service class to capture FCM registration tokens.</li>
+      <li>When FCM creates or refreshes a token, send it to the Cloudflare Worker at <code>/v1/push-token</code>.</li>
+      <li>Create a Firebase service account credential for server-side sending.</li>
+      <li>Store the service account JSON in Cloudflare as a Worker secret. Do not commit it to GitHub and do not embed it in the APK.</li>
+      <li>Update the Worker so sending a reaction can optionally call the FCM HTTP v1 API for the recipient's device token.</li>
+      <li>Test push from Firebase console first, then test app-to-app reaction push through the Worker.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Secrets And Files</h2>
+    <table>
+      <thead><tr><th>Item</th><th>Where It Goes</th><th>Secret?</th></tr></thead>
+      <tbody>
+        <tr><td><code>google-services.json</code></td><td><code>app/google-services.json</code></td><td>No, but keep it app-specific.</td></tr>
+        <tr><td>Firebase service account JSON</td><td>Cloudflare Worker secret, such as <code>FIREBASE_SERVICE_ACCOUNT_JSON</code></td><td>Yes. Never commit.</td></tr>
+        <tr><td>Device secret</td><td>Generated by the app and stored in Android local storage</td><td>Yes. Never display.</td></tr>
+        <tr><td>D1 database ID</td><td><code>wrangler.jsonc</code> or <code>wrangler.toml</code></td><td>No.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Owner Setup Checklist</h2>
+    <ol>
+      <li>Confirm the Cloudflare account and <code>workers.dev</code> subdomain are available.</li>
+      <li>Approve a Worker name, recommended: <code>gym-tracker-social-api</code>.</li>
+      <li>Approve a D1 database name, recommended: <code>gym-tracker-social</code>.</li>
+      <li>Decide whether version 1 should be in-app only or include Android push notifications.</li>
+      <li>If push notifications are wanted, create the Firebase project and Android app.</li>
+      <li>If push notifications are wanted, provide <code>google-services.json</code> for placement in the app.</li>
+      <li>If push notifications are wanted, provide the Firebase service account JSON through secure input so it can be added as a Cloudflare secret.</li>
+      <li>Approve privacy wording for friend streak sharing opt-in.</li>
+      <li>Test with two phones or two app profiles before publishing.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Suggested MVP Scope</h2>
+    <p>Build this in two releases:</p>
+    <ol>
+      <li><strong>Release A:</strong> Cloudflare Worker, D1, friend streak sync, and in-app reactions/inbox. No Firebase push yet.</li>
+      <li><strong>Release B:</strong> Add Firebase Cloud Messaging for push notifications after the social API is stable.</li>
+    </ol>
+    <p>This reduces risk because the app remains useful even when the phone is offline, and push notification setup does not block the core feature.</p>
+  </section>
+
+  <section>
+    <h2>Test Plan</h2>
+    <ol>
+      <li>Install the test APK on two devices or two test users.</li>
+      <li>Opt in to friend streak sharing on both.</li>
+      <li>Exchange friend codes.</li>
+      <li>Complete a workout on device A.</li>
+      <li>Open Friends on device B and verify workouts this week and weekly streak update.</li>
+      <li>Send thumbs up from device B to device A.</li>
+      <li>Verify device A sees the reaction in-app.</li>
+      <li>If Firebase is enabled, verify device A receives a push notification while the app is backgrounded.</li>
+      <li>Disable network and verify normal workout logging still works.</li>
+      <li>Reconnect and verify queued streak/reaction sync completes.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Official References</h2>
+    <ul>
+      <li><a href="https://developers.cloudflare.com/workers/get-started/guide/">Cloudflare Workers CLI get started</a></li>
+      <li><a href="https://developers.cloudflare.com/workers/wrangler/">Cloudflare Wrangler docs</a></li>
+      <li><a href="https://developers.cloudflare.com/d1/get-started/">Cloudflare D1 get started</a></li>
+      <li><a href="https://developers.cloudflare.com/d1/worker-api/d1-database/">Cloudflare D1 Worker binding API</a></li>
+      <li><a href="https://developers.cloudflare.com/workers/configuration/secrets/">Cloudflare Worker secrets</a></li>
+      <li><a href="https://firebase.google.com/docs/android/setup">Add Firebase to your Android project</a></li>
+      <li><a href="https://firebase.google.com/docs/cloud-messaging/android/get-started">Get started with Firebase Cloud Messaging for Android</a></li>
+      <li><a href="https://firebase.google.com/docs/cloud-messaging/send/v1-api">Send messages with the FCM HTTP v1 API</a></li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

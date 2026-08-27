@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Knurl: six crossing diagonals, the crosshatch of a barbell knurl.
+     Art sits inside the 72dp adaptive-icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group>
+        <path android:pathData="M40.74,46.42 L54.00,59.68" android:strokeColor="#9184D9" android:strokeWidth="2.84" android:strokeLineCap="round" />
+        <path android:pathData="M48.32,46.42 L61.58,59.68" android:strokeColor="#9184D9" android:strokeWidth="2.84" android:strokeLineCap="round" />
+        <path android:pathData="M55.89,46.42 L69.16,59.68" android:strokeColor="#9184D9" android:strokeWidth="2.84" android:strokeLineCap="round" />
+        <path android:pathData="M40.74,61.58 L54.00,48.32" android:strokeColor="#9184D9" android:strokeWidth="2.84" android:strokeLineCap="round" />
+        <path android:pathData="M48.32,61.58 L61.58,48.32" android:strokeColor="#9184D9" android:strokeWidth="2.84" android:strokeLineCap="round" />
+        <path android:pathData="M55.89,61.58 L69.16,48.32" android:strokeColor="#9184D9" android:strokeWidth="2.84" android:strokeLineCap="round" />
+    </group>
+</vector>

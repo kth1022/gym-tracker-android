@@ -880,6 +880,18 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void setSystemBarColor(String hex) {
+            runOnUiThread(() -> {
+                try {
+                    int color = Color.parseColor(hex);
+                    getWindow().setStatusBarColor(color);
+                    getWindow().setNavigationBarColor(color);
+                } catch (Exception ignored) {
+                }
+            });
+        }
+
+        @JavascriptInterface
         public void openUrl(String url) {
             runOnUiThread(() -> {
                 try {

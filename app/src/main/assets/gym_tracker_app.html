@@ -1035,7 +1035,8 @@ function ensurePrefsShape(){
   APP_PREFS.tempGroupMembers = APP_PREFS.tempGroupMembers || [];
   APP_PREFS.profileDefs = APP_PREFS.profileDefs || {};
   APP_PREFS.feedbackQueue = APP_PREFS.feedbackQueue || [];
-  APP_PREFS.social = {
+  if(!APP_PREFS.social || typeof APP_PREFS.social !== 'object') APP_PREFS.social = {};
+  const socialDefaults = {
     enabled: false,
     endpoint: SOCIAL_ENDPOINT,
     userId: '',
@@ -1047,8 +1048,13 @@ function ensurePrefsShape(){
     inbox: [],
     lastSyncAt: '',
     lastError: '',
-    ...(APP_PREFS.social || {})
+    registeredAt: ''
   };
+  Object.keys(socialDefaults).forEach(key => {
+    if(APP_PREFS.social[key] == null) APP_PREFS.social[key] = socialDefaults[key];
+  });
+  if(!Array.isArray(APP_PREFS.social.cloudFriends)) APP_PREFS.social.cloudFriends = [];
+  if(!Array.isArray(APP_PREFS.social.inbox)) APP_PREFS.social.inbox = [];
   APP_PREFS.dismissedUpdateVersionCode = Number(APP_PREFS.dismissedUpdateVersionCode || 0);
   APP_PREFS.lastAnnouncedUpdateVersionCode = Number(APP_PREFS.lastAnnouncedUpdateVersionCode || 0);
 }
@@ -5218,18 +5224,19 @@ async function socialSyncNow(renderAfter = true){
   }
 }
 
-async function addSocialFriendDialog(){
+function normalizeSocialFriendCode(value){
+  const text = String(value || '').trim().toUpperCase();
+  const code = text.startsWith('KNURLCLOUD:') ? text.slice('KNURLCLOUD:'.length).trim() : text;
+  return /^[A-Z0-9]{8}$/.test(code) ? code : '';
+}
+
+async function addOnlineFriendByCode(value){
   if(!socialEnabled()){
     await enableSocialSync();
   }
-  const result = await showFormDialog({
-    title: 'Add Online Friend',
-    message: 'Paste the 8-character Knurl cloud friend code.',
-    fields: [{name:'code', label:'Friend code', type:'text', required:true}],
-    submitText: 'Add Friend'
-  });
-  if(!result || !result.code) return;
-  const data = await socialFetch('/v1/friends/accept', {method:'POST', auth:true, body:{friendCode:result.code}});
+  const friendCode = normalizeSocialFriendCode(value);
+  if(!friendCode) throw new Error('Enter an 8-character cloud friend code.');
+  const data = await socialFetch('/v1/friends/accept', {method:'POST', auth:true, body:{friendCode}});
   const friend = data.friend || {};
   APP_PREFS.friends[friend.displayName || 'Friend'] = {
     ...(APP_PREFS.friends[friend.displayName || 'Friend'] || {}),
@@ -5246,6 +5253,41 @@ async function addSocialFriendDialog(){
   savePrefs();
   render();
   showToast(`${friend.displayName || 'Friend'} added online.`);
+}
+
+async function addSocialFriendDialog(){
+  if(!socialEnabled()){
+    await enableSocialSync();
+  }
+  const result = await showFormDialog({
+    title: 'Add Online Friend',
+    message: 'Paste the 8-character Knurl cloud friend code.',
+    fields: [{name:'code', label:'Friend code', type:'text', required:true}],
+    submitText: 'Add Friend'
+  });
+  if(!result || !result.code) return;
+  await addOnlineFriendByCode(result.code);
+}
+
+async function showCloudFriendCode(){
+  if(!socialEnabled()){
+    await enableSocialSync();
+  }
+  const social = socialState();
+  const code = normalizeSocialFriendCode(social.friendCode);
+  if(!code) throw new Error('Cloud code is not registered yet.');
+  const payload = `KNURLCLOUD:${code}`;
+  const qr = window.AndroidBridge && typeof window.AndroidBridge.makeQrDataUrl === 'function'
+    ? window.AndroidBridge.makeQrDataUrl(payload)
+    : '';
+  showContentDialog({
+    title: 'Cloud Friend Code',
+    html: `
+      ${qr ? `<img class="friendqr" src="${escapeHtml(qr)}" alt="Cloud friend QR code">` : ''}
+      <div class="helpmeta"><div><b>Cloud code:</b> ${escapeHtml(code)}</div></div>
+      <textarea class="codebox" readonly>${escapeHtml(code)}</textarea>
+      <div class="muted">Another user can scan this QR code or enter the 8-character code from Online Friend Sync.</div>`
+  });
 }
 
 function cloudFriendForLocal(friend){
@@ -5306,7 +5348,9 @@ function renderSocialPanel(){
       </div>
       <div class="tinyactions">
         <button data-action="${ready ? 'socialsync' : 'enablesocial'}">${ready ? 'Sync Now' : 'Enable Online Sync'}</button>
-        <button data-action="addsocialfriend">Add Online Friend</button>
+        <button data-action="showcloudcode" ${social.friendCode ? '' : 'disabled'}>Show My QR</button>
+        <button data-action="scanonlinefriend">Scan QR</button>
+        <button data-action="addsocialfriend">Enter Code</button>
         <button data-action="socialinboxread" ${inbox.length ? '' : 'disabled'}>Mark Reactions Read</button>
         <button data-action="disablesocial" ${registered ? '' : 'disabled'}>Turn Off</button>
       </div>
@@ -5562,6 +5606,35 @@ async function handleClick(e){
     } catch(error) {
       const social = socialState();
       social.lastError = error.message || 'Could not add online friend.';
+      savePrefs();
+      render();
+      showToast(social.lastError);
+    }
+    return;
+  }
+  if(action === 'showcloudcode'){
+    try {
+      await showCloudFriendCode();
+    } catch(error) {
+      const social = socialState();
+      social.lastError = error.message || 'Could not show cloud code.';
+      savePrefs();
+      render();
+      showToast(social.lastError);
+    }
+    return;
+  }
+  if(action === 'scanonlinefriend'){
+    try {
+      if(!socialEnabled()){
+        showToast('Registering online sync...');
+        await enableSocialSync();
+      }
+      if(window.AndroidBridge && typeof window.AndroidBridge.scanFriendCode === 'function') window.AndroidBridge.scanFriendCode();
+      else showToast('QR scanning is only available in the Android app.');
+    } catch(error) {
+      const social = socialState();
+      social.lastError = error.message || 'Could not start online friend scan.';
       savePrefs();
       render();
       showToast(social.lastError);
@@ -7199,8 +7272,13 @@ async function importWorkbookBase64(base64, filename = 'Shared_Workbook.xlsx', m
   }
 }
 window.importWorkbookBase64 = importWorkbookBase64;
-window.importFriendPayload = payload => {
+window.importFriendPayload = async payload => {
   try {
+    const cloudCode = normalizeSocialFriendCode(payload);
+    if(cloudCode){
+      await addOnlineFriendByCode(cloudCode);
+      return;
+    }
     applyFriendPayload(payload);
   } catch(e){
     showToast('Friend code import failed.');

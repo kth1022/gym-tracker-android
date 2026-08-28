@@ -14,8 +14,8 @@ android {
         applicationId "com.homeops.gymtracker"
         minSdk 26
         targetSdk 36
-        versionCode 23
-        versionName "1.8-test7"
+        versionCode 24
+        versionName "1.8-test8"
     }
 }
 

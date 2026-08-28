@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Knurl</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -90,7 +90,7 @@ h1,h2,h3,.display{
 .topbar{
   position:sticky; top:0; z-index:20;
   display:flex; align-items:center; justify-content:space-between;
-  padding:calc(14px + env(safe-area-inset-top)) 16px 10px;
+  padding:calc(14px + max(env(safe-area-inset-top), 26px)) 16px 10px;
   background:linear-gradient(180deg, var(--bg) 70%, transparent);
 }
 .navbtn{
@@ -353,7 +353,7 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 .updatealert b{ color:var(--amber); font-size:14px; }
 .updatealert span{ color:var(--text-dim); font-size:12.5px; line-height:1.4; }
 .updatealert .tinyactions{ margin-top:0; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); }
-.modalbackdrop{ position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.58); display:flex; align-items:flex-end; justify-content:center; padding:16px; }
+.modalbackdrop{ position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.58); display:flex; align-items:flex-end; justify-content:center; padding:calc(16px + max(env(safe-area-inset-top), 26px)) 16px calc(16px + env(safe-area-inset-bottom)); }
 .modalbox{ width:min(480px,100%); max-height:calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow:auto; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 18px 50px rgba(0,0,0,.45); padding:18px; }
 .modalbox h2{ margin:0 0 6px; font-size:19px; line-height:1.2; }
 .modaltext{ color:var(--text-dim); font-size:13px; line-height:1.45; margin-bottom:14px; }
@@ -445,7 +445,8 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 /* ---------- Knurl screens (design doc turns 4 and 5) ---------- */
 
 /* Screen header */
-.khead{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px 12px; }
+.khead{ display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:calc(12px + max(env(safe-area-inset-top), 26px)) 16px 12px; }
 .kheadleft{ display:flex; align-items:center; gap:10px; min-width:0; }
 .kavatar{ width:34px; height:34px; border-radius:50%; background:var(--amber); color:var(--on-amber); font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center; flex:none; }
 .kavatar.big{ width:46px; height:46px; font-size:19px; }
@@ -497,6 +498,10 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 .kdock .kmid b{ font:600 10px/1 Inter,sans-serif; color:var(--teal); letter-spacing:.12em; text-transform:uppercase; display:block; }
 .kbar{ height:4px; border-radius:2px; background:var(--surface2); margin-top:7px; }
 .kbar i{ display:block; height:100%; border-radius:2px; background:var(--teal); }
+body.hasdock .toast{ bottom:calc(148px + env(safe-area-inset-bottom)); }
+.kdock.over{ border-color:var(--amber); }
+.kdock.over .kclock{ color:var(--amber); }
+.kdock.over .kbar i{ background:var(--amber); }
 .kdock button{ flex:none; height:34px; min-width:34px; padding:0 9px; border-radius:var(--radius-sm); border:1px solid var(--teal); background:transparent; color:var(--teal); font-size:11px; font-weight:800; cursor:pointer; }
 
 /* Tab bar: icon over label */
@@ -3378,11 +3383,20 @@ function updateTimerDom(){
     stopWorkoutTimerTick();
     return;
   }
+  const timer = state.timer;
+  const elapsed = timerElapsed();
   const clock = document.querySelector('[data-timer-clock]');
-  if(clock) clock.textContent = state.timer.mode === 'rest' ? formatTimer(timerRemaining()) : formatTimer(timerElapsed());
-  if(state.timer.mode === 'rest' && timerRemaining() <= 0){
-    stopWorkoutTimerTick();
-    showToast('Rest timer finished.');
+  if(clock) clock.textContent = formatTimer(elapsed);
+  const target = timer.duration || 0;
+  const dock = document.querySelector('.kdock');
+  const bar = dock && dock.querySelector('.kbar i');
+  if(bar) bar.style.width = (target > 0 ? Math.min(100, (elapsed / target) * 100) : 100).toFixed(0) + '%';
+  if(target > 0 && elapsed >= target){
+    if(dock) dock.classList.add('over');
+    if(!timer.notified){
+      timer.notified = true;
+      showToast(timer.mode === 'rest' ? 'Rest target reached.' : 'Target time reached.');
+    }
   }
 }
 
@@ -3489,17 +3503,18 @@ function renderTimerDock(){
 function renderRestDock(){
   const timer = state.timer;
   if(!timer) return '';
-  const rest = timer.mode === 'rest';
-  const value = rest ? timerRemaining(timer) : timerElapsed(timer);
-  const pct = rest && timer.seconds ? Math.max(0, Math.min(100, (value / timer.seconds) * 100)) : 100;
-  return `<div class="kdock">
-    <div class="kclock" data-timer-clock>${formatTimer(value)}</div>
+  const elapsed = timerElapsed(timer);
+  const target = timer.duration || 0;
+  const over = target > 0 && elapsed >= target;
+  const pct = target > 0 ? Math.max(0, Math.min(100, (elapsed / target) * 100)) : 100;
+  return `<div class="kdock${over ? ' over' : ''}">
+    <div class="kclock" data-timer-clock>${formatTimer(elapsed)}</div>
     <div class="kmid">
-      <b>${escapeHtml(rest ? 'Rest' : (timer.label || 'Timer'))}</b>
+      <b>${escapeHtml(timer.mode === 'rest' ? 'Rest' : (timer.label || 'Timed set'))}${target ? ' \u00b7 ' + formatTimer(target) : ''}</b>
       <div class="kbar"><i style="width:${pct.toFixed(0)}%"></i></div>
     </div>
     ${timer.mode === 'exercise' ? '<button data-action="stoptimerrecord">Record</button>' : ''}
-    <button data-action="stoptimer">Stop</button>
+    <button data-action="stoptimer">${timer.mode === 'exercise' ? 'Stop' : 'Done'}</button>
   </div>`;
 }
 
@@ -3586,8 +3601,10 @@ function renderScreenHead(){
     </div>`;
   }
   if(state.tab === 'progress'){
+    const shownYear = dateFromIso(state.date).getFullYear();
+    const thisYear = dateFromIso(todayIso()).getFullYear();
     return `<div class="khead">
-      <div class="ktitle">${escapeHtml(monthName(state.date))}</div>
+      <div class="ktitle">${escapeHtml(monthName(state.date))}${shownYear === thisYear ? '' : ' ' + shownYear}</div>
       <div class="knav">
         <button data-action="prevmonth" aria-label="Previous month">\u2039</button>
         <button data-action="nextmonth" aria-label="Next month">\u203a</button>
@@ -4010,15 +4027,16 @@ function computeStats(client){
 }
 
 function renderCalendarGrid(client){
-  const profile = currentProfile();
+  const shown = dateFromIso(state.date);
+  const first = isoDate(new Date(shown.getFullYear(), shown.getMonth(), 1));
+  const last = isoDate(new Date(shown.getFullYear(), shown.getMonth() + 1, 0));
+  const db = DB[state.profile] || {};
   const cells = [];
-  let d = profile.dateMin;
-  // pad leading blanks so week columns align (Mon start)
-  const firstDow = dateFromIso(d).getDay(); // 0 Sun..6 Sat
-  const leadBlanks = firstDow === 0 ? 6 : firstDow - 1;
-  for(let i=0;i<leadBlanks;i++) cells.push(`<div class="calcell blank"></div>`);
-  while(d <= profile.dateMax){
-    const db = DB[state.profile];
+  const firstDow = dateFromIso(first).getDay(); // 0 Sun..6 Sat
+  const lead = firstDow === 0 ? 6 : firstDow - 1;
+  for(let i = 0; i < lead; i++) cells.push('<div class="calcell blank"></div>');
+  let d = first;
+  while(d <= last){
     const tpl = getSessionTemplate(state.profile, d);
     const sess = db[d] && db[d][client];
     const st = STRETCH_DB[d] && STRETCH_DB[d][client];
@@ -4032,10 +4050,11 @@ function renderCalendarGrid(client){
       else cls += ' strength-pending';
     }
     if(st && st.done) cls += ' stretch-done';
-    const dayNum = dateFromIso(d).getDate();
-    cells.push(`<button class="${cls}" data-action="jumpdate" data-date="${d}">${dayNum}</button>`);
+    cells.push(`<button class="${cls}" data-action="jumpdate" data-date="${d}">${dateFromIso(d).getDate()}</button>`);
     d = addDays(d, 1);
   }
+  const trail = (7 - ((lead + cells.length - lead) % 7)) % 7;
+  for(let i = 0; i < trail; i++) cells.push('<div class="calcell blank"></div>');
   return `<div class="calgrid">${cells.join('')}</div>`;
 }
 
@@ -5385,6 +5404,7 @@ function render(){
   `;
   const shell = document.querySelector('.app-shell');
   if(shell) shell.classList.toggle('timeron', state.tab === 'log' || !!state.timer);
+  document.body.classList.toggle('hasdock', state.tab === 'log');
 }
 
 function handleInputChange(e){
@@ -5570,14 +5590,13 @@ async function handleClick(e){
     state.trendExercise = '';
     render();
   }
-  else if(action === 'prevmonth'){
+  else if(action === 'prevmonth' || action === 'nextmonth'){
+    const step = action === 'prevmonth' ? -1 : 1;
     const d = dateFromIso(state.date);
-    state.date = clampIso(isoDate(new Date(d.getFullYear(), d.getMonth() - 1, 1)), currentProfile().dateMin, currentProfile().dateMax);
-    render();
-  }
-  else if(action === 'nextmonth'){
-    const d = dateFromIso(state.date);
-    state.date = clampIso(isoDate(new Date(d.getFullYear(), d.getMonth() + 1, 1)), currentProfile().dateMin, currentProfile().dateMax);
+    const target = new Date(d.getFullYear(), d.getMonth() + step, 1);
+    const lastOfTarget = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    target.setDate(Math.min(d.getDate(), lastOfTarget));
+    state.date = isoDate(target);
     render();
   }
   else if(action === 'prevday'){ state.date = shiftDate(state.date, -1); render(); }

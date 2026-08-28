@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "knurl-social-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-28",
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "vars": {
+    "APP_NAME": "Knurl"
+  },
+  "d1_databases": [
+    {
+      "binding": "SOCIAL_DB",
+      "database_name": "knurl-social",
+      "database_id": "56f3889f-b17c-411d-a4d5-fae82f822e39",
+      "migrations_dir": "./migrations"
+    }
+  ]
+}

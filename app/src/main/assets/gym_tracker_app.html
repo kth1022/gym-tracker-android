@@ -675,6 +675,7 @@ const DEFAULT_PROFILE_ID = 'main';
 const GOOGLE_CLOUD_READY = false;
 const GITHUB_FEEDBACK_REPO = 'kth1022/gym-tracker-android';
 const FEEDBACK_ENDPOINT = 'https://gym-tracker-feedback-relay.kth1022.workers.dev/api/gym-tracker/feedback';
+const SOCIAL_ENDPOINT = 'https://knurl-social-api.kth1022.workers.dev';
 const PROFILES = {
   main: {
     id:'main', name:'Main Plan', clients:[],
@@ -687,11 +688,13 @@ const PROFILES = {
 let DB = { main: {} };
 let STRETCH_DB = {};
 let CUSTOM_PLAN = { main: null };
-let APP_PREFS = { onboarded:false, theme:'strength', primaryUser:'', profiles:{}, friends:{}, tempGroupMembers:[], feedbackQueue:[], reactions:{}, handoffMode:false, customTheme:null };
+let APP_PREFS = { onboarded:false, theme:'strength', primaryUser:'', profiles:{}, friends:{}, tempGroupMembers:[], feedbackQueue:[], reactions:{}, handoffMode:false, customTheme:null, social:null };
 let saveTimer = null;
 let toastTimer = null;
 let workoutTimerTick = null;
 let updateCheckTimer = null;
+let socialSyncTimer = null;
+let socialSyncRunning = false;
 let groupImportPromptOpen = false;
 
 const THEMES = {
@@ -1027,6 +1030,20 @@ function ensurePrefsShape(){
   APP_PREFS.tempGroupMembers = APP_PREFS.tempGroupMembers || [];
   APP_PREFS.profileDefs = APP_PREFS.profileDefs || {};
   APP_PREFS.feedbackQueue = APP_PREFS.feedbackQueue || [];
+  APP_PREFS.social = {
+    enabled: false,
+    endpoint: SOCIAL_ENDPOINT,
+    userId: '',
+    deviceId: '',
+    deviceSecret: '',
+    displayName: '',
+    friendCode: '',
+    cloudFriends: [],
+    inbox: [],
+    lastSyncAt: '',
+    lastError: '',
+    ...(APP_PREFS.social || {})
+  };
   APP_PREFS.dismissedUpdateVersionCode = Number(APP_PREFS.dismissedUpdateVersionCode || 0);
   APP_PREFS.lastAnnouncedUpdateVersionCode = Number(APP_PREFS.lastAnnouncedUpdateVersionCode || 0);
 }
@@ -3205,6 +3222,7 @@ function scheduleSave(){
       }
       await storageAPI.set(PROFILES[DEFAULT_PROFILE_ID].stretchStorageKey, JSON.stringify(STRETCH_DB));
       await storageAPI.set('app-prefs', JSON.stringify(APP_PREFS));
+      queueSocialSync();
     } catch(e){ console.error('save failed', e); }
   }, 500);
 }
@@ -4977,11 +4995,283 @@ async function addTemporaryMemberDialog(){
   showToast(`${name} added for today's workout.`);
 }
 
+function socialState(){
+  ensurePrefsShape();
+  return APP_PREFS.social;
+}
+
+function socialEnabled(){
+  const social = socialState();
+  return !!(social.enabled && social.endpoint && social.userId && social.deviceId && social.deviceSecret);
+}
+
+function randomToken(bytes = 24){
+  const data = new Uint8Array(bytes);
+  crypto.getRandomValues(data);
+  return Array.from(data, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function ensureSocialIdentity(){
+  const social = socialState();
+  if(!social.userId) social.userId = 'user-' + crypto.randomUUID();
+  if(!social.deviceId) social.deviceId = 'device-' + crypto.randomUUID();
+  if(!social.deviceSecret) social.deviceSecret = randomToken(32);
+  social.endpoint = (social.endpoint || SOCIAL_ENDPOINT).replace(/\/+$/, '');
+  social.displayName = state.client || APP_PREFS.primaryUser || 'Knurl User';
+  return social;
+}
+
+function socialHeaders(){
+  const social = socialState();
+  return {
+    'Content-Type': 'application/json',
+    'X-Knurl-User-Id': social.userId,
+    'X-Knurl-Device-Id': social.deviceId,
+    'X-Knurl-Device-Secret': social.deviceSecret
+  };
+}
+
+async function socialFetch(path, options = {}){
+  const social = socialState();
+  const endpoint = (social.endpoint || SOCIAL_ENDPOINT).replace(/\/+$/, '');
+  const response = await fetch(endpoint + path, {
+    method: options.method || 'GET',
+    headers: options.auth ? socialHeaders() : {'Content-Type':'application/json'},
+    body: options.body ? JSON.stringify(options.body) : undefined
+  });
+  const data = await response.json().catch(() => ({}));
+  if(!response.ok || data.ok === false) throw new Error(data.error || `Social sync failed (${response.status})`);
+  return data;
+}
+
+async function enableSocialSync(){
+  const social = ensureSocialIdentity();
+  const payload = {
+    userId: social.userId,
+    deviceId: social.deviceId,
+    deviceSecret: social.deviceSecret,
+    displayName: social.displayName
+  };
+  const data = await socialFetch('/v1/register', {method:'POST', body:payload});
+  social.enabled = true;
+  social.userId = data.user.id;
+  social.friendCode = data.user.friendCode;
+  social.displayName = data.user.displayName;
+  social.lastError = '';
+  await socialSyncNow(false);
+  savePrefs();
+}
+
+function disableSocialSync(){
+  const social = socialState();
+  social.enabled = false;
+  social.lastError = '';
+  savePrefs();
+  render();
+}
+
+function queueSocialSync(){
+  if(!socialEnabled() || socialSyncRunning) return;
+  if(socialSyncTimer) clearTimeout(socialSyncTimer);
+  socialSyncTimer = setTimeout(() => {
+    socialSyncNow(true).catch(error => {
+      const social = socialState();
+      social.lastError = error.message || 'Social sync failed.';
+      savePrefs();
+      render();
+    });
+  }, 1200);
+}
+
+function isoWeekNumber(iso){
+  const d = dateFromIso(iso);
+  d.setHours(0,0,0,0);
+  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+  const week1 = new Date(d.getFullYear(), 0, 4);
+  return 1 + Math.round((((d - week1) / 86400000) - 3 + ((week1.getDay() + 6) % 7)) / 7);
+}
+
+function socialWeekId(iso = todayIso()){
+  const d = dateFromIso(iso);
+  d.setHours(0,0,0,0);
+  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+  return `${d.getFullYear()}-W${pad(isoWeekNumber(iso))}`;
+}
+
+function completedDatesForPerson(name, profileId = findProfileForPerson(name) || state.profile){
+  const db = DB[profileId] || {};
+  return Object.keys(db).filter(iso => {
+    const sess = db[iso] && db[iso][name];
+    return sess && computeStatus(sess) === 'Complete';
+  }).sort();
+}
+
+function socialStreakSummary(){
+  const name = state.client || APP_PREFS.primaryUser;
+  const dates = completedDatesForPerson(name, state.profile);
+  const todayWeek = weekStartIso(todayIso());
+  const workoutsThisWeek = dates.filter(iso => iso >= todayWeek && iso < addDays(todayWeek, 7)).length;
+  const weeks = new Set(dates.map(iso => weekStartIso(iso)));
+  let consecutiveWeeks = 0;
+  for(let wk = weekStartIso(todayIso()); weeks.has(wk); wk = addDays(wk, -7)) consecutiveWeeks++;
+  return {
+    weekId: socialWeekId(todayIso()),
+    workoutsThisWeek,
+    consecutiveWeeks,
+    lastWorkoutDate: dates.length ? dates[dates.length - 1] : ''
+  };
+}
+
+async function publishSocialStreak(){
+  if(!socialEnabled()) return;
+  await socialFetch('/v1/streak', {method:'POST', auth:true, body:socialStreakSummary()});
+}
+
+async function refreshSocialFriends(){
+  if(!socialEnabled()) return;
+  const social = socialState();
+  const friends = await socialFetch('/v1/friends', {auth:true});
+  const inbox = await socialFetch('/v1/inbox', {auth:true});
+  social.cloudFriends = friends.friends || [];
+  social.inbox = inbox.reactions || [];
+  social.lastSyncAt = new Date().toISOString();
+  social.lastError = '';
+  mergeCloudFriendsToLocal();
+}
+
+function mergeCloudFriendsToLocal(){
+  const social = socialState();
+  (social.cloudFriends || []).forEach(friend => {
+    const name = friend.displayName || 'Friend';
+    APP_PREFS.friends[name] = {
+      ...(APP_PREFS.friends[name] || {}),
+      type: 'GymTrackerFriendV1',
+      name,
+      email: APP_PREFS.friends[name]?.email || '',
+      phone: APP_PREFS.friends[name]?.phone || '',
+      socialId: friend.id,
+      socialFriendCode: friend.friendCode,
+      lastSharedAt: APP_PREFS.friends[name]?.lastSharedAt || '',
+      addedAt: APP_PREFS.friends[name]?.addedAt || new Date().toISOString()
+    };
+  });
+}
+
+async function socialSyncNow(renderAfter = true){
+  if(!socialEnabled() || socialSyncRunning) return;
+  socialSyncRunning = true;
+  try {
+    await publishSocialStreak();
+    await refreshSocialFriends();
+    savePrefs();
+    if(renderAfter) render();
+  } finally {
+    socialSyncRunning = false;
+  }
+}
+
+async function addSocialFriendDialog(){
+  if(!socialEnabled()){
+    await enableSocialSync();
+  }
+  const result = await showFormDialog({
+    title: 'Add Online Friend',
+    message: 'Paste the 8-character Knurl cloud friend code.',
+    fields: [{name:'code', label:'Friend code', type:'text', required:true}],
+    submitText: 'Add Friend'
+  });
+  if(!result || !result.code) return;
+  const data = await socialFetch('/v1/friends/accept', {method:'POST', auth:true, body:{friendCode:result.code}});
+  const friend = data.friend || {};
+  APP_PREFS.friends[friend.displayName || 'Friend'] = {
+    ...(APP_PREFS.friends[friend.displayName || 'Friend'] || {}),
+    type: 'GymTrackerFriendV1',
+    name: friend.displayName || 'Friend',
+    socialId: friend.id,
+    socialFriendCode: friend.friendCode,
+    email: '',
+    phone: '',
+    addedAt: new Date().toISOString(),
+    lastSharedAt: ''
+  };
+  await socialSyncNow(false);
+  savePrefs();
+  render();
+  showToast(`${friend.displayName || 'Friend'} added online.`);
+}
+
+function cloudFriendForLocal(friend){
+  const social = socialState();
+  return (social.cloudFriends || []).find(item =>
+    item.id === friend.socialId ||
+    item.friendCode === friend.socialFriendCode ||
+    item.displayName === friend.name
+  );
+}
+
+async function sendSocialReaction(friend, type){
+  const cloud = cloudFriendForLocal(friend);
+  if(!socialEnabled() || !cloud) return false;
+  await socialFetch('/v1/reactions', {
+    method:'POST',
+    auth:true,
+    body:{
+      toUserId: cloud.id,
+      type,
+      workoutDate: (cloud.streak && cloud.streak.lastWorkoutDate) || friendLastWorkout(friend.name)
+    }
+  });
+  await refreshSocialFriends();
+  savePrefs();
+  return true;
+}
+
+async function markSocialInboxRead(){
+  const social = socialState();
+  const ids = (social.inbox || []).map(item => item.id).filter(Boolean);
+  if(!ids.length) return;
+  await socialFetch('/v1/inbox/read', {method:'POST', auth:true, body:{ids}});
+  social.inbox = [];
+  savePrefs();
+  render();
+}
+
+function renderSocialPanel(){
+  const social = socialState();
+  const enabled = socialEnabled();
+  const lastSync = social.lastSyncAt ? `Last sync ${fmtShortDate(social.lastSyncAt.slice(0,10))}` : 'Not synced yet';
+  const inbox = social.inbox || [];
+  const inboxHtml = inbox.length ? `
+    <div class="userlist" style="margin-top:10px">
+      ${inbox.map(item => `<div class="userrow">
+        <div><b>${escapeHtml(item.fromDisplayName || 'Friend')}</b><span>${item.type === 'fire' ? 'Fire' : 'Thumbs up'}${item.workoutDate ? ' for ' + escapeHtml(item.workoutDate.slice(5)) : ''}</span></div>
+      </div>`).join('')}
+    </div>` : '';
+  return `
+    <div class="panel"><div class="paneltitle">Online Friend Sync</div>
+      <div class="kvgrid">
+        <div class="kv"><span>Status</span><b>${enabled ? 'Enabled' : 'Off'}</b></div>
+        <div class="kv"><span>Cloud code</span><b>${enabled && social.friendCode ? escapeHtml(social.friendCode) : 'Not registered'}</b></div>
+      </div>
+      <div class="tinyactions">
+        <button data-action="${enabled ? 'socialsync' : 'enablesocial'}">${enabled ? 'Sync Now' : 'Enable Online Sync'}</button>
+        <button data-action="addsocialfriend" ${enabled ? '' : 'disabled'}>Add Online Friend</button>
+        <button data-action="socialinboxread" ${inbox.length ? '' : 'disabled'}>Mark Reactions Read</button>
+        <button data-action="disablesocial" ${enabled ? '' : 'disabled'}>Turn Off</button>
+      </div>
+      <div class="muted">${enabled ? `${lastSync}. The app syncs only streak summaries and reactions.` : 'Opt in to share lightweight streak summaries and encouragement reactions with online friends.'}</div>
+      ${social.lastError ? `<div class="muted">Last error: ${escapeHtml(social.lastError)}</div>` : ''}
+      ${inboxHtml}
+    </div>`;
+}
+
 function friendProfileDb(name){
   return DB[findProfileForPerson(name) || state.profile] || {};
 }
 
 function friendWeekStreak(name){
+  const cloud = cloudFriendForLocal({name, ...(APP_PREFS.friends[name] || {})});
+  if(cloud && cloud.streak) return Number(cloud.streak.workoutsThisWeek || 0);
   const db = friendProfileDb(name);
   let count = 0;
   for(let i = 0; i < 7; i++){
@@ -4993,12 +5283,19 @@ function friendWeekStreak(name){
 }
 
 function friendLastWorkout(name){
+  const cloud = cloudFriendForLocal({name, ...(APP_PREFS.friends[name] || {})});
+  if(cloud && cloud.streak && cloud.streak.lastWorkoutDate) return cloud.streak.lastWorkoutDate;
   const db = friendProfileDb(name);
   const days = Object.keys(db).filter(iso => {
     const sess = db[iso] && db[iso][name];
     return sess && computeStatus(sess) === 'Complete';
   }).sort();
   return days.length ? days[days.length - 1] : '';
+}
+
+function friendConsecutiveWeeks(name){
+  const cloud = cloudFriendForLocal({name, ...(APP_PREFS.friends[name] || {})});
+  return cloud && cloud.streak ? Number(cloud.streak.consecutiveWeeks || 0) : 0;
 }
 
 function friendReaction(name){
@@ -5014,6 +5311,7 @@ function renderFriendsView(){
   if(!state.deviceOwner || state.deviceOwner !== state.client) state.deviceOwner = state.client;
   if(!state.groupPlanOwner || !roster.some(p => p.name === state.groupPlanOwner)) state.groupPlanOwner = state.client;
   return `
+    ${renderSocialPanel()}
     <div class="panel"><div class="paneltitle">My Friend Code</div>
       ${renderFriendCodePreview()}
       <div class="muted">Share this code with another app user so they can add ${escapeHtml(state.client)} as a group-workout friend. Email and phone are included only if saved in Account Info.</div>
@@ -5048,10 +5346,12 @@ function renderFriendsView(){
         ${friends.length ? friends.map(friend => {
           const streak = friendWeekStreak(friend.name);
           const last = friendLastWorkout(friend.name);
+          const cloud = cloudFriendForLocal(friend);
+          const consecutive = friendConsecutiveWeeks(friend.name);
           const react = friendReaction(friend.name);
           return `
           <div class="userrow">
-            <div><b>${escapeHtml(friend.name)}</b><span>${last ? 'Last workout ' + escapeHtml(last.slice(5)) : 'No workouts logged'}</span>${temp.has(friend.name) ? `<span>Temporary for today's workout</span>` : ''}</div>
+            <div><b>${escapeHtml(friend.name)}</b><span>${last ? 'Last workout ' + escapeHtml(last.slice(5)) : 'No workouts logged'}</span>${cloud ? `<span>Online streak ${consecutive} week${consecutive === 1 ? '' : 's'}</span>` : ''}${temp.has(friend.name) ? `<span>Temporary for today's workout</span>` : ''}</div>
             <div class="streakcol"><b>${streak}</b><span>this week</span></div>
             <div class="rowactions">
               <button class="reactbtn ${react==='thumb'?'on':''}" data-action="reactfriend" data-client="${escapeHtml(friend.name)}" data-react="thumb" aria-label="Nice work">\u{1F44D}</button>
@@ -5169,12 +5469,84 @@ async function handleClick(e){
     render();
     return;
   }
+  if(action === 'enablesocial'){
+    try {
+      await enableSocialSync();
+      render();
+      showToast('Online friend sync enabled.');
+    } catch(error) {
+      const social = socialState();
+      social.lastError = error.message || 'Online friend sync failed.';
+      savePrefs();
+      render();
+      showToast(social.lastError);
+    }
+    return;
+  }
+  if(action === 'disablesocial'){
+    disableSocialSync();
+    showToast('Online friend sync turned off on this device.');
+    return;
+  }
+  if(action === 'socialsync'){
+    try {
+      await socialSyncNow();
+      showToast('Online friend sync complete.');
+    } catch(error) {
+      const social = socialState();
+      social.lastError = error.message || 'Online friend sync failed.';
+      savePrefs();
+      render();
+      showToast(social.lastError);
+    }
+    return;
+  }
+  if(action === 'addsocialfriend'){
+    try {
+      await addSocialFriendDialog();
+    } catch(error) {
+      const social = socialState();
+      social.lastError = error.message || 'Could not add online friend.';
+      savePrefs();
+      render();
+      showToast(social.lastError);
+    }
+    return;
+  }
+  if(action === 'socialinboxread'){
+    try {
+      await markSocialInboxRead();
+      showToast('Reactions marked read.');
+    } catch(error) {
+      const social = socialState();
+      social.lastError = error.message || 'Could not mark reactions read.';
+      savePrefs();
+      render();
+      showToast(social.lastError);
+    }
+    return;
+  }
   if(action === 'reactfriend'){
     APP_PREFS.reactions = APP_PREFS.reactions || {};
-    const key = btn.dataset.client + '|' + friendLastWorkout(btn.dataset.client);
-    APP_PREFS.reactions[key] = APP_PREFS.reactions[key] === btn.dataset.react ? '' : btn.dataset.react;
+    const friendName = btn.dataset.client;
+    const friend = APP_PREFS.friends[friendName] || {name: friendName};
+    const key = friendName + '|' + friendLastWorkout(friendName);
+    const nextReaction = APP_PREFS.reactions[key] === btn.dataset.react ? '' : btn.dataset.react;
+    APP_PREFS.reactions[key] = nextReaction;
     scheduleSave();
     render();
+    if(nextReaction && socialEnabled() && cloudFriendForLocal(friend)){
+      try {
+        await sendSocialReaction(friend, nextReaction);
+        showToast('Reaction sent.');
+      } catch(error) {
+        const social = socialState();
+        social.lastError = error.message || 'Reaction saved locally; online send failed.';
+        savePrefs();
+        render();
+        showToast('Reaction saved locally; online send failed.');
+      }
+    }
     return;
   }
   if(action === 'switchprofile'){ switchProfile(btn.dataset.profile); render(); }

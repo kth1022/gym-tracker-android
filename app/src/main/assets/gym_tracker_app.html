@@ -5026,14 +5026,31 @@ function socialEnabled(){
 
 function randomToken(bytes = 24){
   const data = new Uint8Array(bytes);
-  crypto.getRandomValues(data);
+  if(globalThis.crypto && typeof globalThis.crypto.getRandomValues === 'function'){
+    globalThis.crypto.getRandomValues(data);
+  } else {
+    for(let i = 0; i < data.length; i++) data[i] = Math.floor(Math.random() * 256);
+  }
   return Array.from(data, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function randomId(prefix){
+  const uuid = globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function'
+    ? globalThis.crypto.randomUUID()
+    : [
+        randomToken(4),
+        randomToken(2),
+        randomToken(2),
+        randomToken(2),
+        randomToken(6)
+      ].join('-');
+  return `${prefix}-${uuid}`;
 }
 
 function ensureSocialIdentity(){
   const social = socialState();
-  if(!social.userId) social.userId = 'user-' + crypto.randomUUID();
-  if(!social.deviceId) social.deviceId = 'device-' + crypto.randomUUID();
+  if(!social.userId) social.userId = randomId('user');
+  if(!social.deviceId) social.deviceId = randomId('device');
   if(!social.deviceSecret) social.deviceSecret = randomToken(32);
   social.endpoint = (social.endpoint || SOCIAL_ENDPOINT).replace(/\/+$/, '');
   social.displayName = state.client || APP_PREFS.primaryUser || 'Knurl User';
@@ -5274,7 +5291,7 @@ function renderSocialPanel(){
       </div>
       <div class="tinyactions">
         <button data-action="${enabled ? 'socialsync' : 'enablesocial'}">${enabled ? 'Sync Now' : 'Enable Online Sync'}</button>
-        <button data-action="addsocialfriend" ${enabled ? '' : 'disabled'}>Add Online Friend</button>
+        <button data-action="addsocialfriend">Add Online Friend</button>
         <button data-action="socialinboxread" ${inbox.length ? '' : 'disabled'}>Mark Reactions Read</button>
         <button data-action="disablesocial" ${enabled ? '' : 'disabled'}>Turn Off</button>
       </div>
@@ -5491,6 +5508,7 @@ async function handleClick(e){
   }
   if(action === 'enablesocial'){
     try {
+      showToast('Registering online sync...');
       await enableSocialSync();
       render();
       showToast('Online friend sync enabled.');
@@ -5523,6 +5541,7 @@ async function handleClick(e){
   }
   if(action === 'addsocialfriend'){
     try {
+      if(!socialEnabled()) showToast('Registering online sync...');
       await addSocialFriendDialog();
     } catch(error) {
       const social = socialState();

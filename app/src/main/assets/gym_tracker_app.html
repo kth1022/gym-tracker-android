@@ -5024,6 +5024,10 @@ function socialEnabled(){
   return !!(social.enabled && social.endpoint && social.userId && social.deviceId && social.deviceSecret);
 }
 
+function socialMissingFields(social = socialState()){
+  return ['endpoint','userId','deviceId','deviceSecret'].filter(key => !social[key]);
+}
+
 function randomToken(bytes = 24){
   const data = new Uint8Array(bytes);
   if(globalThis.crypto && typeof globalThis.crypto.getRandomValues === 'function'){
@@ -5090,12 +5094,20 @@ async function enableSocialSync(){
   };
   const data = await socialFetch('/v1/register', {method:'POST', body:payload});
   social.enabled = true;
-  social.userId = data.user.id;
-  social.friendCode = data.user.friendCode;
-  social.displayName = data.user.displayName;
+  social.userId = data.user && data.user.id ? data.user.id : social.userId;
+  social.deviceId = data.device && data.device.id ? data.device.id : social.deviceId;
+  social.friendCode = data.user && data.user.friendCode ? data.user.friendCode : social.friendCode;
+  social.displayName = data.user && data.user.displayName ? data.user.displayName : social.displayName;
+  social.registeredAt = new Date().toISOString();
   social.lastError = '';
-  await socialSyncNow(false);
   savePrefs();
+  render();
+  try {
+    await socialSyncNow(false);
+  } catch(error) {
+    social.lastError = error.message || 'Registered, but sync did not finish.';
+    savePrefs();
+  }
 }
 
 function disableSocialSync(){
@@ -5274,7 +5286,10 @@ async function markSocialInboxRead(){
 
 function renderSocialPanel(){
   const social = socialState();
-  const enabled = socialEnabled();
+  const ready = socialEnabled();
+  const registered = !!(social.enabled || social.friendCode || social.registeredAt);
+  const missing = socialMissingFields(social);
+  const status = ready ? 'Enabled' : registered ? 'Needs sync' : 'Off';
   const lastSync = social.lastSyncAt ? `Last sync ${fmtShortDate(social.lastSyncAt.slice(0,10))}` : 'Not synced yet';
   const inbox = social.inbox || [];
   const inboxHtml = inbox.length ? `
@@ -5286,16 +5301,17 @@ function renderSocialPanel(){
   return `
     <div class="panel"><div class="paneltitle">Online Friend Sync</div>
       <div class="kvgrid">
-        <div class="kv"><span>Status</span><b>${enabled ? 'Enabled' : 'Off'}</b></div>
-        <div class="kv"><span>Cloud code</span><b>${enabled && social.friendCode ? escapeHtml(social.friendCode) : 'Not registered'}</b></div>
+        <div class="kv"><span>Status</span><b>${status}</b></div>
+        <div class="kv"><span>Cloud code</span><b>${social.friendCode ? escapeHtml(social.friendCode) : 'Not registered'}</b></div>
       </div>
       <div class="tinyactions">
-        <button data-action="${enabled ? 'socialsync' : 'enablesocial'}">${enabled ? 'Sync Now' : 'Enable Online Sync'}</button>
+        <button data-action="${ready ? 'socialsync' : 'enablesocial'}">${ready ? 'Sync Now' : 'Enable Online Sync'}</button>
         <button data-action="addsocialfriend">Add Online Friend</button>
         <button data-action="socialinboxread" ${inbox.length ? '' : 'disabled'}>Mark Reactions Read</button>
-        <button data-action="disablesocial" ${enabled ? '' : 'disabled'}>Turn Off</button>
+        <button data-action="disablesocial" ${registered ? '' : 'disabled'}>Turn Off</button>
       </div>
-      <div class="muted">${enabled ? `${lastSync}. The app syncs only streak summaries and reactions.` : 'Opt in to share lightweight streak summaries and encouragement reactions with online friends.'}</div>
+      <div class="muted">${ready ? `${lastSync}. The app syncs only streak summaries and reactions.` : 'Opt in to share lightweight streak summaries and encouragement reactions with online friends.'}</div>
+      ${registered && missing.length ? `<div class="muted">Registration is incomplete on this device: ${escapeHtml(missing.join(', '))}.</div>` : ''}
       ${social.lastError ? `<div class="muted">Last error: ${escapeHtml(social.lastError)}</div>` : ''}
       ${inboxHtml}
     </div>`;

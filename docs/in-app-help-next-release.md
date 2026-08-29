@@ -35,6 +35,11 @@ The in-app Help screen lives in `app/src/main/assets/gym_tracker_app.html`. Do n
 - Group workouts
   - Explain that group workouts show previous set values for the selected member and exercise.
 
+- Online friend sync
+  - Explain that users can enable Online Friend Sync from Friends.
+  - Explain cloud friend codes, cloud QR codes, and entering an 8-character code.
+  - Explain that only streak summaries and encouragement reactions are synced.
+
 ## Update Rule
 
 Every future build that changes a user workflow must update this list first, then update the in-app Help screen before the release APK is published.

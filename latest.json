@@ -1,9 +1,9 @@
 {
-  "versionCode": 16,
-  "versionName": "1.7",
+  "versionCode": 24,
+  "versionName": "1.8",
   "channel": "debug-template",
-  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.7/gym_tracker_v1_7_code16_debug.apk",
-  "sha256": "1972A611B7E045C21303AE45C31BD2AAE020F0AB59F08E6D3C7D091E3CDD551C",
-  "size": 3922306,
-  "releaseNotes": "Adds automatic update notices, preserves logged workout days when importing a new plan, and adds a filled sample workout plan workbook export."
+  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.8/gym_tracker_v1_8_code24_debug.apk",
+  "sha256": "FF6B649CF211240D1D09A9B074F3E8FBC3821813AB1F309D24DB2A85BA1F3997",
+  "size": 3943199,
+  "releaseNotes": "Introduces the Knurl redesign, online friend streak sharing, cloud friend codes and QR codes, encouragement reactions, one-month Progress calendar rendering, and rest timer safe-area refinements."
 }

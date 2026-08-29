@@ -43,11 +43,18 @@ Add new ideas below using this format:
   - Notes: When logging a superset, allow a set entry to capture two separate weights instead of only one weight value. This should preserve the normal single-exercise set entry workflow while supporting paired movements in the same set.
   - Priority: medium
 
-- [ ] Online friend streak sharing and encouragement reactions
-  - GitHub Issue: #19
+- [ ] Show incoming online friend reactions in app
+  - GitHub Issue: #21
   - Category: feature
-  - Source: maintainer planning
-  - Notes: Let friends opt in to share lightweight workout streak summaries, including workouts completed this week and consecutive workout weeks. Add in-app encouragement reactions such as thumbs up and fire, backed by a Cloudflare Worker and D1. Firebase Cloud Messaging should be used only if push notifications are added.
+  - Source: user testing
+  - Notes: Make received thumbs-up and fire reactions more visible to the recipient. The recipient should be able to see who sent the reaction and what workout/date it applies to when available, without leaving the app.
+  - Priority: medium
+
+- [ ] Reset online reaction buttons after send
+  - GitHub Issue: #20
+  - Category: bug
+  - Source: user testing
+  - Notes: After sending a thumbs-up or fire reaction to an online friend, reset the selected button state so the user can send another reaction later.
   - Priority: medium
 
 ## Later Ideas
@@ -104,3 +111,8 @@ Move shipped items here with the release version.
   - GitHub Issue: #6
   - Shipped: v1.7
   - Notes: The Plan tab exports a filled sample `GymTrackerPlanV1` workbook showing valid plan sheets, headers, dates, exercises, timed targets, and stretching rows.
+
+- [x] Online friend streak sharing and encouragement reactions
+  - GitHub Issue: #19
+  - Shipped: v1.8
+  - Notes: Friends can opt in to online sync, share lightweight workout streak summaries, add online friends by cloud code or QR code, and send thumbs-up or fire encouragement reactions through the Cloudflare Worker and D1 social API.

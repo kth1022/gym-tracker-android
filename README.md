@@ -1,13 +1,13 @@
-# Gym Tracker Android
+# Knurl Android
 
-Gym Tracker is a local-first Android workout tracker built around a WebView app shell.
+Knurl is a local-first Android workout tracker built around a WebView app shell.
 
 ## Current Baseline
 
-- Current update baseline: `1.7`
+- Current update baseline: `1.8`
 - Android package: `com.homeops.gymtracker`
-- Version code: `16`
-- Version name: `1.7`
+- Version code: `24`
+- Version name: `1.8`
 - Primary asset: `app/src/main/assets/gym_tracker_app.html`
 
 The v1.0 baseline was cleaned for broader use:
@@ -95,3 +95,7 @@ Version `1.6` adds the batched backlog update: in-app feedback to GitHub Issues 
 ## Version 1.7
 
 Version `1.7` adds automatic update notices, preserves logged workout days when importing a new plan, and adds a filled sample workout plan workbook export.
+
+## Version 1.8
+
+Version `1.8` introduces the Knurl redesign, online friend streak sharing, cloud friend codes and QR codes, encouragement reactions, a Cloudflare/D1 social API, one-month Progress calendar rendering, and rest timer safe-area refinements.

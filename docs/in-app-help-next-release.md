@@ -18,9 +18,17 @@ The in-app Help screen lives in `app/src/main/assets/gym_tracker_app.html`. Do n
   - Explain when to use Data Recovery.
   - Explain when to export a full recovery snapshot for private troubleshooting.
 
+- Set logging
+  - Explain that a set stays a draft until Log set is pressed, so typing a value does not complete the workout.
+  - Explain that reps are required and weight is optional, so bodyweight work logs without a weight.
+  - Explain the Edit action for reopening a logged set.
+  - Explain the Target chip showing the plan's sets and reps on each exercise card.
+  - Explain that Use last is available per member in a group workout.
+
 - Plan management
   - Explain importing workout plan workbooks.
   - Explain that importing a new plan preserves dates that already have logged workout data.
+  - Explain that an imported plan starts from the import date and never rewrites past days, and starts on the next workout day when the import date already has a logged workout.
   - Explain exporting a blank workout plan template.
   - Explain exporting a filled sample workout plan workbook.
   - Explain clearing a day to rest day.

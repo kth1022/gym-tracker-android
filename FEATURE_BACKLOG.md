@@ -1,4 +1,4 @@
-# Gym Tracker Feature Backlog
+# Knurl Feature Backlog
 
 Use this file to collect feature ideas between releases. Add ideas here as they come up, then batch several related items into the next app update instead of publishing a new APK for every single feature.
 
@@ -14,7 +14,93 @@ Use this file to collect feature ideas between releases. Add ideas here as they 
 
 ## Planned For Next Update
 
-No additional items selected yet.
+Target release: **v1.9**. Baseline version for the next build is set in `gradle.properties`
+(`knurlVersionCode=25`, `knurlVersionName=1.9`). Raise `knurlVersionCode` for every tester
+build as well — see `docs/release-checklist.md`.
+
+All four items below are implemented and awaiting a tester build.
+
+- [x] Restore Use Last in group workout logging
+  - GitHub Issue: #14
+  - Category: bug
+  - Priority: high
+  - Change: the group member card renders a `Use last` button again, and the `uselast`
+    handler resolves the correct person and profile via `data-person` instead of always
+    writing to the current client's session.
+  - Test workflow: run a group workout with two members who each have prior data for the
+    same exercise. Confirm both members show `Use last`, that tapping it fills only that
+    member's sets, that the copied values come from that member's own history, and that
+    the standard single-user workout still shows and honours `Use last`.
+
+- [x] Reset online reaction buttons after send
+  - GitHub Issue: #20
+  - Category: bug
+  - Priority: high
+  - Change: a successful `sendSocialReaction` clears the stored selection for that friend
+    and workout, so the button returns to its unselected state. A failed send still keeps
+    the reaction locally so nothing is lost offline.
+  - Test workflow: send a thumbs-up to an online friend and confirm the button clears and
+    another reaction can be sent. Then turn off networking, send a reaction, and confirm it
+    stays selected with the "saved locally" message.
+
+- [x] Show planned sets and reps in the standard workout log
+  - GitHub Issue: #22
+  - Category: bug
+  - Priority: high
+  - Change: standard exercise cards show a `Target: 3 sets × 10-12` chip alongside the
+    existing `Set n of m` chip, matching what group cards already displayed. The chip is
+    omitted when the plan specifies no prescription.
+  - Test workflow: open a plan day with a full prescription and confirm the target chip
+    matches the plan. Confirm an exercise with only sets, only reps, or neither renders
+    sensibly rather than showing an empty target.
+
+- [x] Keep set entry as a draft until Log Set is pressed, and allow edits afterward
+  - GitHub Issue: #23
+  - Category: bug
+  - Priority: high
+  - Change: sets carry a `logged` flag. Typing a weight or reps, or using the +/- steppers,
+    marks the set a draft and no longer flips the workout to Complete. `Log set` commits it;
+    a new `Edit` action on a logged row reopens it as a draft. Status, volume, set counts,
+    exports and "last time" lookups all count only committed sets. Sets saved before this
+    flag existed are still treated as logged.
+  - Test workflow: type a weight on a scheduled workout and confirm the day stays
+    Scheduled and the calendar does not mark it complete. Press `Log set` and confirm it
+    becomes Complete. Press `Edit` on a logged set, confirm it reopens for editing, and
+    re-log it. Confirm a bodyweight exercise logs with reps and no weight. Confirm a
+    workout logged in a previous version still reads as Complete after upgrading.
+
+- [x] Plan import must not be retroactive
+  - GitHub Issue: #25
+  - Category: bug
+  - Priority: high
+  - Change: plan import now clips the incoming plan to an effective start date before
+    merging. The plan starts on the upload date, or on the next day the incoming plan
+    schedules a workout when the upload date already has logged data. Past dates keep
+    their existing template, `dateMin` is no longer pulled backwards by an import, and
+    the toast reports the start date and how many past days were left alone. Importing a
+    plan that is entirely in the past is refused with a clear message.
+  - Test workflow: import a plan whose workbook starts weeks in the past on a day with no
+    logged workout, and confirm it starts today with past days untouched. Log a workout
+    today, import again, and confirm it starts on the next scheduled day and today's log
+    survives. Import a plan that is entirely in the past and confirm nothing is imported.
+    Confirm the v1.7 behaviour for #5 still holds on previously logged days.
+
+- [x] Ship only generic plan content in the APK
+  - GitHub Issue: #26
+  - Category: bug
+  - Priority: high
+  - Change: the built-in legacy v24 plan shipped one real person's working weights in
+    `kw`/`kr`/`bw`/`br` on 32 exercises; those fields are stripped and the generic
+    exercise, sets, reps and coaching notes remain. Legacy detection no longer matches
+    hardcoded names - it keys off the legacy storage keys and recovers client names from
+    the user's own data. `app/build.gradle` now fails the build if the shipped asset
+    contains a non-empty `clients` roster, a denylisted personal name, or numeric
+    `kw/kr/bw/br` values.
+  - Test workflow: confirm a clean build passes and that dirtying the asset with a
+    personal name, a client roster, or a numeric working weight fails the build with a
+    clear message. Install on a device with no prior data and confirm onboarding shows
+    only "Main Plan" with no clients. Confirm legacy recovery still works from legacy
+    storage keys.
 
 ## Candidate Features
 
@@ -36,25 +122,39 @@ Add new ideas below using this format:
   - Notes: Allow users to export plans, workout logs, group member data, and recovery data to Google Drive in a Google Sheets-accessible format without leaving the app. Also evaluate importing plans or data directly from Google Sheets inside the app with validation, preview, duplicate detection, and conflict handling.
   - Priority: medium
 
-- [ ] Superset exercise set entries with two weights
-  - GitHub Issue: #9
+- [ ] Superset set entry with two weights and two reps
+  - GitHub Issue: #9 (absorbed #24, closed as duplicate)
   - Category: feature
   - Source: user feedback
-  - Notes: When logging a superset, allow a set entry to capture two separate weights instead of only one weight value. This should preserve the normal single-exercise set entry workflow while supporting paired movements in the same set.
+  - Notes: When logging a superset, a set entry must capture two weights *and* two reps, one pair per movement in the pair. Normal single-exercise set entry must be unchanged. Volume, Use Last, rep deltas, Progress/Trend, and export/import must all account for both halves of the pair.
   - Priority: medium
 
-- [ ] Show incoming online friend reactions in app
+- [ ] Split set-management controls
+  - GitHub Issue: #15
+  - Category: feature
+  - Source: user feedback
+  - Notes: Restore separate, quick controls for clearing a set and deleting a set instead of requiring a menu for both actions.
+  - Priority: medium
+
+- [ ] Exercise-specific notes
+  - GitHub Issue: #17
+  - Category: feature
+  - Source: user clarification
+  - Notes: Allow a short note on an individual exercise, separate from the existing workout-level notes. It should be visible when that exercise is next performed; decide whether it follows the exercise forward when the plan is updated.
+  - Priority: medium
+
+- [ ] Edit exercise name and description, then update the plan
+  - GitHub Issue: #18
+  - Category: feature
+  - Source: user feedback
+  - Notes: Let a user rename an exercise and edit its description from the log, then apply that change to the matching weekday going forward. The current swap and target-edit tools do not support arbitrary names or descriptions.
+  - Priority: medium
+
+- [ ] Show received friend reaction counts on the You screen
   - GitHub Issue: #21
   - Category: feature
   - Source: user testing
-  - Notes: Make received thumbs-up and fire reactions more visible to the recipient. The recipient should be able to see who sent the reaction and what workout/date it applies to when available, without leaving the app.
-  - Priority: medium
-
-- [ ] Reset online reaction buttons after send
-  - GitHub Issue: #20
-  - Category: bug
-  - Source: user testing
-  - Notes: After sending a thumbs-up or fire reaction to an online friend, reset the selected button state so the user can send another reaction later.
+  - Notes: On the You screen, show how many of each reaction type (for example, thumbs-up and fire) the user has received from online friends. Keep the Friends inbox for sender and workout-date detail.
   - Priority: medium
 
 ## Later Ideas

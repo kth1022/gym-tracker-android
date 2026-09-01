@@ -1,10 +1,32 @@
 # Workout Plan Management
 
-Gym Tracker supports importing workout plans, tracking scheduled workout days, clearing days to rest days, and loading an existing weekday plan onto another date.
+Knurl supports importing workout plans, tracking scheduled workout days, clearing days to rest days, and loading an existing weekday plan onto another date.
 
 ## Import A Workout Plan
 
-Use a workbook that follows the Gym Tracker plan format. If the import fails with `Use a workout plan workbook`, export a blank template from the app and compare the workbook sheet names and column headers.
+Use a workbook that follows the Knurl plan format. If the import fails with `Use a workout plan workbook`, export a blank template from the app and compare the workbook sheet names and column headers.
+
+### Imported Plans Are Not Retroactive
+
+From v1.9, an imported plan takes effect from the day you import it. It never rewrites days you have already been through.
+
+- The plan starts on the day you import it.
+- If that day already has a logged workout, the plan starts on the next day the incoming plan schedules a workout, so the workout you already logged is not replaced.
+- Dates before that start point keep whatever they already had, including their original planned workout and any logged data.
+- After the import, the toast shows the date the plan starts and how many past days were left unchanged.
+
+A workbook can safely cover a date range that starts in the past. Only the part from the start date forward is applied. If a workbook covers nothing but dates that have already passed, the import is refused and nothing changes.
+
+## Logging Sets
+
+A set is a draft until you press **Log set**.
+
+- Typing a weight or reps, or using the +/- steppers, does not complete the set or the workout.
+- Press **Log set** to record it. Only then does the day count as Complete.
+- Press **Edit** on a logged set to reopen it and change the values, then log it again.
+- Reps are required. Weight is optional, so bodyweight work such as push-ups and pull-ups logs without inventing a weight, and shows as `Bodyweight × 20`.
+
+Each exercise card shows the planned prescription, for example `Target: 3 sets × 10-12`, next to the current set counter.
 
 ## Export A Blank Plan Template
 

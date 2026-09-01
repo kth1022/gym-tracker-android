@@ -1,5 +1,80 @@
+import groovy.json.JsonSlurper
+
 plugins {
     id "com.android.application"
+}
+
+// Version comes from gradle.properties so tester builds can override it per build
+// instead of reusing the published release's versionCode.
+//
+//   Release build:  ./gradlew assembleDebug
+//   Tester build:   ./gradlew assembleDebug -PknurlVersionCode=26 -PknurlVersionName=1.9-test1
+//
+// Every tester build must claim its own versionCode above the last published
+// release. Reusing the release code makes the in-app update check report
+// "up to date" on a tester build and makes bug reports ambiguous about which
+// build they came from.
+def knurlVersionCode = (project.findProperty("knurlVersionCode") ?: "25").toString().trim().toInteger()
+def knurlVersionName = (project.findProperty("knurlVersionName") ?: "1.9").toString().trim()
+
+// Guard: the build's versionCode must be strictly greater than the versionCode
+// in the published manifest. latest.json is only updated after a release is
+// built, so both release and tester builds are legitimately ahead of it.
+def publishedManifest = rootProject.file("latest.json")
+if (publishedManifest.exists()) {
+    def published = new JsonSlurper().parse(publishedManifest)
+    def publishedCode = (published.versionCode ?: 0) as int
+    if (knurlVersionCode <= publishedCode) {
+        throw new GradleException(
+            "versionCode ${knurlVersionCode} is not above the published release (${publishedCode} / " +
+            "${published.versionName}).\n" +
+            "Every tester and release build needs its own versionCode, otherwise the in-app update " +
+            "check reports 'up to date' and feedback reports cannot be traced to a build.\n" +
+            "Fix: raise knurlVersionCode in gradle.properties, or pass " +
+            "-PknurlVersionCode=${publishedCode + 1} on the command line.\n" +
+            "If you are preparing this very release, latest.json must still hold the PREVIOUS " +
+            "release until the final APK is built and hashed. Build first, then update latest.json."
+        )
+    }
+}
+
+// Guard: only generic plan content may ship. The app is one hand-edited HTML asset,
+// so a personal plan pasted in during development would otherwise ship silently.
+// Personal names are configurable via knurlPersonalNames in gradle.properties and are
+// deliberately not committed as app source.
+def shippedAsset = file("src/main/assets/gym_tracker_app.html")
+if (shippedAsset.exists()) {
+    def asset = shippedAsset.getText("UTF-8")
+    def problems = []
+
+    // A shipped profile must never carry a hardcoded client roster.
+    def rosterMatcher = asset =~ /clients\s*:\s*\[\s*['"]/
+    if (rosterMatcher.find()) {
+        problems << "a PROFILES entry ships a non-empty 'clients' roster"
+    }
+
+    // Personal names must not appear anywhere in the shipped asset.
+    def denylist = (project.findProperty("knurlPersonalNames") ?: "").toString()
+            .split(",").collect { it.trim() }.findAll { it }
+    denylist.each { name ->
+        if (asset =~ /(?i)\b${java.util.regex.Pattern.quote(name)}\b/) {
+            problems << "personal name '${name}' appears in the shipped asset"
+        }
+    }
+
+    // Real training loads baked into a built-in plan are personal data.
+    def loadMatcher = asset =~ /\b(?:kw|kr|bw|br)\s*:\s*\d+/
+    if (loadMatcher.find()) {
+        problems << "a built-in plan ships real working weights (kw/kr/bw/br with numeric values)"
+    }
+
+    if (problems) {
+        throw new GradleException(
+            "Personal data check failed for src/main/assets/gym_tracker_app.html:\n" +
+            problems.collect { "  - " + it }.join("\n") +
+            "\nOnly generic sample plan content may ship in the APK. See issue #26."
+        )
+    }
 }
 
 android {
@@ -14,8 +89,8 @@ android {
         applicationId "com.homeops.gymtracker"
         minSdk 26
         targetSdk 36
-        versionCode 24
-        versionName "1.8"
+        versionCode knurlVersionCode
+        versionName knurlVersionName
     }
 }
 

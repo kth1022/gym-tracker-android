@@ -1,9 +1,9 @@
 {
-  "versionCode": 24,
-  "versionName": "1.8",
+  "versionCode": 25,
+  "versionName": "1.9",
   "channel": "debug-template",
-  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.8/gym_tracker_v1_8_code24_debug.apk",
-  "sha256": "FF6B649CF211240D1D09A9B074F3E8FBC3821813AB1F309D24DB2A85BA1F3997",
-  "size": 3943199,
-  "releaseNotes": "Introduces the Knurl redesign, online friend streak sharing, cloud friend codes and QR codes, encouragement reactions, one-month Progress calendar rendering, and rest timer safe-area refinements."
+  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.9/gym_tracker_v1_9_code25_debug.apk",
+  "sha256": "7C16B85E7D23505FA5D919F0050160DC1F1C78C77AEAEDFDED048590347C723F",
+  "size": 3945255,
+  "releaseNotes": "Bug-fix release. Imported plans start from the day you import them instead of rewriting past days. Set entry stays a draft until you press Log set, and logged sets can be edited. Exercise cards show the planned sets and reps. Use last is back in group workouts. Reaction buttons reset after sending. Bodyweight sets log without a weight. No personal plan data ships in the app."
 }

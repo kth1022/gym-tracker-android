@@ -91,7 +91,7 @@ Use this section for useful ideas that are not ready for the next release.
 Move shipped items here with the release version.
 
 - [x] Restore the correct app signing key and prevent silent key drift
-  - GitHub Issue: not yet filed
+  - GitHub Issue: #27
   - Shipped: v1.9.1
   - Category: bug
   - Source: user testing ("App not installed")
@@ -106,7 +106,7 @@ Move shipped items here with the release version.
     different keystore.
 
 - [x] Tap a logged set to reopen it
-  - GitHub Issue: follows #23
+  - GitHub Issue: #29
   - Shipped: v1.9.1
   - Category: bug
   - Source: user testing
@@ -118,7 +118,7 @@ Move shipped items here with the release version.
     preserved and can be logged again.
 
 - [x] Sets must not auto-log on timed exercises or in group workouts
-  - GitHub Issue: follows #23
+  - GitHub Issue: #28
   - Shipped: v1.9.1
   - Category: bug
   - Source: user testing
@@ -134,7 +134,7 @@ Move shipped items here with the release version.
     reopens. Confirm stopping a timer with Record still logs.
 
 - [x] Last time must show every set, not just the top set
-  - GitHub Issue: not yet filed
+  - GitHub Issue: #30
   - Shipped: v1.9.1
   - Category: bug
   - Source: user testing
@@ -146,7 +146,7 @@ Move shipped items here with the release version.
     on a later day and confirm all three appear with the correct date.
 
 - [x] Workout elapsed time must stop
-  - GitHub Issue: not yet filed
+  - GitHub Issue: #31
   - Shipped: v1.9.1
   - Category: bug
   - Source: user testing

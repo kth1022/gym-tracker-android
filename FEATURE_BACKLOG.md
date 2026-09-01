@@ -14,93 +14,11 @@ Use this file to collect feature ideas between releases. Add ideas here as they 
 
 ## Planned For Next Update
 
-Target release: **v1.9**. Baseline version for the next build is set in `gradle.properties`
-(`knurlVersionCode=25`, `knurlVersionName=1.9`). Raise `knurlVersionCode` for every tester
-build as well — see `docs/release-checklist.md`.
+Nothing selected yet. v1.9 shipped on 2026-08-31; see `Completed`.
 
-All four items below are implemented and awaiting a tester build.
-
-- [x] Restore Use Last in group workout logging
-  - GitHub Issue: #14
-  - Category: bug
-  - Priority: high
-  - Change: the group member card renders a `Use last` button again, and the `uselast`
-    handler resolves the correct person and profile via `data-person` instead of always
-    writing to the current client's session.
-  - Test workflow: run a group workout with two members who each have prior data for the
-    same exercise. Confirm both members show `Use last`, that tapping it fills only that
-    member's sets, that the copied values come from that member's own history, and that
-    the standard single-user workout still shows and honours `Use last`.
-
-- [x] Reset online reaction buttons after send
-  - GitHub Issue: #20
-  - Category: bug
-  - Priority: high
-  - Change: a successful `sendSocialReaction` clears the stored selection for that friend
-    and workout, so the button returns to its unselected state. A failed send still keeps
-    the reaction locally so nothing is lost offline.
-  - Test workflow: send a thumbs-up to an online friend and confirm the button clears and
-    another reaction can be sent. Then turn off networking, send a reaction, and confirm it
-    stays selected with the "saved locally" message.
-
-- [x] Show planned sets and reps in the standard workout log
-  - GitHub Issue: #22
-  - Category: bug
-  - Priority: high
-  - Change: standard exercise cards show a `Target: 3 sets × 10-12` chip alongside the
-    existing `Set n of m` chip, matching what group cards already displayed. The chip is
-    omitted when the plan specifies no prescription.
-  - Test workflow: open a plan day with a full prescription and confirm the target chip
-    matches the plan. Confirm an exercise with only sets, only reps, or neither renders
-    sensibly rather than showing an empty target.
-
-- [x] Keep set entry as a draft until Log Set is pressed, and allow edits afterward
-  - GitHub Issue: #23
-  - Category: bug
-  - Priority: high
-  - Change: sets carry a `logged` flag. Typing a weight or reps, or using the +/- steppers,
-    marks the set a draft and no longer flips the workout to Complete. `Log set` commits it;
-    a new `Edit` action on a logged row reopens it as a draft. Status, volume, set counts,
-    exports and "last time" lookups all count only committed sets. Sets saved before this
-    flag existed are still treated as logged.
-  - Test workflow: type a weight on a scheduled workout and confirm the day stays
-    Scheduled and the calendar does not mark it complete. Press `Log set` and confirm it
-    becomes Complete. Press `Edit` on a logged set, confirm it reopens for editing, and
-    re-log it. Confirm a bodyweight exercise logs with reps and no weight. Confirm a
-    workout logged in a previous version still reads as Complete after upgrading.
-
-- [x] Plan import must not be retroactive
-  - GitHub Issue: #25
-  - Category: bug
-  - Priority: high
-  - Change: plan import now clips the incoming plan to an effective start date before
-    merging. The plan starts on the upload date, or on the next day the incoming plan
-    schedules a workout when the upload date already has logged data. Past dates keep
-    their existing template, `dateMin` is no longer pulled backwards by an import, and
-    the toast reports the start date and how many past days were left alone. Importing a
-    plan that is entirely in the past is refused with a clear message.
-  - Test workflow: import a plan whose workbook starts weeks in the past on a day with no
-    logged workout, and confirm it starts today with past days untouched. Log a workout
-    today, import again, and confirm it starts on the next scheduled day and today's log
-    survives. Import a plan that is entirely in the past and confirm nothing is imported.
-    Confirm the v1.7 behaviour for #5 still holds on previously logged days.
-
-- [x] Ship only generic plan content in the APK
-  - GitHub Issue: #26
-  - Category: bug
-  - Priority: high
-  - Change: the built-in legacy v24 plan shipped one real person's working weights in
-    `kw`/`kr`/`bw`/`br` on 32 exercises; those fields are stripped and the generic
-    exercise, sets, reps and coaching notes remain. Legacy detection no longer matches
-    hardcoded names - it keys off the legacy storage keys and recovers client names from
-    the user's own data. `app/build.gradle` now fails the build if the shipped asset
-    contains a non-empty `clients` roster, a denylisted personal name, or numeric
-    `kw/kr/bw/br` values.
-  - Test workflow: confirm a clean build passes and that dirtying the asset with a
-    personal name, a client roster, or a numeric working weight fails the build with a
-    clear message. Install on a device with no prior data and confirm onboarding shows
-    only "Main Plan" with no clients. Confirm legacy recovery still works from legacy
-    storage keys.
+Baseline version for the next build is in `gradle.properties`. Raise `knurlVersionCode`
+for every build that leaves this machine, tester builds included — the build now fails
+if it is not above the published release. See `docs/release-checklist.md`.
 
 ## Candidate Features
 
@@ -164,6 +82,94 @@ Use this section for useful ideas that are not ready for the next release.
 ## Completed
 
 Move shipped items here with the release version.
+
+- [x] Restore Use Last in group workout logging
+  - GitHub Issue: #14
+  - Shipped: v1.9
+  - Category: bug
+  - Priority: high
+  - Change: the group member card renders a `Use last` button again, and the `uselast`
+    handler resolves the correct person and profile via `data-person` instead of always
+    writing to the current client's session.
+  - Test workflow: run a group workout with two members who each have prior data for the
+    same exercise. Confirm both members show `Use last`, that tapping it fills only that
+    member's sets, that the copied values come from that member's own history, and that
+    the standard single-user workout still shows and honours `Use last`.
+
+- [x] Reset online reaction buttons after send
+  - GitHub Issue: #20
+  - Shipped: v1.9
+  - Category: bug
+  - Priority: high
+  - Change: a successful `sendSocialReaction` clears the stored selection for that friend
+    and workout, so the button returns to its unselected state. A failed send still keeps
+    the reaction locally so nothing is lost offline.
+  - Test workflow: send a thumbs-up to an online friend and confirm the button clears and
+    another reaction can be sent. Then turn off networking, send a reaction, and confirm it
+    stays selected with the "saved locally" message.
+
+- [x] Show planned sets and reps in the standard workout log
+  - GitHub Issue: #22
+  - Shipped: v1.9
+  - Category: bug
+  - Priority: high
+  - Change: standard exercise cards show a `Target: 3 sets × 10-12` chip alongside the
+    existing `Set n of m` chip, matching what group cards already displayed. The chip is
+    omitted when the plan specifies no prescription.
+  - Test workflow: open a plan day with a full prescription and confirm the target chip
+    matches the plan. Confirm an exercise with only sets, only reps, or neither renders
+    sensibly rather than showing an empty target.
+
+- [x] Keep set entry as a draft until Log Set is pressed, and allow edits afterward
+  - GitHub Issue: #23
+  - Shipped: v1.9
+  - Category: bug
+  - Priority: high
+  - Change: sets carry a `logged` flag. Typing a weight or reps, or using the +/- steppers,
+    marks the set a draft and no longer flips the workout to Complete. `Log set` commits it;
+    a new `Edit` action on a logged row reopens it as a draft. Status, volume, set counts,
+    exports and "last time" lookups all count only committed sets. Sets saved before this
+    flag existed are still treated as logged.
+  - Test workflow: type a weight on a scheduled workout and confirm the day stays
+    Scheduled and the calendar does not mark it complete. Press `Log set` and confirm it
+    becomes Complete. Press `Edit` on a logged set, confirm it reopens for editing, and
+    re-log it. Confirm a bodyweight exercise logs with reps and no weight. Confirm a
+    workout logged in a previous version still reads as Complete after upgrading.
+
+- [x] Plan import must not be retroactive
+  - GitHub Issue: #25
+  - Shipped: v1.9
+  - Category: bug
+  - Priority: high
+  - Change: plan import now clips the incoming plan to an effective start date before
+    merging. The plan starts on the upload date, or on the next day the incoming plan
+    schedules a workout when the upload date already has logged data. Past dates keep
+    their existing template, `dateMin` is no longer pulled backwards by an import, and
+    the toast reports the start date and how many past days were left alone. Importing a
+    plan that is entirely in the past is refused with a clear message.
+  - Test workflow: import a plan whose workbook starts weeks in the past on a day with no
+    logged workout, and confirm it starts today with past days untouched. Log a workout
+    today, import again, and confirm it starts on the next scheduled day and today's log
+    survives. Import a plan that is entirely in the past and confirm nothing is imported.
+    Confirm the v1.7 behaviour for #5 still holds on previously logged days.
+
+- [x] Ship only generic plan content in the APK
+  - GitHub Issue: #26
+  - Shipped: v1.9
+  - Category: bug
+  - Priority: high
+  - Change: the built-in legacy v24 plan shipped one real person's working weights in
+    `kw`/`kr`/`bw`/`br` on 32 exercises; those fields are stripped and the generic
+    exercise, sets, reps and coaching notes remain. Legacy detection no longer matches
+    hardcoded names - it keys off the legacy storage keys and recovers client names from
+    the user's own data. `app/build.gradle` now fails the build if the shipped asset
+    contains a non-empty `clients` roster, a denylisted personal name, or numeric
+    `kw/kr/bw/br` values.
+  - Test workflow: confirm a clean build passes and that dirtying the asset with a
+    personal name, a client roster, or a numeric working weight fails the build with a
+    clear message. Install on a device with no prior data and confirm onboarding shows
+    only "Main Plan" with no clients. Confirm legacy recovery still works from legacy
+    storage keys.
 
 - [x] Rest timer between sets
   - Shipped: v1.4

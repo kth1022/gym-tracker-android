@@ -1,9 +1,9 @@
 {
-  "versionCode": 25,
-  "versionName": "1.9",
+  "versionCode": 29,
+  "versionName": "1.9.1",
   "channel": "debug-template",
-  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.9/gym_tracker_v1_9_code25_debug.apk",
-  "sha256": "7C16B85E7D23505FA5D919F0050160DC1F1C78C77AEAEDFDED048590347C723F",
-  "size": 3945255,
-  "releaseNotes": "Bug-fix release. Imported plans start from the day you import them instead of rewriting past days. Set entry stays a draft until you press Log set, and logged sets can be edited. Exercise cards show the planned sets and reps. Use last is back in group workouts. Reaction buttons reset after sending. Bodyweight sets log without a weight. No personal plan data ships in the app."
+  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.9.1/gym_tracker_v1_9_1_code29_debug.apk",
+  "sha256": "8B402E3458A82FE8C724DECB4D6C65ECBECF5B55996E9D860400803A7CF21C0F",
+  "size": 3947391,
+  "releaseNotes": "Bug-fix release, and the one that actually installs. v1.9 was signed with a regenerated key and could not install over v1.8, so nobody received it; 1.9.1 restores the original signing key and carries every v1.9 fix plus these. Sets stay drafts until you log them, everywhere - including timed exercises and group workouts, which used to log on the first keystroke. Tap a logged set to reopen and correct it. Each exercise shows the planned target and every set you logged last time, with the date. Workout elapsed time now stops when the last set is logged instead of counting forever. Imported plans start from the day you import them. No personal plan data ships in the app."
 }

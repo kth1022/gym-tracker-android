@@ -9,15 +9,22 @@ Use this file to collect feature ideas between releases. Add ideas here as they 
 - Categorize GitHub Issues correctly: use `bug` for defects and `feature request` plus `enhancement` for feature ideas.
 - Move items to `Planned For Next Update` when they are clearly useful, scoped, and worth shipping together.
 - Start implementation when the planned list has several worthwhile items or one urgent fix.
+- Every change ships as change -> tester build -> user verifies on the phone -> publish.
+  Never publish a change the user has not confirmed on their own device. See the
+  Release Cycle section of `docs/release-checklist.md`.
 - Every tester build and public release must follow `docs/release-checklist.md`.
 - Every shipped update still needs an increased `versionCode`, rebuilt APK, updated `latest.json`, a GitHub Release asset, updated in-app Help when workflows change, and updated wiki source in `docs/wiki/`.
 
 ## Planned For Next Update
 
-Nothing selected yet. v1.9 shipped on 2026-08-31; see `Completed`.
+Nothing selected yet. v1.9.1 shipped on 2026-08-31; see `Completed`.
+
+v1.9 is superseded and must not be treated as a shipped release: it was signed with a
+regenerated key, could not install over v1.8, and reached no one. v1.9.1 carries all of
+its fixes.
 
 Baseline version for the next build is in `gradle.properties`. Raise `knurlVersionCode`
-for every build that leaves this machine, tester builds included — the build now fails
+for every build that leaves this machine, tester builds included - the build now fails
 if it is not above the published release. See `docs/release-checklist.md`.
 
 ## Candidate Features
@@ -82,6 +89,79 @@ Use this section for useful ideas that are not ready for the next release.
 ## Completed
 
 Move shipped items here with the release version.
+
+- [x] Restore the correct app signing key and prevent silent key drift
+  - GitHub Issue: not yet filed
+  - Shipped: v1.9.1
+  - Category: bug
+  - Source: user testing ("App not installed")
+  - Notes: the default debug keystore expired and was regenerated on 2026-08-25, changing
+    the signing identity from `030f60f9...` to `dd84967b...`. Android cannot install an
+    update signed with a different key, so v1.9 was uninstallable and users silently stayed
+    on v1.8 - which is why the v1.9 fixes appeared not to work. The original keystore was
+    recovered, `app/build.gradle` now pins it, and the build fails on fingerprint mismatch.
+  - Priority: high
+  - Test workflow: install over an existing v1.8 install and confirm it updates without
+    uninstalling and that logged history survives. Confirm the build fails when pointed at a
+    different keystore.
+
+- [x] Tap a logged set to reopen it
+  - GitHub Issue: follows #23
+  - Shipped: v1.9.1
+  - Category: bug
+  - Source: user testing
+  - Notes: the logged-set row was styled as clickable but only the small Edit pill carried
+    the action. The whole row is now a button that reopens the set as a draft with its
+    values intact and the Log set button restored.
+  - Priority: high
+  - Test workflow: log a set, tap anywhere on the row, confirm it reopens with the value
+    preserved and can be logged again.
+
+- [x] Sets must not auto-log on timed exercises or in group workouts
+  - GitHub Issue: follows #23
+  - Shipped: v1.9.1
+  - Category: bug
+  - Source: user testing
+  - Notes: #23's draft logic only applied to rows carrying `kbigwrap`, the big single-set
+    card. Timed exercises and group member rows render through `renderSetRow`, which had
+    neither that class nor a Log button, so the first keystroke logged the set and flipped
+    the workout to Complete. Typing and the steppers now always leave a draft, and those
+    rows gained a Log button that becomes a check to reopen. Group `Use last` fills drafts
+    instead of completing the workout.
+  - Priority: high
+  - Test workflow: type into a plank set and a group member's set and confirm the day stays
+    Scheduled. Press Log on each and confirm it completes. Press the check and confirm it
+    reopens. Confirm stopping a timer with Record still logs.
+
+- [x] Last time must show every set, not just the top set
+  - GitHub Issue: not yet filed
+  - Shipped: v1.9.1
+  - Category: bug
+  - Source: user testing
+  - Notes: the card showed only the final set of the previous session. It now lists every
+    logged set with the date, for example `Last Aug 24: 135x10, 145x8, 145x7`. Bodyweight
+    sets render as `BW`.
+  - Priority: high
+  - Test workflow: log three sets including one bodyweight set, then open the same exercise
+    on a later day and confirm all three appear with the correct date.
+
+- [x] Workout elapsed time must stop
+  - GitHub Issue: not yet filed
+  - Shipped: v1.9.1
+  - Category: bug
+  - Source: user testing
+  - Notes: `formatElapsed` measured `Date.now() - startedAt` with no end, so once a workout
+    started the clock ran forever and an old day showed the time since it happened rather
+    than how long it took. The session now records `lastLogAt` and `finishedAt`. The clock
+    starts on the first logged set or on marking the warm-up done, stops when every set is
+    logged, resumes if a set is reopened, freezes three hours after the last logged thing
+    for an abandoned workout, and shows a past day's real duration. Sessions logged before
+    this existed have no knowable end and read as `--:--` instead of a fabricated number.
+    Durations past an hour now render as `1:34:07` rather than `94:07`.
+  - Priority: high
+  - Test workflow: log a set and confirm the clock starts near zero. Log the last set and
+    confirm it freezes. Reopen a set and confirm it runs again. Open a workout from a
+    previous week and confirm it shows that workout's duration, not days.
 
 - [x] Restore Use Last in group workout logging
   - GitHub Issue: #14

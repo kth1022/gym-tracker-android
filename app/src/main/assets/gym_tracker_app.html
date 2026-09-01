@@ -204,6 +204,13 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 .stepper .numin{ border:none; background:transparent; padding:8px 2px; width:100%; -moz-appearance:textfield; }
 .stepper.timeinput .numin{ text-align:left; padding-left:8px; min-width:52px; }
 .stepper .numin::-webkit-outer-spin-button,.stepper .numin::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+.setlog{
+  flex:none; min-width:44px; height:34px; padding:0 8px; border-radius:var(--radius-sm);
+  border:1px solid var(--amber); background:var(--amber); color:var(--on-amber);
+  font:700 11px/1 Inter,sans-serif; letter-spacing:.04em; text-transform:uppercase; cursor:pointer;
+}
+.setlog.islogged{ background:var(--surface2); border-color:var(--teal); color:var(--teal); font-size:15px; }
+.setlog:active{ opacity:.72; }
 .clearset{
   flex:none; width:30px; height:30px; border-radius:50%; border:1px solid var(--border);
   background:var(--surface2); color:var(--danger); font-size:16px; cursor:pointer;
@@ -297,7 +304,8 @@ textarea:focus{ outline:none; border-color:var(--amber); }
   .tinyactions{ grid-template-columns:repeat(auto-fit,minmax(92px,1fr)); }
   .exhead{ flex-direction:column; align-items:stretch; }
   .exactions{ max-width:100%; justify-content:flex-start; }
-  .setrow{ display:grid; grid-template-columns:36px minmax(0,1fr) minmax(0,1.05fr) 30px; gap:6px; }
+  .setrow:not(.kbigwrap){ display:grid; grid-template-columns:32px minmax(0,1fr) minmax(0,1fr) 40px 26px; gap:5px; }
+  .setlog{ min-width:0; width:100%; padding:0 2px; font-size:10px; }
   .timerbar{ align-items:flex-start; }
   .timerclock{ font-size:22px; }
   .setnum{ width:auto; }
@@ -470,7 +478,7 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 
 /* Exercise card, active-set treatment */
 .kchip{ font:600 10.5px/1 Inter,sans-serif; color:var(--amber); background:var(--amber-14); padding:4px 7px; border-radius:6px; letter-spacing:.04em; }
-.klast{ font:500 11.5px/1 Inter,sans-serif; color:var(--text-dim); font-variant-numeric:tabular-nums; }
+.klast{ font:500 11.5px/1.45 Inter,sans-serif; color:var(--text-dim); font-variant-numeric:tabular-nums; flex:1 1 100%; }
 .kexmeta{ display:flex; align-items:center; gap:7px; margin-top:6px; flex-wrap:wrap; }
 .kbigwrap{ display:block; }
 .kbig{ display:flex; align-items:flex-end; gap:14px; margin:16px 0 2px; }
@@ -486,10 +494,14 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 .kactions button{ height:50px; border-radius:var(--radius-sm); background:var(--surface2); border:1px solid var(--border); color:var(--text); font-size:24px; line-height:1; cursor:pointer; flex:1; }
 .kactions .klogset{ flex:2.1; background:var(--amber); border-color:var(--amber); color:var(--on-amber); display:flex; align-items:center; padding-left:16px; font-family:'Oswald',sans-serif; font-weight:600; font-size:16px; letter-spacing:.05em; text-transform:uppercase; }
 .kdone{ display:flex; flex-direction:column; gap:6px; margin-top:12px; }
-.kdonerow{ display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:var(--radius-sm); background:var(--surface2); border:none; width:100%; cursor:pointer; }
+.kdonerow{ display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:var(--radius-sm); background:var(--surface2); border:none; width:100%; cursor:pointer; text-align:left; font:inherit; color:inherit; -webkit-appearance:none; -webkit-tap-highlight-color:transparent; }
+.kdonerow:active{ background:var(--surface); }
+.kdonerow .kdoneedit{ flex:none; width:auto; margin:0; padding:0; border:none; background:none; font:700 9.5px/1 Inter,sans-serif; color:var(--text-dim); letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
+.kdonerow .kdv ~ .kdoneedit{ margin-left:auto; }
+.kdonerow .kd ~ .kdoneedit{ margin-left:8px; }
 .kdonerow .kn{ width:18px; height:18px; border-radius:50%; background:var(--surface); color:var(--text-dim); font:800 10px/18px Inter,sans-serif; text-align:center; flex:none; }
-.kdonerow .kdv{ font:600 13.5px/1 Inter,sans-serif; font-variant-numeric:tabular-nums; color:var(--text); white-space:nowrap; }
-.kdonerow .kd{ margin-left:auto; font:600 10px/1 Inter,sans-serif; color:var(--teal); letter-spacing:.08em; text-transform:uppercase; }
+.kdonerow .kdv{ font:600 13.5px/1 Inter,sans-serif; font-variant-numeric:tabular-nums; color:var(--text); white-space:nowrap; flex:0 1 auto; min-width:0; }
+.kdonerow .kd{ margin-left:auto; font:600 10px/1 Inter,sans-serif; color:var(--teal); letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 /* Rest dock, design-doc form */
 .kdock{ background:var(--surface); border:1px solid var(--teal); border-radius:var(--radius); padding:10px 12px; display:flex; align-items:center; gap:12px; box-shadow:0 10px 22px rgba(0,0,0,.28); }
@@ -3360,15 +3372,41 @@ function setIsReadyToLog(s){
 // The planned prescription for an exercise, e.g. "Target: 3 sets x 10-12".
 // Renders whichever half the plan actually specifies and nothing at all when
 // the plan specifies neither, so cards never show "Target:  sets x ".
-function targetChip(ex){
+function targetText(ex){
   const sets = String((ex && ex.s) == null ? '' : ex.s).trim();
   const reps = String((ex && ex.r) == null ? '' : ex.r).trim();
-  if(!sets && !reps) return '';
-  let text;
-  if(sets && reps) text = `${sets} sets × ${reps}`;
-  else if(sets) text = `${sets} sets`;
-  else text = `${reps} reps`;
-  return `<span class="kchip">Target: ${escapeHtml(text)}</span>`;
+  if(sets && reps) return `${sets} sets × ${reps}`;
+  if(sets) return `${sets} sets`;
+  if(reps) return `${reps} reps`;
+  return '';
+}
+
+function targetChip(ex){
+  const text = targetText(ex);
+  return text ? `<span class="kchip">Target: ${escapeHtml(text)}</span>` : '';
+}
+
+function formatSetValue(s){
+  // Bodyweight sets carry no weight, so show the movement instead of a blank.
+  const w = String((s && s.w) == null ? '' : s.w).trim();
+  const r = String((s && s.r) == null ? '' : s.r).trim();
+  return (w === '' ? 'BW' : w) + '\u00d7' + (r === '' ? '\u2013' : r);
+}
+
+function fmtDayMonth(iso){
+  if(!iso) return '';
+  try { return dateFromIso(iso).toLocaleDateString('en-US', {month:'short', day:'numeric'}); }
+  catch(e){ return iso; }
+}
+
+function lastTimeText(last, lastSets){
+  // Every set from the last time this exercise was done, not just the top set.
+  if(!last || !lastSets || !lastSets.length) return '';
+  return `Last ${fmtDayMonth(last.date)}: ${lastSets.map(formatSetValue).join(', ')}`;
+}
+
+function sessionHasLoggedSet(sess){
+  return Object.values((sess && sess.sets) || {}).some(rows => (rows || []).some(isLoggedSet));
 }
 
 function computeStatus(sess){
@@ -3490,6 +3528,7 @@ function stopWorkoutTimer(record = false){
     if(!sess.sets[timer.exercise][timer.idx]) sess.sets[timer.exercise][timer.idx] = {w:'', r:''};
     sess.sets[timer.exercise][timer.idx].r = String(elapsed);
     sess.sets[timer.exercise][timer.idx].logged = true;
+    noteSessionActivity(sess);
     if(sess.status === 'Scheduled') sess.status = 'Complete';
     scheduleSave();
   }
@@ -3715,6 +3754,10 @@ function renderSetRow(ex, idx, s, options = {}){
   const timed = typeof ex === 'object' && isTimedExercise(ex);
   const duration = timed ? targetSeconds(ex) : 0;
   const personAttr = options.person ? ` data-person="${escapeHtml(options.person)}"` : '';
+  // These compact rows follow the same draft rules as the big single-set card:
+  // nothing counts as logged until this button is pressed.
+  const logged = isLoggedSet(s);
+  const logBtn = `<button class="setlog${logged ? ' islogged' : ''}" data-action="${logged ? 'editloggedset' : 'logset'}" data-exercise="${escapeHtml(exName)}" data-idx="${idx}"${personAttr} title="${logged ? 'Edit this logged set' : 'Log this set'}">${logged ? '\u2713' : 'Log'}</button>`;
   const repsControl = timed
     ? `<input type="text" inputmode="decimal" class="numin" data-field="r" value="${s.r ?? ''}" placeholder="sec"><button class="timerstart" data-action="startsettimer" data-targetseconds="${duration}" title="Start timer">Start</button>`
     : `<button data-action="nudge" data-field="r" data-delta="-1">\u2013</button><input type="number" inputmode="numeric" class="numin" data-field="r" value="${s.r ?? ''}" placeholder="reps"><button data-action="nudge" data-field="r" data-delta="1">+</button>`;
@@ -3729,6 +3772,7 @@ function renderSetRow(ex, idx, s, options = {}){
     <div class="stepper small ${timed ? 'timeinput' : ''}">
       ${repsControl}
     </div>
+    ${logBtn}
     <button class="clearset" data-action="setmenu" title="Set actions">...</button>
   </div>`;
 }
@@ -3752,9 +3796,56 @@ function sessionSetCounts(sess, tpl){
   return { done, total };
 }
 
-function formatElapsed(sess){
-  if(!sess || !sess.startedAt) return '\u2013\u2013:\u2013\u2013';
-  return formatTimer(Math.max(0, Math.round((Date.now() - sess.startedAt) / 1000)));
+// A workout that was never finished should not keep counting for the rest of time.
+// Three hours after the last logged thing, treat the session as over.
+const WORKOUT_IDLE_MS = 3 * 60 * 60 * 1000;
+
+function sessionAllSetsLogged(sess){
+  const groups = Object.values((sess && sess.sets) || {});
+  let any = false;
+  for(const rows of groups){
+    for(const s of (rows || [])){
+      if(isLoggedSet(s)) any = true;
+      else return false;
+    }
+  }
+  return any;
+}
+
+function noteSessionActivity(sess){
+  // The workout clock starts at the first logged thing and stops at the last one.
+  if(!sess) return;
+  const now = Date.now();
+  if(!sess.startedAt) sess.startedAt = now;
+  sess.lastLogAt = now;
+  sess.finishedAt = sessionAllSetsLogged(sess) ? now : null;
+}
+
+function sessionElapsedSeconds(sess, iso){
+  if(!sess || !sess.startedAt) return null;
+  const past = iso && iso !== todayIso();
+  // Sessions logged before the clock recorded an end have no knowable duration.
+  if(past && !sess.finishedAt && !sess.lastLogAt) return null;
+  const last = sess.lastLogAt || sess.startedAt;
+  let end;
+  if(sess.finishedAt) end = sess.finishedAt;               // every set is logged
+  else if(past) end = last;                                // an earlier day is already over
+  else if(Date.now() - last > WORKOUT_IDLE_MS) end = last; // abandoned, not still running
+  else end = Date.now();
+  return Math.max(0, Math.round((end - sess.startedAt) / 1000));
+}
+
+function formatDuration(seconds){
+  seconds = Math.max(0, Math.floor(seconds || 0));
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return h ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+}
+
+function formatElapsed(sess, iso){
+  const secs = sessionElapsedSeconds(sess, iso);
+  return secs == null ? '\u2013\u2013:\u2013\u2013' : formatDuration(secs);
 }
 
 function renderSessionSummary(iso, client, tpl){
@@ -3770,7 +3861,7 @@ function renderSessionSummary(iso, client, tpl){
       <div class="kname">${escapeHtml(tpl.label)}</div>
       <div class="kstats">
         <div><div class="klabel">Volume</div><div class="kval">${vol ? Math.round(vol).toLocaleString() : 0} lb</div></div>
-        <div><div class="klabel">Elapsed</div><div class="kval">${formatElapsed(sess)}</div></div>
+        <div><div class="klabel">Elapsed</div><div class="kval">${formatElapsed(sess, iso)}</div></div>
       </div>
     </div>
   </div>`;
@@ -3793,7 +3884,7 @@ function renderExerciseCard(ex, iso, client){
   const setsArr = sess.sets[ex.n];
   const last = findLastSession(state.profile, iso, client, ex.n);
   const lastSets = last ? last.sets.filter(isLoggedSet) : [];
-  const lastTop = lastSets.length ? lastSets[lastSets.length - 1] : null;
+  const lastSummary = lastTimeText(last, lastSets);
   const timed = isTimedExercise(ex);
   const activeIdx = setsArr.findIndex(s => !isLoggedSet(s));
   const menu = isOpen('exmenu.' + ex.n) ? `<div class="exmenu">
@@ -3811,7 +3902,7 @@ function renderExerciseCard(ex, iso, client){
         <div class="kexmeta">
           <span class="kchip">Set ${Math.min(activeIdx === -1 ? setsArr.length : activeIdx + 1, setsArr.length)} of ${setsArr.length}</span>
           ${targetChip(ex)}
-          ${lastTop ? `<span class="klast">Last time ${escapeHtml(lastTop.w)} \u00d7 ${escapeHtml(lastTop.r)}</span>` : ''}
+          ${lastSummary ? `<span class="klast">${escapeHtml(lastSummary)}</span>` : ''}
         </div>
       </div>
       <div class="exactions">
@@ -3830,12 +3921,13 @@ function renderExerciseCard(ex, iso, client){
   const doneRows = setsArr.map((s, i) => {
     if(!isLoggedSet(s)) return '';
     const delta = repDelta(s, lastSets, i);
-    return `<div class="kdonerow">
+    // The whole row is the edit control, so tapping a logged set reopens it.
+    return `<button type="button" class="kdonerow" data-action="editloggedset" data-exercise="${escapeHtml(ex.n)}" data-idx="${i}" title="Edit this logged set">
       <span class="kn">${i + 1}</span>
       <span class="kdv">${String(s.w == null ? '' : s.w).trim() === '' ? 'Bodyweight' : escapeHtml(s.w) + ' lb'} \u00d7 ${escapeHtml(s.r)}</span>
       ${delta ? `<span class="kd">${delta}</span>` : ''}
-      <button class="pill sm" data-action="editloggedset" data-exercise="${escapeHtml(ex.n)}" data-idx="${i}">Edit</button>
-    </div>`;
+      <span class="kdoneedit">Edit</span>
+    </button>`;
   }).join('');
 
   const active = activeIdx === -1 ? '' : `
@@ -3871,7 +3963,7 @@ function renderExerciseCard(ex, iso, client){
 function renderGroupExerciseCard(ex, iso, members){
   return `
   <div class="excard">
-    <div class="exhead"><div><div class="exname">${escapeHtml(ex.n)}</div><div class="extarget">${escapeHtml(ex.s)} sets x ${escapeHtml(ex.r)}</div></div><div class="exactions"><button class="helpbtn" data-action="exercisehelp" data-exercise="${escapeHtml(ex.n)}" aria-label="Exercise help">?</button><button class="exdelete" data-action="deleteexercise" data-exercise="${escapeHtml(ex.n)}">Delete</button></div></div>
+    <div class="exhead"><div><div class="exname">${escapeHtml(ex.n)}</div>${targetText(ex) ? `<div class="extarget">${escapeHtml(targetText(ex))}</div>` : ''}</div><div class="exactions"><button class="helpbtn" data-action="exercisehelp" data-exercise="${escapeHtml(ex.n)}" aria-label="Exercise help">?</button><button class="exdelete" data-action="deleteexercise" data-exercise="${escapeHtml(ex.n)}">Delete</button></div></div>
     ${ex.note ? `<div class="exnote">${escapeHtml(ex.note)}</div>` : ''}
     ${members.map(person => {
       const sess = getSessionForPerson(iso, person);
@@ -3879,7 +3971,7 @@ function renderGroupExerciseCard(ex, iso, members){
       const targetSets = parseTargetSets(ex.s);
       if(!sess.sets[ex.n]) sess.sets[ex.n] = Array.from({length: targetSets}, () => ({w:'', r:''}));
       const last = findLastSession(findProfileForPerson(person), iso, person, ex.n);
-      const refText = last ? 'Last: ' + last.sets.filter(isLoggedSet).map(s => `${s.w}\u00d7${s.r}`).join(', ') : '';
+      const refText = last ? lastTimeText(last, last.sets.filter(isLoggedSet)) : '';
       return `<div class="groupmember"><h4>${escapeHtml(person)}</h4>${refText ? `<div class="exref">${escapeHtml(refText)}</div>` : ''}${last ? `<button class="uselast" data-action="uselast" data-exercise="${escapeHtml(ex.n)}" data-person="${escapeHtml(person)}">↻ Use last</button>` : ''}${sess.sets[ex.n].map((s,i) => renderSetRow(ex, i, s, {person})).join('')}<button class="addset" data-action="addset" data-exercise="${escapeHtml(ex.n)}" data-person="${escapeHtml(person)}">+ Add set</button></div>`;
     }).join('')}
   </div>`;
@@ -4448,8 +4540,11 @@ const HELP_TOPICS = [
   { title:`Log`, body:`
 <div class="helplist">
         <div class="helpitem"><b>Workout entry</b><span>Use the date controls at the top to move between days. Enter each set's weight and reps, notes, body weight, sleep, and workout status.</span></div>
-        <div class="helpitem"><b>Logging a set</b><span>A set stays a draft until you press Log set, so typing a value does not complete the workout. Reps are required and weight is optional, so bodyweight work logs without a weight. Press Edit on a logged set to change it and log it again.</span></div>
+        <div class="helpitem"><b>Logging a set</b><span>A set stays a draft until you log it, so typing a value never completes the workout on its own. On the main exercise card press Log set. On timed exercises and group workouts press the Log button on the set row, or stop a running timer with Record. Reps are required and weight is optional, so bodyweight work logs without a weight.</span></div>
+        <div class="helpitem"><b>Workout time</b><span>Elapsed starts when you log your first set or mark the warm-up done, and stops when the last set of the workout is logged. Reopening a set starts it again. A workout you walk away from stops counting rather than running all day.</span></div>
+        <div class="helpitem"><b>Changing a logged set</b><span>Tap anywhere on a logged set to reopen it. The values come back in the editor with the Log set button, so you can correct a number and log it again. On timed and group rows tap the green check on that row.</span></div>
         <div class="helpitem"><b>Planned sets and reps</b><span>Each exercise card shows the plan's target, such as Target: 3 sets x 10-12, next to the current set counter.</span></div>
+        <div class="helpitem"><b>Last time</b><span>Under the target, each exercise lists every set you logged the last time you did it, with the date, for example Last Aug 24: 135x10, 145x8, 145x7. Bodyweight sets show as BW.</span></div>
         <div class="helpitem"><b>Use last</b><span>Tap Use last to copy your previous values for that exercise. In a group workout each member has their own Use last button that copies only that member's history.</span></div>
         <div class="helpitem"><b>Add or delete exercises</b><span>Add an exercise to the selected day, delete an exercise from that day's workout, clear the prefilled workout, or load a single premade day.</span></div>
         <div class="helpitem"><b>Add to plan</b><span>After changing a day's exercises, use Add to Plan to update that weekday from the selected date forward.</span></div>
@@ -5587,8 +5682,8 @@ function handleInputChange(e){
     const sess = row.dataset.person ? getSessionForPerson(iso, row.dataset.person) : getSession(iso, client);
     if(row.dataset.person) sess.deviceOwner = state.deviceOwner || state.client;
     sess.sets[exName][idx][field] = t.value;
-    // The standard strength card is a draft until the user explicitly logs it.
-    if(row.classList.contains('kbigwrap')) sess.sets[exName][idx].logged = false;
+    // Typing a value never logs a set. Every row waits for its Log button.
+    sess.sets[exName][idx].logged = false;
     scheduleSave();
   }
 }
@@ -5913,26 +6008,32 @@ async function handleClick(e){
     }
   }
   else if(action === 'logset'){
-    const sess = getSession(iso, client);
+    const person = btn.dataset.person || '';
+    const sess = person ? getSessionForPerson(iso, person) : getSession(iso, client);
+    if(person) sess.deviceOwner = state.deviceOwner || state.client;
     const rows = sess.sets[btn.dataset.exercise] || [];
     const row = rows[parseInt(btn.dataset.idx, 10)];
     if(!setIsReadyToLog(row)){
       showToast('Enter reps first.');
     } else {
-      if(!sess.startedAt) sess.startedAt = Date.now();
       row.logged = true;
+      noteSessionActivity(sess);
       if(sess.status === 'Scheduled') sess.status = 'Complete';
       scheduleSave();
       render();
     }
   }
   else if(action === 'editloggedset'){
-    const sess = getSession(iso, client);
+    const person = btn.dataset.person || '';
+    const sess = person ? getSessionForPerson(iso, person) : getSession(iso, client);
     const rows = sess.sets[btn.dataset.exercise] || [];
     const row = rows[parseInt(btn.dataset.idx, 10)];
     if(row){
       row.logged = false;
-      if(!rows.some(isLoggedSet) && sess.status === 'Complete') sess.status = 'Scheduled';
+      // The workout is no longer finished, so the clock is running again.
+      sess.finishedAt = null;
+      // Reopening the last logged set of the day puts it back on the schedule.
+      if(!sessionHasLoggedSet(sess) && sess.status === 'Complete') sess.status = 'Scheduled';
       scheduleSave();
       render();
     }
@@ -6093,7 +6194,11 @@ async function handleClick(e){
     loadPlannedWorkoutOntoCurrentDay();
   }
   else if(action === 'setfield'){
-    getSession(iso, client)[btn.dataset.fieldname] = btn.dataset.val; scheduleSave(); render();
+    const sess = getSession(iso, client);
+    sess[btn.dataset.fieldname] = btn.dataset.val;
+    // Finishing the warm-up is the other way a workout starts.
+    if(btn.dataset.fieldname === 'warmup' && btn.dataset.val === 'Yes') noteSessionActivity(sess);
+    scheduleSave(); render();
   }
   else if(action === 'setstatus'){
     getSession(iso, client).status = btn.dataset.val; scheduleSave(); render();
@@ -6142,8 +6247,8 @@ async function handleClick(e){
     if(row.dataset.person) sess.deviceOwner = state.deviceOwner || state.client;
     const cur = parseFloat(sess.sets[exName][idx][field]) || 0;
     sess.sets[exName][idx][field] = Math.max(0, cur + delta);
-    if(row.classList.contains('kbigwrap')) sess.sets[exName][idx].logged = false;
-    else if(sess.status === 'Scheduled') sess.status = 'Complete';
+    // Nudging a value is still editing, so the set stays a draft.
+    sess.sets[exName][idx].logged = false;
     scheduleSave(); render();
   }
   else if(action === 'setmenu'){
@@ -6205,12 +6310,9 @@ async function handleClick(e){
     const last = findLastSession(profileId, iso, person, exName);
     if(last){
       const sess = btn.dataset.person ? getSessionForPerson(iso, person) : getSession(iso, client);
-      const copied = last.sets.filter(isLoggedSet).map(s => ({w:s.w, r:s.r}));
-      sess.sets[exName] = btn.dataset.person ? copied : copied.map(s => ({...s, logged:false}));
-      if(btn.dataset.person){
-        sess.deviceOwner = state.deviceOwner || state.client;
-        if(sess.status === 'Scheduled') sess.status = 'Complete';
-      }
+      // Copied values are a starting point, so they land as drafts to confirm.
+      sess.sets[exName] = last.sets.filter(isLoggedSet).map(s => ({w:s.w, r:s.r, logged:false}));
+      if(btn.dataset.person) sess.deviceOwner = state.deviceOwner || state.client;
       scheduleSave(); render();
     }
   }

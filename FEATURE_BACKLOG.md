@@ -82,6 +82,34 @@ Add new ideas below using this format:
   - Notes: On the You screen, show how many of each reaction type (for example, thumbs-up and fire) the user has received from online friends. Keep the Friends inbox for sender and workout-date detail.
   - Priority: medium
 
+- [ ] Rest timer manual controls and 30-second flash markers
+  - GitHub Issue: #32
+  - Category: feature
+  - Source: in-app user feedback
+  - Notes: Replace or extend the current rest timer preset flow with start, stop, and reset controls. Add a visible flash or pulse at each 30-second mark so the user can track rest intervals without leaving the workout screen.
+  - Priority: medium
+
+- [ ] Today shortcut on the Log date picker
+  - GitHub Issue: #33
+  - Category: feature
+  - Source: in-app user feedback
+  - Notes: Add a Today button near the Log page date controls that jumps directly back to the current calendar date.
+  - Priority: low
+
+- [ ] Manual pause and resume for the daily workout elapsed timer
+  - GitHub Issue: #34
+  - Category: feature
+  - Source: in-app user feedback
+  - Notes: Keep the automatic workout elapsed timer behavior, but add manual start/pause controls so the user can correct timing during interruptions or unusual workout flow.
+  - Priority: medium
+
+- [ ] Theme color wheels
+  - GitHub Issues: #35, #36
+  - Category: feature
+  - Source: in-app user feedback
+  - Notes: Replace manual theme color hex-code entry with color wheel pickers. Issues #35 and #36 are duplicate reports for the same request.
+  - Priority: low
+
 ## Later Ideas
 
 Use this section for useful ideas that are not ready for the next release.

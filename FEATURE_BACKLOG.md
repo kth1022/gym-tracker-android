@@ -103,6 +103,13 @@ Add new ideas below using this format:
   - Notes: Keep the automatic workout elapsed timer behavior, but add manual start/pause controls so the user can correct timing during interruptions or unusual workout flow.
   - Priority: medium
 
+- [ ] Circuit training mode
+  - GitHub Issue: #37
+  - Category: feature
+  - Source: in-app user feedback
+  - Notes: Allow a plan to be marked as circuit training with configurable workout and rest intervals, a selected number of circuits, and an audible alarm when it is time to move to the next exercise.
+  - Priority: medium
+
 - [ ] Theme color wheels
   - GitHub Issues: #35, #36
   - Category: feature

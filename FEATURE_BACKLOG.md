@@ -65,7 +65,7 @@ Use this file to collect feature ideas between releases. Add ideas here as they 
   - Priority: high
   - Shipped: v1.9.2
 
-v1.9.1 shipped on 2026-08-31; see `Completed`.
+v1.9.1 shipped on 2026-08-31; see `Previously Completed`.
 
 v1.9 is superseded and must not be treated as a shipped release: it was signed with a
 regenerated key, could not install over v1.8, and reached no one. v1.9.1 carries all of

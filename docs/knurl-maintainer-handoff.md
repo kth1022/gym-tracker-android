@@ -3,12 +3,13 @@
 ## Current State
 
 - Current public release: Knurl `1.9.2`, version code `32`.
-- Source batch commit: `7f137dc Implement small backlog feature batch`.
-- Source batch was pushed to `main` and approved after phone verification.
+- Release commit: `c61f982 Release Knurl 1.9.2`.
+- Release tag: `v1.9.2`.
+- Release was pushed to `main` and approved after phone verification.
 - Public build: `1.9.2`, version code `32`.
 - The source batch includes backlog issues #33, #39, #15, and #35/#36.
 - In-app Help, wiki source, and `FEATURE_BACKLOG.md` were updated.
-- The final public APK was built and verified; release publication is in progress.
+- The final public APK was built, uploaded, and verified from the public GitHub release.
 
 ## Signing-Key Recovery
 

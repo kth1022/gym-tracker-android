@@ -125,6 +125,7 @@ if (expectedSigningFp) {
 android {
     namespace "com.homeops.gymtracker"
     compileSdk 36
+    buildToolsVersion "36.0.0"
 
     buildFeatures {
         buildConfig true

@@ -106,6 +106,17 @@ does not match `knurlSigningSha256` in `gradle.properties`.
 - Backup: `~/.android/knurl-signing-key-backup.keystore`
 - Override for a one-off build: `-PknurlKeystore=/path/to/debug.keystore`
 
+The original Knurl key was lost in the 2026-09-16 computer rebuild. The current
+replacement key has fingerprint
+`9F:80:ED:DC:12:45:7E:AF:E4:71:11:3F:CB:E1:A1:E7:DD:66:25:02:6B:B5:01:18:73:62:21:FB:48:DD:B2:44`.
+It cannot update installations signed by the old key. The replacement build therefore
+requires the documented export, uninstall, reinstall, and import migration before users
+can continue with their existing data.
+
+The current Windows build machine uses JDK 17, Android API 36, and Build Tools 36.0.0.
+`app/build.gradle` pins Build Tools 36.0.0 so the build does not try to install the
+unavailable Build Tools 34 package into the protected SDK directory.
+
 The keystore is never committed. `.gitignore` covers `*.keystore` and `*.jks`, and the
 GitHub repo is public, so publishing it would let anyone sign a package that installs over
 Knurl on a user's phone.

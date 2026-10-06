@@ -75,6 +75,71 @@ Baseline version for the next build is in `gradle.properties`. Raise `knurlVersi
 for every build that leaves this machine, tester builds included - the build now fails
 if it is not above the published release. See `docs/release-checklist.md`.
 
+## Candidate Project: Accounts And Cloud Recovery
+
+This is a planning project only. Do not start implementation until the design decisions
+below are resolved and the project is moved to `Planned For Next Update`.
+
+- [ ] Knurl account creation and login
+  - GitHub Issue: #43
+  - Category: feature
+  - Notes: Decide between password login, magic links, and passkeys; define email verification, session expiry, account deletion, and local-profile linking.
+  - Priority: high
+
+- [ ] Opt-in encrypted recovery snapshot backup and restore
+  - GitHub Issue: #44
+  - Category: feature
+  - Notes: Define client/server encryption, snapshot versioning, retention, storage limits, restore confirmation, conflict handling, and the fresh-install login flow.
+  - Priority: high
+
+- [ ] Reinstall migration and device management
+  - GitHub Issue: #45
+  - Category: feature
+  - Notes: Define how users link an existing local install, view active devices, revoke a lost device, recover after a signing-key reset, and prevent an unintended overwrite.
+  - Priority: high
+
+- [ ] Major-release and migration email notifications
+  - GitHub Issue: #46
+  - Category: feature
+  - Notes: Define release severity, opt-in consent, unsubscribe behavior, delivery provider, migration/security notices, and delivery failure handling.
+  - Priority: medium
+
+- [ ] Notify users when their GitHub feedback issue is closed
+  - GitHub Issue: #47
+  - Category: feature
+  - Notes: Associate an opted-in email with a GitHub issue, verify GitHub webhooks, send one closure notification, and define privacy retention and duplicate handling.
+  - Priority: medium
+
+- [ ] Opt-in privacy-preserving analytics
+  - GitHub Issue: #48
+  - Category: feature
+  - Notes: Define an anonymous event allowlist, consent screen, retention, export/delete behavior, dashboard, and a strict prohibition on collecting workout history or weights.
+  - Priority: medium
+
+- [ ] Self-host Knurl account services on HomeOps and TrueNAS
+  - GitHub Issue: #49
+  - Category: feature
+  - Notes: Define the API runtime, PostgreSQL, encrypted snapshot storage, Cloudflare Tunnel/public endpoint, backups, monitoring, Vaultwarden secrets, and disaster recovery.
+  - Priority: high
+
+- [ ] Resolve the account/cloud-recovery architecture as one release project
+  - GitHub Issue: #42
+  - Category: feature
+  - Notes: Planning umbrella for issues #43-#49. Decide which data is stored, who can decrypt it, how users consent, what happens when the server is unavailable, and whether HomeOps remains the system of record.
+  - Priority: high
+
+### Decisions Required Before Implementation
+
+- Authentication: password, magic link, passkey, or a combination.
+- Encryption: server-managed encryption for convenience versus client-side encryption for stronger privacy.
+- Storage: PostgreSQL metadata plus encrypted object storage on TrueNAS, with an off-device backup.
+- Public access: Cloudflare Tunnel and a dedicated Knurl API hostname; Tailscale remains for administration only.
+- Email: transactional email provider, sender address, unsubscribe handling, and bounce handling.
+- Snapshot policy: upload frequency, manual versus automatic snapshots, retention count, size limits, and delete-account behavior.
+- Restore behavior: preview and explicit confirmation, replacement versus merge, and conflict handling across devices.
+- Analytics: exact anonymous events, opt-in wording, retention, and whether analytics can be disabled later.
+- Operations: monitoring, alerting, disaster recovery testing, and who can access production data.
+
 ## Candidate Features
 
 Add new ideas below using this format:

@@ -1,9 +1,9 @@
 {
-  "versionCode": 29,
-  "versionName": "1.9.1",
-  "channel": "debug-template",
-  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.9.1/gym_tracker_v1_9_1_code29_debug.apk",
-  "sha256": "8B402E3458A82FE8C724DECB4D6C65ECBECF5B55996E9D860400803A7CF21C0F",
-  "size": 3947391,
-  "releaseNotes": "Bug-fix release, and the one that actually installs. v1.9 was signed with a regenerated key and could not install over v1.8, so nobody received it; 1.9.1 restores the original signing key and carries every v1.9 fix plus these. Sets stay drafts until you log them, everywhere - including timed exercises and group workouts, which used to log on the first keystroke. Tap a logged set to reopen and correct it. Each exercise shows the planned target and every set you logged last time, with the date. Workout elapsed time now stops when the last set is logged instead of counting forever. Imported plans start from the day you import them. No personal plan data ships in the app."
+  "versionCode": 32,
+  "versionName": "1.9.2",
+  "channel": "public",
+  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.9.2/gym_tracker_v1_9_2_code32_debug.apk",
+  "sha256": "994EB68F05873773A8EF73FAE568518ABB214E8DEC81A277030681E057A292AB",
+  "size": 3949547,
+  "releaseNotes": "Adds Restore Recovery Snapshot under Plan > Import. A private GymTrackerRecoveryV1 snapshot restores the plan, workout logs, group data, rest-day data, stretch data, and preferences together. Workout-data imports now detect the full date range in the workbook by default, including older Excel date formats. Also includes the Today shortcut, bodyweight set display, separate set-management controls, and native theme color pickers. Users coming from the lost old signing key must use the documented export, uninstall, reinstall, and snapshot restore migration."
 }

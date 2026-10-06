@@ -15,39 +15,55 @@ Use this file to collect feature ideas between releases. Add ideas here as they 
 - Every tester build and public release must follow `docs/release-checklist.md`.
 - Every shipped update still needs an increased `versionCode`, rebuilt APK, updated `latest.json`, a GitHub Release asset, updated in-app Help when workflows change, and updated wiki source in `docs/wiki/`.
 
-## Planned For Next Update
+## Completed In v1.9.2
 
-- [ ] Today shortcut on the Log date picker
+- [x] Today shortcut on the Log date picker
   - GitHub Issue: #33
   - Category: feature
   - Source: in-app user feedback
   - Notes: Add a Today button near the Log page date controls that jumps directly back to the current calendar date.
   - Priority: low
-  - Status: tester build in progress
+  - Shipped: v1.9.2
 
-- [ ] Display zero-weight sets as bodyweight
+- [x] Display zero-weight sets as bodyweight
   - GitHub Issue: #39
   - Category: feature
   - Source: in-app user feedback
   - Notes: When a user enters 0 lb for an exercise, display the logged set as BW or Bodyweight instead of 0 lb in set summaries and last-time values.
   - Priority: low
-  - Status: tester build in progress
+  - Shipped: v1.9.2
 
-- [ ] Split set-management controls
+- [x] Split set-management controls
   - GitHub Issue: #15
   - Category: feature
   - Source: user feedback
   - Notes: Restore separate, quick controls for clearing a set and deleting a set instead of requiring a menu for both actions.
   - Priority: medium
-  - Status: tester build in progress
+  - Shipped: v1.9.2
 
-- [ ] Theme color wheels
+- [x] Theme color wheels
   - GitHub Issues: #35, #36
   - Category: feature
   - Source: in-app user feedback
   - Notes: Replace manual theme color hex-code entry with native color pickers. Issues #35 and #36 are duplicate reports for the same request.
   - Priority: low
-  - Status: tester build in progress; #35 and #36 are duplicate reports
+  - Shipped: v1.9.2; #35 and #36 are duplicate reports
+
+- [x] Restore a complete recovery snapshot in the app
+  - GitHub Issue: #40
+  - Category: feature
+  - Source: migration testing
+  - Notes: Restore a private `GymTrackerRecoveryV1` JSON snapshot from Plan > Import and recover the plan, workout logs, group data, rest-day data, stretch data, and preferences together.
+  - Priority: high
+  - Shipped: v1.9.2
+
+- [x] Import workout data using the workbook's full date range
+  - GitHub Issue: #41
+  - Category: bug
+  - Source: migration testing
+  - Notes: Detect the first and last dates in an imported workout-data workbook by default, including ISO and Excel serial date values, instead of defaulting to only the currently selected app date.
+  - Priority: high
+  - Shipped: v1.9.2
 
 v1.9.1 shipped on 2026-08-31; see `Completed`.
 
@@ -132,7 +148,7 @@ Add new ideas below using this format:
 
 Use this section for useful ideas that are not ready for the next release.
 
-## Completed
+## Previously Completed
 
 Move shipped items here with the release version.
 

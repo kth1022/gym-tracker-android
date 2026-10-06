@@ -2,16 +2,16 @@
 
 Knurl checks for app updates automatically and from the You tab. The app reads `latest.json`, compares version codes, downloads the APK, verifies the SHA-256 hash, and then lets Android ask the user to approve installation.
 
-## Next Tester Build
+## Current Public Release
 
-The next tester build is focused on four small workflow improvements:
+Version `1.9.2` is the current public release. It adds recovery-snapshot restore,
+automatically detects the full date range during workout-data imports, and includes the
+previously tested Today shortcut, bodyweight display, set-management controls, and native
+theme color pickers. It also includes the replacement-key migration documentation.
 
-- A Today button on the Log date header.
-- Zero-weight sets displayed as BW or Bodyweight.
-- Separate clear-set-data and delete-set controls on compact set rows.
-- Native color pickers for custom theme colors.
-
-This build is for phone testing only and is not a public release until the maintainer verifies it on a device.
+Because the original signing key was lost, users coming from an old-key installation must
+export or save a recovery snapshot, uninstall the old app, install the replacement-signed
+APK, and restore the snapshot. New installations can install normally.
 
 ## User Update Flow
 
@@ -43,14 +43,12 @@ included. The version comes from `gradle.properties` and can be overridden per b
 above the published release, because a reused code makes the in-app update check report
 "up to date" on a tester build and makes feedback reports impossible to trace to a build.
 
-## Current Public Release
-
-Version `1.9.1` is the current public bug-fix release. Imported plans are no longer retroactive, set entry stays
-a draft until Log set is pressed and can be edited afterwards, exercise cards show the planned
-sets and reps, Use last is back in group workouts, reaction buttons reset after sending, and
-the APK no longer contains any personal plan data.
-
 ## Previous Releases
+
+Version `1.9.1` was the previous public bug-fix release. Imported plans are no longer
+retroactive, set entry stays a draft until Log set is pressed and can be edited afterwards,
+exercise cards show the planned sets and reps, Use last is back in group workouts, reaction
+buttons reset after sending, and the APK no longer contains personal plan data.
 
 Version `1.8` introduces the Knurl redesign, online friend streak sharing, cloud friend codes and QR codes, encouragement reactions, a Cloudflare/D1 social API, one-month Progress calendar rendering, and rest timer safe-area refinements.
 

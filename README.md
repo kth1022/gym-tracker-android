@@ -4,10 +4,10 @@ Knurl is a local-first Android workout tracker built around a WebView app shell.
 
 ## Current Baseline
 
-- Current update baseline: `1.8`
+- Current update baseline: `1.9.2`
 - Android package: `com.homeops.gymtracker`
-- Version code: `24`
-- Version name: `1.8`
+- Version code: `32`
+- Version name: `1.9.2`
 - Primary asset: `app/src/main/assets/gym_tracker_app.html`
 
 The v1.0 baseline was cleaned for broader use:
@@ -36,7 +36,10 @@ app/build/outputs/apk/debug/app-debug.apk
 
 ## Release Signing
 
-Do not publish debug APKs as the long-term update channel.
+The current public APK is signed with the replacement Knurl signing key generated after
+the original key was lost in the 2026-09-16 computer rebuild. It cannot update installations
+signed with the old key; affected users must use the documented recovery-snapshot migration.
+The keystore is not stored in the repository.
 
 Before GitHub-hosted app updates are enabled, create a release keystore and configure `keystore.properties` locally or through GitHub Actions secrets. Android requires future APK updates to use the same package name and signing key.
 

@@ -2,13 +2,13 @@
 
 ## Current State
 
-- Current public release: Knurl `1.9.1`, version code `29`.
+- Current public release: Knurl `1.9.2`, version code `32`.
 - Source batch commit: `7f137dc Implement small backlog feature batch`.
-- Source batch was pushed to `main`; no public release was published.
-- Tester batch: `1.9.2-recovery-test3`, version code `32`.
+- Source batch was pushed to `main` and approved after phone verification.
+- Public build: `1.9.2`, version code `32`.
 - The source batch includes backlog issues #33, #39, #15, and #35/#36.
 - In-app Help, wiki source, and `FEATURE_BACKLOG.md` were updated.
-- The replacement tester APK was built locally and has not been published.
+- The final public APK was built and verified; release publication is in progress.
 
 ## Signing-Key Recovery
 
@@ -37,7 +37,7 @@ The keystore and its password are not committed. The TrueNAS encrypted backup an
 
 ## Release Safety
 
-Do not publish `latest.json` or create a GitHub Release until the replacement migration APK is tested. Do not tell users to install it as an update. The required migration is: export Workout Data, export the Plan, save a Recovery Snapshot, uninstall the old Knurl installation, install the replacement APK, import the Plan and Workout Data, and verify the recovered history and group data.
+The replacement key cannot update old-key installations. Users coming from the old installation must export or save a Recovery Snapshot, uninstall the old Knurl installation, install the replacement APK, and restore the snapshot. New installations and users already on the replacement key can install normally.
 
 If the key is not found anywhere on `D:\`, it is considered lost in the 2026-09-16 computer rebuild. A replacement key cannot update existing installations; users would need a data export/recovery workflow before uninstalling and reinstalling a newly signed app.
 
@@ -54,7 +54,7 @@ Tester build command:
 
 ```powershell
 $env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'
-./gradlew.bat assembleDebug '-PknurlVersionCode=32' '-PknurlVersionName=1.9.2-recovery-test3'
+./gradlew.bat assembleDebug
 ```
 
 The full working note is maintained in the Second Brain vault at:

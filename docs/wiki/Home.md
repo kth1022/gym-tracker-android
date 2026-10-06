@@ -14,6 +14,7 @@ Knurl is a local-first Android workout tracker. It stores workout plans, workout
 - [Workout Plan Management](Workout-Plan-Management.md)
 - [Friends And Online Sync](Friends-And-Online-Sync.md)
 - [Import, Export, And Templates](Import-Export-and-Templates.md)
+- [Migration After Signing-Key Reset](Migration-After-Signing-Key-Reset.md)
 - [Feedback And Data Recovery](Feedback-and-Data-Recovery.md)
 
 ## Maintainer Docs

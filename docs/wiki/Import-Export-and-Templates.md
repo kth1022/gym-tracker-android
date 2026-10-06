@@ -15,7 +15,7 @@ When a new plan is imported, Gym Tracker preserves dates that already have logge
 
 ## Recovery Snapshot
 
-A recovery snapshot is a private JSON export that can help restore or inspect app data after an update, phone change, or import problem.
+A recovery snapshot is a private JSON export that restores the plan, workout logs, group data, rest-day entries, stretch data, and preferences after an update, phone change, or import problem.
 
 Use a recovery snapshot when:
 
@@ -23,6 +23,14 @@ Use a recovery snapshot when:
 - Group workout member data is missing.
 - Older app data needs to be inspected.
 - The maintainer asks for full recovery data privately.
+
+To restore one, open **Plan > Import > Restore Recovery Snapshot**, choose the JSON file,
+and confirm the replacement warning. The snapshot is the preferred migration file because
+it restores all supported app data together. Keep it private because it contains workout
+history and local preferences.
+
+Workout-data workbook imports detect the first and last dates in the workbook and select
+that full range by default. The range can still be narrowed before importing.
 
 ## Data Recovery Issue
 

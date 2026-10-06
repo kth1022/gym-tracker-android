@@ -16,6 +16,8 @@ The in-app Help screen lives in `app/src/main/assets/gym_tracker_app.html`. Do n
 
 - Data recovery
   - Explain when to use Data Recovery.
+  - Explain that **Restore Recovery Snapshot** restores the plan, workout logs, group data,
+    rest-day entries, stretch data, and preferences together, and replaces current local data.
   - Explain when to export a full recovery snapshot for private troubleshooting.
 
 - Set logging
@@ -32,6 +34,7 @@ The in-app Help screen lives in `app/src/main/assets/gym_tracker_app.html`. Do n
 
 - Plan management
   - Explain importing workout plan workbooks.
+  - Explain that workout-data import selects the workbook's detected date range by default.
   - Explain that importing a new plan preserves dates that already have logged workout data.
   - Explain that an imported plan starts from the import date and never rewrites past days, and starts on the next workout day when the import date already has a logged workout.
   - Explain exporting a blank workout plan template.

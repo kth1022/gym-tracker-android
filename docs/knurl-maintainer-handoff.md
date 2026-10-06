@@ -5,7 +5,7 @@
 - Current public release: Knurl `1.9.1`, version code `29`.
 - Source batch commit: `7f137dc Implement small backlog feature batch`.
 - Source batch was pushed to `main`; no public release was published.
-- Tester batch: `1.9.2-replacement-test1`, version code `30`.
+- Tester batch: `1.9.2-recovery-test3`, version code `32`.
 - The source batch includes backlog issues #33, #39, #15, and #35/#36.
 - In-app Help, wiki source, and `FEATURE_BACKLOG.md` were updated.
 - The replacement tester APK was built locally and has not been published.
@@ -54,7 +54,7 @@ Tester build command:
 
 ```powershell
 $env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'
-./gradlew.bat assembleDebug '-PknurlVersionCode=30' '-PknurlVersionName=1.9.2-replacement-test1'
+./gradlew.bat assembleDebug '-PknurlVersionCode=32' '-PknurlVersionName=1.9.2-recovery-test3'
 ```
 
 The full working note is maintained in the Second Brain vault at:

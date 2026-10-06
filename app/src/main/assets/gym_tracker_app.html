@@ -4480,9 +4480,10 @@ function renderPlanView(){
       <div class="tinyactions">
         <button data-action="import">Import Plan</button>
         <button data-action="importworkoutdata">Import Workout Data</button>
+        <button data-action="importrecovery">Restore Recovery Snapshot</button>
         <button data-action="nearbyreceive">Nearby Receive</button>
       </div>
-      <div class="muted">Importing a plan merges into the saved range and keeps dates that already have logged workouts.</div>
+      <div class="muted">Plan imports start from the import date. Workout-data imports default to the full date range found in the workbook. A recovery snapshot restores the plan, workout logs, group data, and preferences together.</div>
     </div>` : ''}
 
     ${exportOpen ? `<div class="panel" style="margin-bottom:12px">
@@ -4585,7 +4586,8 @@ const HELP_TOPICS = [
   { title:`Plan`, body:`
 <div class="helplist">
         <div class="helpitem"><b>Import plan</b><span>Load a spreadsheet workout plan. A new plan starts from the day you import it and never rewrites past days. If today already has a logged workout, the plan starts on its next workout day instead. Dates before that keep their existing plan and data.</span></div>
-        <div class="helpitem"><b>Import workout data</b><span>Load completed workout data from another user or device, then choose the date or range the file should update.</span></div>
+        <div class="helpitem"><b>Import workout data</b><span>Load completed workout data from another user or device. The app detects the workbook date range and selects it by default, so older history and today's record are included.</span></div>
+        <div class="helpitem"><b>Restore recovery snapshot</b><span>Choose a private GymTrackerRecoveryV1 JSON snapshot to restore the plan, workout logs, group members, rest-day data, and preferences together. This replaces the current local data.</span></div>
         <div class="helpitem"><b>Export workout data</b><span>Choose a date range and export completed logs for review, progress tracking, or plan adjustments.</span></div>
         <div class="helpitem"><b>Export plan</b><span>Export the planned routine for a date range so another user can import the same workout plan.</span></div>
         <div class="helpitem"><b>Plan templates</b><span>Export a blank workbook when building a new plan from scratch, or export the sample workbook to see a complete import-ready example.</span></div>
@@ -5661,6 +5663,7 @@ function render(){
     ${renderScreenHead()}
     <input type="file" id="importPlanFile" accept=".xlsx" style="display:none">
     <input type="file" id="importDataFile" accept=".xlsx" style="display:none">
+    <input type="file" id="importRecoveryFile" accept=".json,application/json" style="display:none">
     <div class="content">
       ${renderUpdateAlert()}
       ${state.tab === 'log' ? renderLogView() : state.tab === 'progress' ? renderProgressView() : state.tab === 'plan' ? renderPlanView() : state.tab === 'friends' ? renderFriendsView() : renderUsersView()}
@@ -5979,6 +5982,10 @@ async function handleClick(e){
     state.importTargetProfile = '';
     state.importTargetClient = '';
     const input = document.getElementById('importDataFile');
+    if(input) input.click();
+  }
+  else if(action === 'importrecovery'){
+    const input = document.getElementById('importRecoveryFile');
     if(input) input.click();
   }
   else if(action === 'repeatmonth'){
@@ -6395,6 +6402,10 @@ async function init(){
       importWorkbookFile(e.target.files[0]);
       e.target.value = '';
     }
+    if(e.target.id === 'importRecoveryFile' && e.target.files && e.target.files[0]){
+      importRecoveryFile(e.target.files[0]);
+      e.target.value = '';
+    }
     if(e.target.dataset.action === 'trendexercise'){
       state.trendExercise = e.target.value;
       render();
@@ -6607,6 +6618,116 @@ function saveRecoverySnapshot(){
   };
   saveTextDownload(`Gym_Tracker_Recovery_${todayIso()}.json`, JSON.stringify(snapshot, null, 2));
   showToast('Recovery snapshot saved.');
+}
+
+function cloneRecoveryValue(value){
+  return value == null ? value : JSON.parse(JSON.stringify(value));
+}
+
+function restoreRecoveryObject(target, source){
+  Object.keys(target).forEach(key => delete target[key]);
+  Object.assign(target, cloneRecoveryValue(source || {}));
+}
+
+async function restoreRecoverySnapshot(snapshot){
+  if(!snapshot || snapshot.format !== 'GymTrackerRecoveryV1'){
+    throw new Error('This is not a Knurl recovery snapshot.');
+  }
+  if(!snapshot.profiles || !snapshot.workoutData || !snapshot.customPlans){
+    throw new Error('The recovery snapshot is missing plan or workout data.');
+  }
+  const confirmed = await showFormDialog({
+    title: 'Restore recovery snapshot',
+    message: 'This replaces the current Knurl data on this device with the plan, workout logs, group data, and preferences from the snapshot.',
+    fields: [],
+    submitText: 'Restore Snapshot',
+    cancelText: 'Cancel'
+  });
+  if(!confirmed) return;
+
+  restoreRecoveryObject(PROFILES, snapshot.profiles);
+  DB = cloneRecoveryValue(snapshot.workoutData) || {};
+  CUSTOM_PLAN = cloneRecoveryValue(snapshot.customPlans) || {};
+  STRETCH_DB = cloneRecoveryValue(snapshot.stretchData) || {};
+  APP_PREFS = {
+    onboarded: false,
+    theme: 'strength',
+    primaryUser: '',
+    profiles: {},
+    friends: {},
+    tempGroupMembers: [],
+    feedbackQueue: [],
+    reactions: {},
+    handoffMode: false,
+    customTheme: null,
+    social: null,
+    ...(cloneRecoveryValue(snapshot.appPrefs) || {})
+  };
+  state = {...state, ...(cloneRecoveryValue(snapshot.state) || {})};
+
+  if(!PROFILES[DEFAULT_PROFILE_ID]){
+    PROFILES[DEFAULT_PROFILE_ID] = {
+      id: DEFAULT_PROFILE_ID,
+      name: 'Main Plan',
+      clients: [],
+      days: ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'],
+      hasStretchTab: true,
+      dateMin: '2000-01-01',
+      dateMax: '2099-12-31',
+      storageKey: 'log-main-all',
+      planStorageKey: 'plan-main',
+      stretchStorageKey: 'stretch-main-all'
+    };
+  }
+  Object.keys(PROFILES).forEach(pid => {
+    const profile = PROFILES[pid] || {};
+    profile.id = pid;
+    profile.clients = Array.isArray(profile.clients) ? profile.clients : [];
+    profile.days = Array.isArray(profile.days) && profile.days.length
+      ? profile.days
+      : ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    profile.dateMin = profile.dateMin || '2000-01-01';
+    profile.dateMax = profile.dateMax || '2099-12-31';
+    profile.storageKey = profile.storageKey || `log-${pid}-all`;
+    profile.planStorageKey = profile.planStorageKey || `plan-${pid}`;
+    profile.stretchStorageKey = profile.stretchStorageKey || `stretch-${pid}-all`;
+    PROFILES[pid] = profile;
+    DB[pid] = DB[pid] || {};
+    if(!Object.prototype.hasOwnProperty.call(CUSTOM_PLAN, pid)) CUSTOM_PLAN[pid] = null;
+  });
+  ensurePrefsShape();
+  if(!PROFILES[state.profile]) state.profile = DEFAULT_PROFILE_ID;
+  const profile = currentProfile();
+  const account = accountPerson();
+  state.client = profile.clients.includes(state.client) ? state.client : (profile.clients[0] || account.name || '');
+  state.date = clampIso(state.date || todayIso(), profile.dateMin, profile.dateMax);
+  state.trendStart = profile.dateMin;
+  state.trendEnd = profile.dateMax;
+  state.exportStart = profile.dateMin;
+  state.exportEnd = profile.dateMax;
+  state.timer = null;
+  state.updateStatus = null;
+  state.importTargetProfile = '';
+  state.importTargetClient = '';
+  applyTheme(APP_PREFS.theme || 'strength');
+  scheduleSave();
+  render();
+  showToast('Recovery snapshot restored.');
+}
+
+function importRecoveryFile(file){
+  const reader = new FileReader();
+  reader.onload = async event => {
+    try {
+      const snapshot = JSON.parse(String(event.target.result || ''));
+      await restoreRecoverySnapshot(snapshot);
+    } catch(err){
+      console.error(err);
+      showToast(`Recovery restore failed: ${err.message || 'Invalid snapshot.'}`);
+    }
+  };
+  reader.onerror = () => showToast('Recovery restore failed: could not read the file.');
+  reader.readAsText(file);
 }
 
 function deliverWorkbook(wb, filename, share){
@@ -7274,6 +7395,29 @@ function profileForImportedClient(client, fallbackProfileId){
   return ensureSeparateProfileForPerson(client) || fallbackProfileId;
 }
 
+function normalizeImportedIso(value){
+  if(value == null || value === '') return null;
+  if(typeof value === 'string'){
+    const text = value.trim();
+    const match = text.match(/^(\d{4}-\d{2}-\d{2})/);
+    if(match) return match[1];
+  }
+  return isoFromExcelDate(value);
+}
+
+function importedWorkbookDateRange(wb){
+  const dates = [];
+  ['Sessions','Sets'].forEach(sheetName => {
+    if(!wb.Sheets[sheetName]) return;
+    XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {defval:''}).forEach(row => {
+      const iso = normalizeImportedIso(row.Date);
+      if(iso) dates.push(iso);
+    });
+  });
+  dates.sort();
+  return {start: dates[0] || '', end: dates[dates.length - 1] || ''};
+}
+
 function resultRowUser(row){
   return String(row.User || row.Client || '').trim();
 }
@@ -7287,18 +7431,20 @@ function importResultWorkbook(wb, profileId, options = {}){
   if(options.replace){
     sessionRows.forEach(row => {
       const user = resultRowUser(row);
-      if(!row.Date || !user || !inRange(row.Date, start, end)) return;
+      const iso = normalizeImportedIso(row.Date);
+      if(!iso || !user || !inRange(iso, start, end)) return;
       const pid = profileForImportedClient(user, profileId);
-      if(DB[pid] && DB[pid][row.Date]) delete DB[pid][row.Date][user];
+      if(DB[pid] && DB[pid][iso]) delete DB[pid][iso][user];
     });
   }
   sessionRows.forEach(row => {
     const user = resultRowUser(row);
-    if(row.Date && !inRange(row.Date, start, end)) return;
-    if(!row.Date || !user) return;
+    const iso = normalizeImportedIso(row.Date);
+    if(iso && !inRange(iso, start, end)) return;
+    if(!iso || !user) return;
     const pid = profileForImportedClient(user, profileId);
     const logs = DB[pid] || {};
-    const sess = ensureImportedSession(logs, row.Date, user);
+    const sess = ensureImportedSession(logs, iso, user);
     assignIfPresent(sess, 'bodyWeight', row.BodyWeight);
     assignIfPresent(sess, 'sleep', row.SleepHours);
     assignIfPresent(sess, 'warmup', row.WarmUpDone);
@@ -7310,11 +7456,12 @@ function importResultWorkbook(wb, profileId, options = {}){
   });
   setRows.forEach(row => {
     const user = resultRowUser(row);
-    if(row.Date && !inRange(row.Date, start, end)) return;
-    if(!row.Date || !user || !row.Exercise || !row.SetNumber) return;
+    const iso = normalizeImportedIso(row.Date);
+    if(iso && !inRange(iso, start, end)) return;
+    if(!iso || !user || !row.Exercise || !row.SetNumber) return;
     const pid = profileForImportedClient(user, profileId);
     const logs = DB[pid] || {};
-    const sess = ensureImportedSession(logs, row.Date, user);
+    const sess = ensureImportedSession(logs, iso, user);
     if(!sess.sets[row.Exercise]) sess.sets[row.Exercise] = [];
     sess.sets[row.Exercise][Number(row.SetNumber) - 1] = { w: row.Weight, r: row.Reps };
     if(row.DeviceOwner) sess.deviceOwner = row.DeviceOwner;
@@ -7436,12 +7583,15 @@ async function processImportedWorkbook(wb, filename, mode = state.importMode){
       showToast('Group workout data received.');
       return;
     }
+    const detectedRange = importedWorkbookDateRange(wb);
     const range = await showFormDialog({
       title: 'Import workout data',
-      message: 'Choose the date or date range from this file that should replace local workout data.',
+      message: detectedRange.start
+        ? `This file contains data from ${fmtShortDate(detectedRange.start)} through ${fmtShortDate(detectedRange.end)}. The full range is selected by default.`
+        : 'Choose the date or date range from this file that should replace local workout data.',
       fields: [
-        {name:'start', label:'Start date', type:'date', value:state.date, required:true},
-        {name:'end', label:'End date', type:'date', value:state.date}
+        {name:'start', label:'Start date', type:'date', value:detectedRange.start || state.date, required:true},
+        {name:'end', label:'End date', type:'date', value:detectedRange.end || state.date}
       ],
       submitText: 'Import',
       cancelText: 'Cancel'

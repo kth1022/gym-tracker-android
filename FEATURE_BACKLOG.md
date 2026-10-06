@@ -17,7 +17,39 @@ Use this file to collect feature ideas between releases. Add ideas here as they 
 
 ## Planned For Next Update
 
-Nothing selected yet. v1.9.1 shipped on 2026-08-31; see `Completed`.
+- [ ] Today shortcut on the Log date picker
+  - GitHub Issue: #33
+  - Category: feature
+  - Source: in-app user feedback
+  - Notes: Add a Today button near the Log page date controls that jumps directly back to the current calendar date.
+  - Priority: low
+  - Status: tester build in progress
+
+- [ ] Display zero-weight sets as bodyweight
+  - GitHub Issue: #39
+  - Category: feature
+  - Source: in-app user feedback
+  - Notes: When a user enters 0 lb for an exercise, display the logged set as BW or Bodyweight instead of 0 lb in set summaries and last-time values.
+  - Priority: low
+  - Status: tester build in progress
+
+- [ ] Split set-management controls
+  - GitHub Issue: #15
+  - Category: feature
+  - Source: user feedback
+  - Notes: Restore separate, quick controls for clearing a set and deleting a set instead of requiring a menu for both actions.
+  - Priority: medium
+  - Status: tester build in progress
+
+- [ ] Theme color wheels
+  - GitHub Issues: #35, #36
+  - Category: feature
+  - Source: in-app user feedback
+  - Notes: Replace manual theme color hex-code entry with native color pickers. Issues #35 and #36 are duplicate reports for the same request.
+  - Priority: low
+  - Status: tester build in progress; #35 and #36 are duplicate reports
+
+v1.9.1 shipped on 2026-08-31; see `Completed`.
 
 v1.9 is superseded and must not be treated as a shipped release: it was signed with a
 regenerated key, could not install over v1.8, and reached no one. v1.9.1 carries all of
@@ -54,13 +86,6 @@ Add new ideas below using this format:
   - Notes: When logging a superset, a set entry must capture two weights *and* two reps, one pair per movement in the pair. Normal single-exercise set entry must be unchanged. Volume, Use Last, rep deltas, Progress/Trend, and export/import must all account for both halves of the pair.
   - Priority: medium
 
-- [ ] Split set-management controls
-  - GitHub Issue: #15
-  - Category: feature
-  - Source: user feedback
-  - Notes: Restore separate, quick controls for clearing a set and deleting a set instead of requiring a menu for both actions.
-  - Priority: medium
-
 - [ ] Exercise-specific notes
   - GitHub Issues: #17, #38
   - Category: feature
@@ -89,13 +114,6 @@ Add new ideas below using this format:
   - Notes: Replace or extend the current rest timer preset flow with start, stop, and reset controls. Add a visible flash or pulse at each 30-second mark so the user can track rest intervals without leaving the workout screen.
   - Priority: medium
 
-- [ ] Today shortcut on the Log date picker
-  - GitHub Issue: #33
-  - Category: feature
-  - Source: in-app user feedback
-  - Notes: Add a Today button near the Log page date controls that jumps directly back to the current calendar date.
-  - Priority: low
-
 - [ ] Manual pause and resume for the daily workout elapsed timer
   - GitHub Issue: #34
   - Category: feature
@@ -109,20 +127,6 @@ Add new ideas below using this format:
   - Source: in-app user feedback
   - Notes: Allow a plan to be marked as circuit training with configurable workout and rest intervals, a selected number of circuits, and an audible alarm when it is time to move to the next exercise.
   - Priority: medium
-
-- [ ] Display zero-weight sets as bodyweight
-  - GitHub Issue: #39
-  - Category: feature
-  - Source: in-app user feedback
-  - Notes: When a user enters 0 lb for an exercise, display the logged set as BW or Bodyweight instead of 0 lb, consistently across the workout log, last-time values, progress, group workouts, and exports where appropriate.
-  - Priority: low
-
-- [ ] Theme color wheels
-  - GitHub Issues: #35, #36
-  - Category: feature
-  - Source: in-app user feedback
-  - Notes: Replace manual theme color hex-code entry with color wheel pickers. Issues #35 and #36 are duplicate reports for the same request.
-  - Priority: low
 
 ## Later Ideas
 

@@ -4,7 +4,7 @@ Knurl is a local-first Android workout tracker. It stores workout plans, workout
 
 ## Current Version
 
-- Current public version: `1.8`
+- Current public version: `1.9.1`
 - Android package: `com.homeops.gymtracker`
 - Update channel: GitHub Releases
 

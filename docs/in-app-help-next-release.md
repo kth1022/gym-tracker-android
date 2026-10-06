@@ -21,9 +21,14 @@ The in-app Help screen lives in `app/src/main/assets/gym_tracker_app.html`. Do n
 - Set logging
   - Explain that a set stays a draft until Log set is pressed, so typing a value does not complete the workout.
   - Explain that reps are required and weight is optional, so bodyweight work logs without a weight.
+  - Explain that entering zero weight is displayed as BW or Bodyweight.
   - Explain the Edit action for reopening a logged set.
+  - Explain the separate Clear set data and Delete set controls.
   - Explain the Target chip showing the plan's sets and reps on each exercise card.
   - Explain that Use last is available per member in a group workout.
+
+- Date navigation
+  - Explain that Today returns the Log screen to the current date after browsing other days.
 
 - Plan management
   - Explain importing workout plan workbooks.
@@ -47,6 +52,9 @@ The in-app Help screen lives in `app/src/main/assets/gym_tracker_app.html`. Do n
   - Explain that users can enable Online Friend Sync from Friends.
   - Explain cloud friend codes, cloud QR codes, and entering an 8-character code.
   - Explain that only streak summaries and encouragement reactions are synced.
+
+- Appearance
+  - Explain that Custom theme colors are selected with color pickers and apply to this device.
 
 ## Update Rule
 

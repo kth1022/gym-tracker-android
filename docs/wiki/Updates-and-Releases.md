@@ -2,6 +2,17 @@
 
 Knurl checks for app updates automatically and from the You tab. The app reads `latest.json`, compares version codes, downloads the APK, verifies the SHA-256 hash, and then lets Android ask the user to approve installation.
 
+## Next Tester Build
+
+The next tester build is focused on four small workflow improvements:
+
+- A Today button on the Log date header.
+- Zero-weight sets displayed as BW or Bodyweight.
+- Separate clear-set-data and delete-set controls on compact set rows.
+- Native color pickers for custom theme colors.
+
+This build is for phone testing only and is not a public release until the maintainer verifies it on a device.
+
 ## User Update Flow
 
 1. When Knurl sees a newer GitHub-hosted release, it shows an update notice inside the app.
@@ -34,7 +45,7 @@ above the published release, because a reused code makes the in-app update check
 
 ## Current Public Release
 
-Version `1.9` is a bug-fix release. Imported plans are no longer retroactive, set entry stays
+Version `1.9.1` is the current public bug-fix release. Imported plans are no longer retroactive, set entry stays
 a draft until Log set is pressed and can be edited afterwards, exercise cards show the planned
 sets and reps, Use last is back in group workouts, reaction buttons reset after sending, and
 the APK no longer contains any personal plan data.

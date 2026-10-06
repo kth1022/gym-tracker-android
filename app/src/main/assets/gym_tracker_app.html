@@ -211,9 +211,16 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 }
 .setlog.islogged{ background:var(--surface2); border-color:var(--teal); color:var(--teal); font-size:15px; }
 .setlog:active{ opacity:.72; }
-.clearset{
+.setaction{
   flex:none; width:30px; height:30px; border-radius:50%; border:1px solid var(--border);
-  background:var(--surface2); color:var(--danger); font-size:16px; cursor:pointer;
+  background:var(--surface2); color:var(--text-dim); font-size:14px; font-weight:800; cursor:pointer;
+}
+.setaction.clearset{ color:var(--teal); }
+.setaction.deleteset{ color:var(--danger); }
+.setaction:active{ opacity:.72; }
+.todayhead{
+  width:auto !important; min-width:54px; padding:0 9px; color:var(--amber) !important;
+  font-size:11px !important; font-weight:800; letter-spacing:.02em;
 }
 .addset{
   margin-top:10px; width:100%; padding:9px; border-radius:var(--radius-sm); border:1px dashed var(--border);
@@ -304,7 +311,7 @@ textarea:focus{ outline:none; border-color:var(--amber); }
   .tinyactions{ grid-template-columns:repeat(auto-fit,minmax(92px,1fr)); }
   .exhead{ flex-direction:column; align-items:stretch; }
   .exactions{ max-width:100%; justify-content:flex-start; }
-  .setrow:not(.kbigwrap){ display:grid; grid-template-columns:32px minmax(0,1fr) minmax(0,1fr) 40px 26px; gap:5px; }
+  .setrow:not(.kbigwrap){ display:grid; grid-template-columns:32px minmax(0,1fr) minmax(0,1fr) 40px 26px 26px; gap:5px; }
   .setlog{ min-width:0; width:100%; padding:0 2px; font-size:10px; }
   .timerbar{ align-items:flex-start; }
   .timerclock{ font-size:22px; }
@@ -368,6 +375,7 @@ textarea:focus{ outline:none; border-color:var(--amber); }
 .modalfields{ display:grid; gap:12px; }
 .modalfields label{ display:grid; gap:6px; color:var(--text-dim); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
 .modalfields input,.modalfields select,.modalfields textarea{ width:100%; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface2); color:var(--text); padding:11px 12px; font-size:15px; }
+.modalfields input[type="color"]{ height:44px; padding:4px; cursor:pointer; }
 .modalfields textarea{ min-height:120px; text-transform:none; letter-spacing:0; font-weight:500; }
 .modalactions{ display:flex; justify-content:flex-end; gap:10px; margin-top:16px; }
 .modalactions button{ border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface2); color:var(--text); padding:10px 13px; font-weight:800; }
@@ -3386,11 +3394,18 @@ function targetChip(ex){
   return text ? `<span class="kchip">Target: ${escapeHtml(text)}</span>` : '';
 }
 
+function isBodyweightWeight(value){
+  const text = String(value == null ? '' : value).trim();
+  if(text === '') return true;
+  const number = Number(text);
+  return Number.isFinite(number) && number === 0;
+}
+
 function formatSetValue(s){
-  // Bodyweight sets carry no weight, so show the movement instead of a blank.
+  // Blank and zero-weight sets both represent bodyweight work.
   const w = String((s && s.w) == null ? '' : s.w).trim();
   const r = String((s && s.r) == null ? '' : s.r).trim();
-  return (w === '' ? 'BW' : w) + '\u00d7' + (r === '' ? '\u2013' : r);
+  return (isBodyweightWeight(w) ? 'BW' : w) + '\u00d7' + (r === '' ? '\u2013' : r);
 }
 
 function fmtDayMonth(iso){
@@ -3712,6 +3727,7 @@ function renderScreenHead(){
         </div>
       </div>
       <div class="knav">
+        <button class="todayhead" data-action="today" aria-label="Go to today">Today</button>
         <button data-action="prevday" aria-label="Previous day">\u2039</button>
         <button data-action="nextday" aria-label="Next day">\u203a</button>
       </div>
@@ -3773,7 +3789,8 @@ function renderSetRow(ex, idx, s, options = {}){
       ${repsControl}
     </div>
     ${logBtn}
-    <button class="clearset" data-action="setmenu" title="Set actions">...</button>
+    <button class="setaction clearset" data-action="clearset" title="Clear set data" aria-label="Clear set data">&#8634;</button>
+    <button class="setaction deleteset" data-action="deleteset" title="Delete set" aria-label="Delete set">&#215;</button>
   </div>`;
 }
 
@@ -3924,7 +3941,7 @@ function renderExerciseCard(ex, iso, client){
     // The whole row is the edit control, so tapping a logged set reopens it.
     return `<button type="button" class="kdonerow" data-action="editloggedset" data-exercise="${escapeHtml(ex.n)}" data-idx="${i}" title="Edit this logged set">
       <span class="kn">${i + 1}</span>
-      <span class="kdv">${String(s.w == null ? '' : s.w).trim() === '' ? 'Bodyweight' : escapeHtml(s.w) + ' lb'} \u00d7 ${escapeHtml(s.r)}</span>
+      <span class="kdv">${isBodyweightWeight(s.w) ? 'Bodyweight' : escapeHtml(s.w) + ' lb'} \u00d7 ${escapeHtml(s.r)}</span>
       ${delta ? `<span class="kd">${delta}</span>` : ''}
       <span class="kdoneedit">Edit</span>
     </button>`;
@@ -4533,16 +4550,17 @@ const HELP_TOPICS = [
         <div class="helpitem"><b>Workout groups</b><span>Enable group workout logging when multiple people train together. Select group members, choose whose plan to follow, or merge everyone's exercises for the day.</span></div>
         <div class="helpitem"><b>Workout complete</b><span>At the end of a group workout, tap Workout Complete to mark group entries complete, send today's workout data, and remove temporary members.</span></div>
         <div class="helpitem"><b>Device owner</b><span>Set whose device is being used for a group workout. Trends ignore other members' group data unless it belongs to the selected user or was logged on that user's device.</span></div>
-        <div class="helpitem"><b>Theme</b><span>Change the app color scheme for this device.</span></div>
+        <div class="helpitem"><b>Theme</b><span>Change the app color scheme for this device. Custom theme colors are selected with color pickers and apply only to this device.</span></div>
         <div class="helpitem"><b>App updates</b><span>The app checks for newer GitHub-hosted releases automatically and shows an update notice when one is available. The User tab still has a manual Check for Update button, and Android will ask you to approve any APK install.</span></div>
       </div>
 ` },
   { title:`Log`, body:`
 <div class="helplist">
-        <div class="helpitem"><b>Workout entry</b><span>Use the date controls at the top to move between days. Enter each set's weight and reps, notes, body weight, sleep, and workout status.</span></div>
-        <div class="helpitem"><b>Logging a set</b><span>A set stays a draft until you log it, so typing a value never completes the workout on its own. On the main exercise card press Log set. On timed exercises and group workouts press the Log button on the set row, or stop a running timer with Record. Reps are required and weight is optional, so bodyweight work logs without a weight.</span></div>
+        <div class="helpitem"><b>Workout entry</b><span>Use the date controls at the top to move between days. Tap Today to return to the current date after browsing. Enter each set's weight and reps, notes, body weight, sleep, and workout status.</span></div>
+        <div class="helpitem"><b>Logging a set</b><span>A set stays a draft until you log it, so typing a value never completes the workout on its own. On the main exercise card press Log set. On timed exercises and group workouts press the Log button on the set row, or stop a running timer with Record. Reps are required and weight is optional, so bodyweight work logs without a weight. Entering 0 lb also displays as BW or Bodyweight.</span></div>
         <div class="helpitem"><b>Workout time</b><span>Elapsed starts when you log your first set or mark the warm-up done, and stops when the last set of the workout is logged. Reopening a set starts it again. A workout you walk away from stops counting rather than running all day.</span></div>
         <div class="helpitem"><b>Changing a logged set</b><span>Tap anywhere on a logged set to reopen it. The values come back in the editor with the Log set button, so you can correct a number and log it again. On timed and group rows tap the green check on that row.</span></div>
+        <div class="helpitem"><b>Set controls</b><span>On compact set rows, use the clear button to remove the values while keeping the set, or use the delete button to remove the set row. Deleting the only row clears it instead.</span></div>
         <div class="helpitem"><b>Planned sets and reps</b><span>Each exercise card shows the plan's target, such as Target: 3 sets x 10-12, next to the current set counter.</span></div>
         <div class="helpitem"><b>Last time</b><span>Under the target, each exercise lists every set you logged the last time you did it, with the date, for example Last Aug 24: 135x10, 145x8, 145x7. Bodyweight sets show as BW.</span></div>
         <div class="helpitem"><b>Use last</b><span>Tap Use last to copy your previous values for that exercise. In a group workout each member has their own Use last button that copies only that member's history.</span></div>
@@ -5705,13 +5723,13 @@ async function handleClick(e){
     const current = customTheme();
     const result = await showFormDialog({
       title: 'Custom theme',
-      message: 'Six-digit hex colours, for example #f2b84b.',
+      message: 'Choose the colors for your custom theme.',
       fields: [
-        { name:'amber', label:'Accent', value: current.amber },
-        { name:'teal', label:'Second accent', value: current.teal },
-        { name:'bg', label:'Ground', value: current.bg },
-        { name:'surface', label:'Surface', value: current.surface },
-        { name:'surface2', label:'Raised surface', value: current.surface2 }
+        { name:'amber', label:'Accent', type:'color', value: current.amber },
+        { name:'teal', label:'Second accent', type:'color', value: current.teal },
+        { name:'bg', label:'Ground', type:'color', value: current.bg },
+        { name:'surface', label:'Surface', type:'color', value: current.surface },
+        { name:'surface2', label:'Raised surface', type:'color', value: current.surface2 }
       ],
       submitText: 'Save theme'
     });

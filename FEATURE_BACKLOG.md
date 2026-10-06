@@ -62,10 +62,10 @@ Add new ideas below using this format:
   - Priority: medium
 
 - [ ] Exercise-specific notes
-  - GitHub Issue: #17
+  - GitHub Issues: #17, #38
   - Category: feature
   - Source: user clarification
-  - Notes: Allow a short note on an individual exercise, separate from the existing workout-level notes. It should be visible when that exercise is next performed; decide whether it follows the exercise forward when the plan is updated.
+  - Notes: Allow a short note on an individual exercise, separate from the existing workout-level notes. For example, record that the user did goblet squats instead of Smith machine squats. It should be visible when that exercise is next performed; decide whether it follows the exercise forward when the plan is updated. Issue #38 is a later duplicate/clarification of #17.
   - Priority: medium
 
 - [ ] Edit exercise name and description, then update the plan
@@ -109,6 +109,13 @@ Add new ideas below using this format:
   - Source: in-app user feedback
   - Notes: Allow a plan to be marked as circuit training with configurable workout and rest intervals, a selected number of circuits, and an audible alarm when it is time to move to the next exercise.
   - Priority: medium
+
+- [ ] Display zero-weight sets as bodyweight
+  - GitHub Issue: #39
+  - Category: feature
+  - Source: in-app user feedback
+  - Notes: When a user enters 0 lb for an exercise, display the logged set as BW or Bodyweight instead of 0 lb, consistently across the workout log, last-time values, progress, group workouts, and exports where appropriate.
+  - Priority: low
 
 - [ ] Theme color wheels
   - GitHub Issues: #35, #36

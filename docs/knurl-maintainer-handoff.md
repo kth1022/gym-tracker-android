@@ -31,6 +31,10 @@ Searches of the current computer, all of `D:\`, `D:\rebuild-20260916`, the worki
 
 Do not generate a replacement key, publish `latest.json`, create a GitHub Release, or ask users to uninstall Knurl. Restore and verify the original key first. After restoration, build the tester APK with version code `30`, install it over Knurl `1.9.1`, and wait for phone verification before publishing.
 
+If the key is not found anywhere on `D:\`, it is considered lost in the 2026-09-16 computer rebuild. A replacement key cannot update existing installations; users would need a data export/recovery workflow before uninstalling and reinstalling a newly signed app.
+
+Future signing-key backups will use a restricted TrueNAS location for the encrypted keystore file and Vaultwarden for the keystore password. Neither the keystore nor its password may be committed to GitHub.
+
 The full working note is maintained in the Second Brain vault at:
 
 `C:\Users\kth10\Second Brain\10 Home\Handoffs\knurl-gym-tracker.md`

@@ -75,11 +75,11 @@ Baseline version for the next build is in `gradle.properties`. Raise `knurlVersi
 for every build that leaves this machine, tester builds included - the build now fails
 if it is not above the published release. See `docs/release-checklist.md`.
 
-## Active Planning Project: Accounts And Cloud Recovery
+## Deferred Project: Accounts And Cloud Recovery
 
-Planning has started, but production implementation has not. The architecture decision record
-is [`docs/knurl-accounts-architecture.md`](docs/knurl-accounts-architecture.md). Resolve the
-decisions below before moving these items to `Planned For Next Update`.
+This project is intentionally deferred. The architecture decision record is
+[`docs/knurl-accounts-architecture.md`](docs/knurl-accounts-architecture.md), but these items
+are not part of the current app update. Resolve the listed decisions before implementation.
 
 - [ ] Knurl account creation and login
   - GitHub Issue: #43

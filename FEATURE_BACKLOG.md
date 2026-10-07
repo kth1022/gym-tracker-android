@@ -161,13 +161,6 @@ Add new ideas below using this format:
   - Notes: Allow users to export plans, workout logs, group member data, and recovery data to Google Drive in a Google Sheets-accessible format without leaving the app. Also evaluate importing plans or data directly from Google Sheets inside the app with validation, preview, duplicate detection, and conflict handling.
   - Priority: medium
 
-- [ ] Superset set entry with two weights and two reps
-  - GitHub Issue: #9 (absorbed #24, closed as duplicate)
-  - Category: feature
-  - Source: user feedback
-  - Notes: When logging a superset, a set entry must capture two weights *and* two reps, one pair per movement in the pair. Normal single-exercise set entry must be unchanged. Volume, Use Last, rep deltas, Progress/Trend, and export/import must all account for both halves of the pair.
-  - Priority: medium
-
 - [ ] Exercise-specific notes
   - GitHub Issues: #17, #38
   - Category: feature
@@ -213,6 +206,13 @@ Add new ideas below using this format:
 ## Later Ideas
 
 Use this section for useful ideas that are not ready for the next release.
+
+- [ ] Superset set entry with two weights and two reps
+  - GitHub Issue: #9 (absorbed #24, closed as duplicate)
+  - Category: feature
+  - Source: user feedback
+  - Notes: Requirements need clarification from the user before implementation. Confirm the expected superset workflow and data model, including how paired movements, weights, reps, volume, Use Last, Progress/Trend, and export/import should behave.
+  - Priority: later
 
 ## Previously Completed
 

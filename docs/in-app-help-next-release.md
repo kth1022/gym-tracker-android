@@ -58,9 +58,9 @@ The in-app Help screen lives in `app/src/main/assets/gym_tracker_app.html`. Do n
   - Explain that the You screen shows received reaction totals and unread counts, while Friends keeps sender and workout-date details.
 
 - Timer controls
-  - Explain that rest timers can be paused, resumed, and reset from the Log screen.
+  - Explain that the rest timer starts with one open-ended Start Rest button and can be paused, resumed, and reset from the Log screen.
   - Explain that the rest timer flashes at each 30-second mark.
-  - Explain that workout elapsed time can be paused, resumed, or reset from Session details without deleting logged data.
+  - Explain that workout elapsed time can be paused, resumed, or reset from Session details without deleting logged data, and that only exercise activity advances it after the initial start.
 
 - Exercise notes and editing
   - Explain that an exercise menu can save a note for the next time the exercise is performed.

@@ -624,8 +624,8 @@ body.hasdock .toast{ bottom:calc(148px + env(safe-area-inset-bottom)); }
 
 /* Rest timer dock: always present on Log, above the tab bar */
 .timerdock{ position:fixed; left:50%; transform:translateX(-50%); bottom:calc(74px + env(safe-area-inset-bottom)); z-index:28; width:min(448px, calc(100% - 32px)); }
-.timerdock .dockidle{ display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
-.timerdock .dockidle button{ background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:var(--radius); padding:11px 8px; font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:.03em; text-transform:uppercase; cursor:pointer; box-shadow:0 10px 22px rgba(0,0,0,.28); }
+.timerdock .dockidle{ display:block; }
+.timerdock .dockidle button{ width:100%; background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:var(--radius); padding:11px 8px; font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:.03em; text-transform:uppercase; cursor:pointer; box-shadow:0 10px 22px rgba(0,0,0,.28); }
 .timerdock .timerbar{ position:static; left:auto; transform:none; width:100%; }
 .timerdock .timerbar.flash{ animation:timerflash .9s ease-out; }
 @keyframes timerflash{ 0%{ border-color:var(--amber); box-shadow:0 0 0 0 var(--amber-35),0 10px 22px rgba(0,0,0,.28); } 100%{ border-color:var(--teal); box-shadow:0 0 0 14px transparent,0 10px 22px rgba(0,0,0,.28); } }
@@ -3687,7 +3687,7 @@ function stopWorkoutTimer(record = false){
     if(!sess.sets[timer.exercise][timer.idx]) sess.sets[timer.exercise][timer.idx] = {w:'', r:''};
     sess.sets[timer.exercise][timer.idx].r = String(elapsed);
     sess.sets[timer.exercise][timer.idx].logged = true;
-    noteSessionActivity(sess);
+    noteSessionActivity(sess, 'exercise');
     if(sess.status === 'Scheduled') sess.status = 'Complete';
     scheduleSave();
   }
@@ -3826,9 +3826,7 @@ function progressStats(client){
 function renderTimerDock(){
   if(state.tab !== 'log') return '';
   const inner = state.timer ? renderRestDock() : `<div class="dockidle">
-      <button data-action="startresttimer" data-seconds="60">Rest 1:00</button>
-      <button data-action="startresttimer" data-seconds="90">Rest 1:30</button>
-      <button data-action="startresttimer" data-seconds="120">Rest 2:00</button>
+      <button data-action="startresttimer">Start Rest</button>
     </div>`;
   return `<div class="timerdock">${inner}</div>`;
 }
@@ -4032,12 +4030,15 @@ function sessionAllSetsLogged(sess){
   return any;
 }
 
-function noteSessionActivity(sess){
-  // The workout clock starts at the first logged thing and stops at the last one.
+function noteSessionActivity(sess, source = 'exercise'){
+  // Only exercise activity advances the clock. Warm-up completion can start an
+  // otherwise untouched workout, but must not change an already running clock.
   if(!sess) return;
   const now = Date.now();
+  const hasLoggedExercise = sessionHasLoggedSet(sess);
+  if(source === 'warmup' && hasLoggedExercise && !sess.startedAt) return;
   if(!sess.startedAt) sess.startedAt = now;
-  sess.lastLogAt = now;
+  if(source !== 'warmup' || !hasLoggedExercise) sess.lastLogAt = now;
   sess.finishedAt = sessionAllSetsLogged(sess) ? now : null;
 }
 
@@ -4787,7 +4788,7 @@ const HELP_TOPICS = [
         <div class="helpitem"><b>Add or delete exercises</b><span>Add an exercise to the selected day, delete an exercise from that day's workout, clear the prefilled workout, or load a single premade day.</span></div>
         <div class="helpitem"><b>Add to plan</b><span>After changing a day's exercises, use Add to Plan to update that weekday from the selected date forward.</span></div>
         <div class="helpitem"><b>Rest days</b><span>For blank days, mark the day as a rest day so the app knows no workout was planned.</span></div>
-        <div class="helpitem"><b>Rest timer</b><span>Use the timer dock for a 1:00, 1:30, or 2:00 rest interval. Pause, resume, or reset it without leaving the Log screen. The dock flashes at each 30-second mark.</span></div>
+        <div class="helpitem"><b>Rest timer</b><span>Tap Start Rest in the timer dock to start an open-ended rest timer. Pause, resume, or reset it without leaving the Log screen, then tap Done when rest is over. The dock flashes at each 30-second mark.</span></div>
         <div class="helpitem"><b>Timed exercises</b><span>For targets such as 30-45 sec, enter 0 for body-weight and use Start on the set row. Record saves the held time as the reps value; the timer can be paused, resumed, or reset.</span></div>
       </div>
 ` },
@@ -6296,7 +6297,7 @@ async function handleClick(e){
       showToast('Enter reps first.');
     } else {
       row.logged = true;
-      noteSessionActivity(sess);
+      noteSessionActivity(sess, 'exercise');
       if(sess.status === 'Scheduled') sess.status = 'Complete';
       scheduleSave();
       render();
@@ -6482,19 +6483,18 @@ async function handleClick(e){
     const sess = getSession(iso, client);
     sess[btn.dataset.fieldname] = btn.dataset.val;
     // Finishing the warm-up is the other way a workout starts.
-    if(btn.dataset.fieldname === 'warmup' && btn.dataset.val === 'Yes') noteSessionActivity(sess);
+    if(btn.dataset.fieldname === 'warmup' && btn.dataset.val === 'Yes') noteSessionActivity(sess, 'warmup');
     scheduleSave(); render();
   }
   else if(action === 'setstatus'){
     getSession(iso, client).status = btn.dataset.val; scheduleSave(); render();
   }
   else if(action === 'startresttimer'){
-    const seconds = parseInt(btn.dataset.seconds || '90', 10);
     startWorkoutTimer({
       mode: 'rest',
-      duration: seconds,
+      duration: 0,
       label: 'Rest timer',
-      detail: `Rest for ${formatTimer(seconds)}`
+      detail: 'Tap Done when rest is over.'
     });
   }
   else if(action === 'pausetimer'){

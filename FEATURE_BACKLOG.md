@@ -91,14 +91,14 @@ until the user verifies the tester APK on a phone.
   - GitHub Issue: #32
   - Category: feature
   - Source: in-app user feedback
-  - Notes: Add pause, resume, and reset controls to the in-app rest timer. Add a visible flash or pulse at each 30-second mark so the user can track rest intervals without leaving the workout screen.
+  - Notes: Replace preset rest durations with one open-ended Start Rest control. Add pause, resume, and reset controls plus a visible flash or pulse at each 30-second mark so the user can track rest intervals without leaving the workout screen.
   - Priority: medium
 
 - [ ] Manual pause and resume for the daily workout elapsed timer
   - GitHub Issue: #34
   - Category: feature
   - Source: in-app user feedback
-  - Notes: Keep the automatic workout elapsed timer behavior, but add manual pause, resume, and reset controls so the user can correct timing during interruptions or unusual workout flow without deleting logged data.
+  - Notes: Keep the automatic workout elapsed timer behavior, but add manual pause, resume, and reset controls so the user can correct timing during interruptions or unusual workout flow without deleting logged data. Only exercise logging advances the clock; warm-up completion may start an untouched workout, while weight, sleep, notes, and later warm-up changes do not alter it.
   - Priority: medium
 
 - [ ] Exercise-specific notes

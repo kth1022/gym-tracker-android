@@ -34,9 +34,9 @@ Open an exercise's menu to add a note for that exercise. The note is separate fr
 
 ## Timer Controls
 
-The Log screen's rest timer dock provides preset intervals with pause, resume, and reset controls. The dock flashes at each 30-second marker. Timed exercise rows also use the in-app timer; **Record** saves the held time as the reps value.
+The Log screen's rest timer dock has one open-ended **Start Rest** control with pause, resume, and reset controls. Tap **Done** when rest is over. The dock flashes at each 30-second marker. Timed exercise rows also use the in-app timer; **Record** saves the held time as the reps value.
 
-Session details show the daily workout elapsed clock after the first logged set or completed warm-up. Pause and resume exclude an interruption from the elapsed time. Reset clears only the clock and leaves logged data intact.
+Session details show the daily workout elapsed clock after the first logged set or a completed warm-up before any exercise is logged. Only exercise logging advances the clock after it starts; changing warm-up status later or adding weight, sleep, or notes does not move it. Pause and resume exclude an interruption from the elapsed time. Reset clears only the clock and leaves logged data intact.
 
 ## Export A Blank Plan Template
 

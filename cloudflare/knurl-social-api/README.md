@@ -12,6 +12,7 @@ Cloudflare Worker and D1 backend for Knurl friend streak sharing and in-app enco
 - `POST /v1/streak`
 - `POST /v1/reactions`
 - `GET /v1/inbox`
+- `GET /v1/reactions/summary`
 - `POST /v1/inbox/read`
 - `POST /v1/push-token`
 

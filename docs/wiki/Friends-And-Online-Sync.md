@@ -28,6 +28,10 @@ Online sync sends lightweight social data only:
 
 Full workout logs, notes, body weight, sleep, and plan details are not synced through the social API.
 
+## Reaction History
+
+The **You** tab shows the number of thumbs-up and fire reactions received, along with total and unread counts. The Friends tab keeps the detailed inbox entries with the sender and workout date. Marking the inbox read changes the unread count but does not delete the lifetime totals.
+
 ## Current Limitations
 
-Reactions are sent through the Cloudflare Worker, but the received reaction experience still needs refinement. The active backlog tracks clearer in-app reaction visibility and resetting reaction buttons after a send.
+Reaction counts require the deployed social API summary route. If an older worker is still active, friend sync continues to work and the last locally cached counts remain visible until the worker is updated.

@@ -55,6 +55,16 @@ The in-app Help screen lives in `app/src/main/assets/gym_tracker_app.html`. Do n
   - Explain that users can enable Online Friend Sync from Friends.
   - Explain cloud friend codes, cloud QR codes, and entering an 8-character code.
   - Explain that only streak summaries and encouragement reactions are synced.
+  - Explain that the You screen shows received reaction totals and unread counts, while Friends keeps sender and workout-date details.
+
+- Timer controls
+  - Explain that rest timers can be paused, resumed, and reset from the Log screen.
+  - Explain that the rest timer flashes at each 30-second mark.
+  - Explain that workout elapsed time can be paused, resumed, or reset from Session details without deleting logged data.
+
+- Exercise notes and editing
+  - Explain that an exercise menu can save a note for the next time the exercise is performed.
+  - Explain that the exercise name and description can be edited for today and optionally applied to matching weekdays going forward.
 
 - Appearance
   - Explain that Custom theme colors are selected with color pickers and apply to this device.

@@ -75,6 +75,46 @@ Baseline version for the next build is in `gradle.properties`. Raise `knurlVersi
 for every build that leaves this machine, tester builds included - the build now fails
 if it is not above the published release. See `docs/release-checklist.md`.
 
+## Planned For Next Update
+
+These five items are the active batch for the next tester build. They remain unchecked
+until the user verifies the tester APK on a phone.
+
+- [ ] Show received friend reaction counts on the You screen
+  - GitHub Issue: #21
+  - Category: feature
+  - Source: user testing
+  - Notes: On the You screen, show how many of each reaction type (for example, thumbs-up and fire) the user has received from online friends. Keep the Friends inbox for sender and workout-date detail.
+  - Priority: medium
+
+- [ ] Rest timer manual controls and 30-second flash markers
+  - GitHub Issue: #32
+  - Category: feature
+  - Source: in-app user feedback
+  - Notes: Add pause, resume, and reset controls to the in-app rest timer. Add a visible flash or pulse at each 30-second mark so the user can track rest intervals without leaving the workout screen.
+  - Priority: medium
+
+- [ ] Manual pause and resume for the daily workout elapsed timer
+  - GitHub Issue: #34
+  - Category: feature
+  - Source: in-app user feedback
+  - Notes: Keep the automatic workout elapsed timer behavior, but add manual pause, resume, and reset controls so the user can correct timing during interruptions or unusual workout flow without deleting logged data.
+  - Priority: medium
+
+- [ ] Exercise-specific notes
+  - GitHub Issues: #17, #38
+  - Category: feature
+  - Source: user clarification
+  - Notes: Allow a short note on an individual exercise, separate from the existing workout-level notes. It is visible when that exercise is next performed. Issue #38 is a later duplicate/clarification of #17.
+  - Priority: medium
+
+- [ ] Edit exercise name and description, then update the plan
+  - GitHub Issue: #18
+  - Category: feature
+  - Source: user feedback
+  - Notes: Let a user rename an exercise and edit its description from the log, then optionally apply that change to the matching weekday going forward. The current swap and target-edit tools do not support arbitrary names or descriptions.
+  - Priority: medium
+
 ## Deferred Project: Accounts And Cloud Recovery
 
 This project is intentionally deferred. The architecture decision record is
@@ -159,41 +199,6 @@ Add new ideas below using this format:
   - Category: feature
   - Source: user suggestion
   - Notes: Allow users to export plans, workout logs, group member data, and recovery data to Google Drive in a Google Sheets-accessible format without leaving the app. Also evaluate importing plans or data directly from Google Sheets inside the app with validation, preview, duplicate detection, and conflict handling.
-  - Priority: medium
-
-- [ ] Exercise-specific notes
-  - GitHub Issues: #17, #38
-  - Category: feature
-  - Source: user clarification
-  - Notes: Allow a short note on an individual exercise, separate from the existing workout-level notes. For example, record that the user did goblet squats instead of Smith machine squats. It should be visible when that exercise is next performed; decide whether it follows the exercise forward when the plan is updated. Issue #38 is a later duplicate/clarification of #17.
-  - Priority: medium
-
-- [ ] Edit exercise name and description, then update the plan
-  - GitHub Issue: #18
-  - Category: feature
-  - Source: user feedback
-  - Notes: Let a user rename an exercise and edit its description from the log, then apply that change to the matching weekday going forward. The current swap and target-edit tools do not support arbitrary names or descriptions.
-  - Priority: medium
-
-- [ ] Show received friend reaction counts on the You screen
-  - GitHub Issue: #21
-  - Category: feature
-  - Source: user testing
-  - Notes: On the You screen, show how many of each reaction type (for example, thumbs-up and fire) the user has received from online friends. Keep the Friends inbox for sender and workout-date detail.
-  - Priority: medium
-
-- [ ] Rest timer manual controls and 30-second flash markers
-  - GitHub Issue: #32
-  - Category: feature
-  - Source: in-app user feedback
-  - Notes: Replace or extend the current rest timer preset flow with start, stop, and reset controls. Add a visible flash or pulse at each 30-second mark so the user can track rest intervals without leaving the workout screen.
-  - Priority: medium
-
-- [ ] Manual pause and resume for the daily workout elapsed timer
-  - GitHub Issue: #34
-  - Category: feature
-  - Source: in-app user feedback
-  - Notes: Keep the automatic workout elapsed timer behavior, but add manual start/pause controls so the user can correct timing during interruptions or unusual workout flow.
   - Priority: medium
 
 - [ ] Circuit training mode

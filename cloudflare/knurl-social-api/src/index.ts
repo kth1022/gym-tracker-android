@@ -111,6 +111,9 @@ export default {
       if (request.method === "GET" && path === "/v1/inbox") {
         return jsonResponse(200, await listInbox(env, user));
       }
+      if (request.method === "GET" && path === "/v1/reactions/summary") {
+        return jsonResponse(200, await reactionSummary(env, user));
+      }
       if (request.method === "POST" && path === "/v1/inbox/read") {
         return jsonResponse(200, await markInboxRead(request, env, user));
       }
@@ -335,6 +338,29 @@ async function listInbox(env: Env, user: UserRow): Promise<unknown> {
       createdAt: row.created_at
     }))
   };
+}
+
+async function reactionSummary(env: Env, user: UserRow): Promise<unknown> {
+  const rows = await env.SOCIAL_DB.prepare(
+    `SELECT type, COUNT(*) AS total_count,
+            SUM(CASE WHEN read_at IS NULL THEN 1 ELSE 0 END) AS unread_count
+     FROM reactions
+     WHERE to_user_id = ?
+     GROUP BY type`
+  ).bind(user.id).all<{ type: string; total_count: number; unread_count: number }>();
+
+  const byType: Record<string, { total: number; unread: number }> = {};
+  let total = 0;
+  let unread = 0;
+  for (const row of rows.results || []) {
+    const count = Number(row.total_count || 0);
+    const unreadCount = Number(row.unread_count || 0);
+    byType[row.type] = { total: count, unread: unreadCount };
+    total += count;
+    unread += unreadCount;
+  }
+
+  return { ok: true, total, unread, byType };
 }
 
 async function markInboxRead(request: Request, env: Env, user: UserRow): Promise<unknown> {

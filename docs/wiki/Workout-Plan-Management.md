@@ -28,6 +28,16 @@ A set is a draft until you press **Log set**.
 
 Each exercise card shows the planned prescription, for example `Target: 3 sets × 10-12`, next to the current set counter.
 
+## Exercise Notes And Editing
+
+Open an exercise's menu to add a note for that exercise. The note is separate from workout notes and appears the next time the exercise is performed. The same menu can edit the exercise name and description. After saving, Knurl asks whether to apply the change to matching weekdays from the selected date forward.
+
+## Timer Controls
+
+The Log screen's rest timer dock provides preset intervals with pause, resume, and reset controls. The dock flashes at each 30-second marker. Timed exercise rows also use the in-app timer; **Record** saves the held time as the reps value.
+
+Session details show the daily workout elapsed clock after the first logged set or completed warm-up. Pause and resume exclude an interruption from the elapsed time. Reset clears only the clock and leaves logged data intact.
+
 ## Export A Blank Plan Template
 
 Use the app's blank workout plan template export when creating a new plan outside the app. The exported workbook uses the sheet names and headers accepted by the importer.
@@ -48,4 +58,3 @@ Example:
 4. Load the Wednesday workout plan onto Friday.
 
 The load plan day selector should show weekdays from the current plan, not every calendar date.
-

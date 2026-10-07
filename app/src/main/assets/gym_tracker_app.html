@@ -627,6 +627,10 @@ body.hasdock .toast{ bottom:calc(148px + env(safe-area-inset-bottom)); }
 .timerdock .dockidle{ display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
 .timerdock .dockidle button{ background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:var(--radius); padding:11px 8px; font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:.03em; text-transform:uppercase; cursor:pointer; box-shadow:0 10px 22px rgba(0,0,0,.28); }
 .timerdock .timerbar{ position:static; left:auto; transform:none; width:100%; }
+.timerdock .timerbar.flash{ animation:timerflash .9s ease-out; }
+@keyframes timerflash{ 0%{ border-color:var(--amber); box-shadow:0 0 0 0 var(--amber-35),0 10px 22px rgba(0,0,0,.28); } 100%{ border-color:var(--teal); box-shadow:0 0 0 14px transparent,0 10px 22px rgba(0,0,0,.28); } }
+.elapsedcontrols{ display:flex; align-items:center; justify-content:space-between; gap:10px; border-top:1px solid var(--border); padding-top:10px; margin-top:10px; }
+.elapsedcontrols b{ font-family:'Oswald',sans-serif; font-size:18px; color:var(--teal); font-variant-numeric:tabular-nums; }
 
 /* Exercise card: tighter, with an overflow menu */
 .excard{ padding:12px 13px; }
@@ -717,6 +721,8 @@ let APP_PREFS = { onboarded:false, theme:'strength', primaryUser:'', profiles:{}
 let saveTimer = null;
 let toastTimer = null;
 let workoutTimerTick = null;
+let workoutElapsedTick = null;
+let timerFlashTimeout = null;
 let updateCheckTimer = null;
 let socialSyncTimer = null;
 let socialSyncRunning = false;
@@ -1064,9 +1070,10 @@ function ensurePrefsShape(){
     deviceSecret: '',
     displayName: '',
     friendCode: '',
-    cloudFriends: [],
-    inbox: [],
-    lastSyncAt: '',
+     cloudFriends: [],
+     inbox: [],
+     reactionSummary: { total: 0, unread: 0, byType: {} },
+     lastSyncAt: '',
     lastError: '',
     registeredAt: ''
   };
@@ -1075,6 +1082,12 @@ function ensurePrefsShape(){
   });
   if(!Array.isArray(APP_PREFS.social.cloudFriends)) APP_PREFS.social.cloudFriends = [];
   if(!Array.isArray(APP_PREFS.social.inbox)) APP_PREFS.social.inbox = [];
+  if(!APP_PREFS.social.reactionSummary || typeof APP_PREFS.social.reactionSummary !== 'object'){
+    APP_PREFS.social.reactionSummary = { total: 0, unread: 0, byType: {} };
+  }
+  if(!APP_PREFS.social.reactionSummary.byType || typeof APP_PREFS.social.reactionSummary.byType !== 'object'){
+    APP_PREFS.social.reactionSummary.byType = {};
+  }
   APP_PREFS.dismissedUpdateVersionCode = Number(APP_PREFS.dismissedUpdateVersionCode || 0);
   APP_PREFS.lastAnnouncedUpdateVersionCode = Number(APP_PREFS.lastAnnouncedUpdateVersionCode || 0);
 }
@@ -2613,6 +2626,11 @@ function clearStrengthDataForDate(profileId, iso){
     sess.warmup = '';
     sess.cooldown = '';
     sess.status = 'Scheduled';
+    sess.startedAt = null;
+    sess.lastLogAt = null;
+    sess.finishedAt = null;
+    sess.pausedAt = null;
+    sess.pausedMs = 0;
   });
 }
 
@@ -2937,6 +2955,78 @@ async function editExerciseTargets(exerciseName){
   const push = await showConfirmDialog({
     title: 'Add to plan?',
     message: `Apply these targets to all ${weekdayName(state.date)} workouts from this date forward?`,
+    confirmText: 'Update Plan',
+    cancelText: 'Today only'
+  });
+  if(push) addCurrentDayToPlan();
+}
+
+async function editExerciseNote(exerciseName, person = ''){
+  if(!exerciseName) return;
+  const sess = person ? getSessionForPerson(state.date, person) : getSession(state.date, state.client);
+  sess.exerciseNotes = sess.exerciseNotes || {};
+  const result = await showFormDialog({
+    title: 'Exercise note',
+    message: `Save a note for ${exerciseName}. It will appear the next time this exercise is logged.`,
+    fields: [{name:'note', label:'Note', type:'textarea', value:sess.exerciseNotes[exerciseName] || ''}],
+    submitText: 'Save'
+  });
+  if(!result) return;
+  const note = String(result.note || '').trim();
+  if(note) sess.exerciseNotes[exerciseName] = note;
+  else delete sess.exerciseNotes[exerciseName];
+  if(person) sess.deviceOwner = state.deviceOwner || state.client;
+  scheduleSave();
+  render();
+  showToast(note ? 'Exercise note saved.' : 'Exercise note cleared.');
+}
+
+function renameExerciseInLogs(profileId, oldName, newName, startIso, dayName){
+  const db = DB[profileId] || {};
+  Object.keys(db).forEach(iso => {
+    if(iso < startIso || (dayName && weekdayName(iso) !== dayName)) return;
+    Object.values(db[iso] || {}).forEach(sess => {
+      if(!sess || !sess.sets || !sess.sets[oldName]) return;
+      if(!sess.sets[newName]) sess.sets[newName] = sess.sets[oldName];
+      delete sess.sets[oldName];
+      if(sess.exerciseNotes && sess.exerciseNotes[oldName]){
+        if(!sess.exerciseNotes[newName]) sess.exerciseNotes[newName] = sess.exerciseNotes[oldName];
+        delete sess.exerciseNotes[oldName];
+      }
+    });
+  });
+}
+
+async function editExerciseDetails(exerciseName){
+  const day = editableDayTemplate();
+  if(!day || !exerciseName) return;
+  const ex = (day.exercises || []).find(item => (item.n || item.name) === exerciseName);
+  if(!ex) return;
+  const result = await showFormDialog({
+    title: 'Edit exercise',
+    message: 'Change the exercise name or description for this workout day.',
+    fields: [
+      {name:'name', label:'Exercise name', type:'text', value:ex.n || ex.name || '', required:true},
+      {name:'description', label:'Description', type:'textarea', value:ex.note || ex.notes || ''}
+    ],
+    submitText: 'Save'
+  });
+  if(!result) return;
+  const newName = String(result.name || '').trim();
+  if(!newName) return;
+  const oldName = ex.n || ex.name || exerciseName;
+  const description = String(result.description || '').trim();
+  if(ex.n != null) ex.n = newName;
+  if(ex.name != null) ex.name = newName;
+  if(ex.n == null && ex.name == null) ex.n = newName;
+  ex.note = description;
+  if(ex.notes != null) ex.notes = description;
+  if(oldName !== newName) renameExerciseInLogs(state.profile, oldName, newName, state.date, weekdayName(state.date));
+  scheduleSave();
+  render();
+  const push = await showConfirmDialog({
+    title: 'Update future plan days?',
+    message: `Apply this name and description to ${weekdayName(state.date)} workouts from this date forward?`,
     confirmText: 'Update Plan',
     cancelText: 'Today only'
   });
@@ -3273,7 +3363,7 @@ function getDay(iso){
   return db[iso];
 }
 function emptySession(){
-  return { bodyWeight:'', sleep:'', warmup:'', cooldown:'', status:'Scheduled', notes:'', sets:{} };
+  return { bodyWeight:'', sleep:'', warmup:'', cooldown:'', status:'Scheduled', notes:'', exerciseNotes:{}, sets:{} };
 }
 function getSession(iso, client){
   const day = getDay(iso);
@@ -3358,6 +3448,17 @@ function findLastSession(profileId, iso, client, exerciseName){
       const filled = sess.sets[exerciseName].filter(isLoggedSet);
       if(filled.length) return { date:d, sets: sess.sets[exerciseName] };
     }
+  }
+  return null;
+}
+
+function findLastExerciseNote(profileId, iso, client, exerciseName){
+  const db = DB[profileId] || {};
+  const dates = Object.keys(db).filter(d => d < iso).sort().reverse();
+  for(const d of dates){
+    const sess = db[d] && db[d][client];
+    const note = sess && sess.exerciseNotes && String(sess.exerciseNotes[exerciseName] || '').trim();
+    if(note) return { date:d, note };
   }
   return null;
 }
@@ -3473,7 +3574,8 @@ function formatTimer(seconds){
 function timerElapsed(timer = state.timer){
   if(!timer) return 0;
   const started = timer.startedAt || Date.now();
-  return Math.floor((Date.now() - started) / 1000) + (timer.baseElapsed || 0);
+  const end = timer.pausedAt || Date.now();
+  return Math.floor((end - started) / 1000) + (timer.baseElapsed || 0);
 }
 
 function timerRemaining(timer = state.timer){
@@ -3490,6 +3592,8 @@ function startWorkoutTimer(config){
     duration: Number(config.duration) || 0,
     startedAt: Date.now(),
     baseElapsed: 0,
+    pausedAt: null,
+    lastMarker: 0,
     exercise: config.exercise || '',
     person: config.person || '',
     client: config.client || state.client,
@@ -3508,6 +3612,35 @@ function stopWorkoutTimerTick(){
   }
 }
 
+function pauseWorkoutTimer(){
+  if(!state.timer || state.timer.pausedAt) return;
+  state.timer.pausedAt = Date.now();
+  stopWorkoutTimerTick();
+  render();
+}
+
+function resumeWorkoutTimer(){
+  const timer = state.timer;
+  if(!timer || !timer.pausedAt) return;
+  timer.baseElapsed = timerElapsed(timer);
+  timer.startedAt = Date.now();
+  timer.pausedAt = null;
+  workoutTimerTick = setInterval(updateTimerDom, 500);
+  render();
+}
+
+function resetWorkoutTimer(){
+  if(!state.timer) return;
+  state.timer.startedAt = Date.now();
+  state.timer.baseElapsed = 0;
+  state.timer.pausedAt = null;
+  state.timer.lastMarker = 0;
+  state.timer.notified = false;
+  stopWorkoutTimerTick();
+  workoutTimerTick = setInterval(updateTimerDom, 500);
+  render();
+}
+
 function updateTimerDom(){
   if(!state.timer){
     stopWorkoutTimerTick();
@@ -3521,6 +3654,17 @@ function updateTimerDom(){
   const dock = document.querySelector('.kdock');
   const bar = dock && dock.querySelector('.kbar i');
   if(bar) bar.style.width = (target > 0 ? Math.min(100, (elapsed / target) * 100) : 100).toFixed(0) + '%';
+  const marker = Math.floor(elapsed / 30);
+  if(marker > 0 && marker > (timer.lastMarker || 0)){
+    timer.lastMarker = marker;
+    if(dock){
+      dock.classList.remove('flash');
+      void dock.offsetWidth;
+      dock.classList.add('flash');
+      clearTimeout(timerFlashTimeout);
+      timerFlashTimeout = setTimeout(() => dock.classList.remove('flash'), 900);
+    }
+  }
   if(target > 0 && elapsed >= target){
     if(dock) dock.classList.add('over');
     if(!timer.notified){
@@ -3549,6 +3693,63 @@ function stopWorkoutTimer(record = false){
   }
   state.timer = null;
   stopWorkoutTimerTick();
+  render();
+}
+
+function stopWorkoutElapsedTick(){
+  if(workoutElapsedTick){
+    clearInterval(workoutElapsedTick);
+    workoutElapsedTick = null;
+  }
+}
+
+function updateWorkoutElapsedDom(){
+  const sess = getSession(state.date, state.client);
+  const text = formatElapsed(sess, state.date);
+  document.querySelectorAll('[data-workout-elapsed]').forEach(el => { el.textContent = text; });
+}
+
+function syncWorkoutElapsedTick(){
+  stopWorkoutElapsedTick();
+  if(state.tab !== 'log' || state.groupActive) return;
+  const sess = getSession(state.date, state.client);
+  if(sess.startedAt && !sess.finishedAt && !sess.pausedAt){
+    workoutElapsedTick = setInterval(updateWorkoutElapsedDom, 500);
+  }
+}
+
+function pauseWorkoutElapsed(){
+  const sess = getSession(state.date, state.client);
+  if(!sess.startedAt || sess.finishedAt || sess.pausedAt) return;
+  sess.pausedAt = Date.now();
+  scheduleSave();
+  render();
+}
+
+function resumeWorkoutElapsed(){
+  const sess = getSession(state.date, state.client);
+  if(!sess.pausedAt) return;
+  sess.pausedMs = (sess.pausedMs || 0) + Math.max(0, Date.now() - sess.pausedAt);
+  sess.pausedAt = null;
+  scheduleSave();
+  render();
+}
+
+async function resetWorkoutElapsed(){
+  const sess = getSession(state.date, state.client);
+  if(!sess.startedAt) return;
+  const ok = await showConfirmDialog({
+    title: 'Reset workout time',
+    message: 'Reset the elapsed time for this workout? Logged sets and notes will remain saved.',
+    confirmText: 'Reset'
+  });
+  if(!ok) return;
+  sess.startedAt = null;
+  sess.lastLogAt = null;
+  sess.finishedAt = null;
+  sess.pausedAt = null;
+  sess.pausedMs = 0;
+  scheduleSave();
   render();
 }
 
@@ -3646,6 +3847,8 @@ function renderRestDock(){
       <div class="kbar"><i style="width:${pct.toFixed(0)}%"></i></div>
     </div>
     ${timer.mode === 'exercise' ? '<button data-action="stoptimerrecord">Record</button>' : ''}
+    <button data-action="${timer.pausedAt ? 'resumetimer' : 'pausetimer'}">${timer.pausedAt ? 'Resume' : 'Pause'}</button>
+    <button data-action="resettimer">Reset</button>
     <button data-action="stoptimer">${timer.mode === 'exercise' ? 'Stop' : 'Done'}</button>
   </div>`;
 }
@@ -3849,7 +4052,9 @@ function sessionElapsedSeconds(sess, iso){
   else if(past) end = last;                                // an earlier day is already over
   else if(Date.now() - last > WORKOUT_IDLE_MS) end = last; // abandoned, not still running
   else end = Date.now();
-  return Math.max(0, Math.round((end - sess.startedAt) / 1000));
+  let pausedMs = Number(sess.pausedMs || 0);
+  if(sess.pausedAt) pausedMs += Math.max(0, Date.now() - sess.pausedAt);
+  return Math.max(0, Math.round((end - sess.startedAt - pausedMs) / 1000));
 }
 
 function formatDuration(seconds){
@@ -3876,9 +4081,9 @@ function renderSessionSummary(iso, client, tpl){
     </div>
     <div style="min-width:0;flex:1">
       <div class="kname">${escapeHtml(tpl.label)}</div>
-      <div class="kstats">
+       <div class="kstats">
         <div><div class="klabel">Volume</div><div class="kval">${vol ? Math.round(vol).toLocaleString() : 0} lb</div></div>
-        <div><div class="klabel">Elapsed</div><div class="kval">${formatElapsed(sess, iso)}</div></div>
+        <div><div class="klabel">Elapsed</div><div class="kval" data-workout-elapsed>${formatElapsed(sess, iso)}</div></div>
       </div>
     </div>
   </div>`;
@@ -3902,13 +4107,17 @@ function renderExerciseCard(ex, iso, client){
   const last = findLastSession(state.profile, iso, client, ex.n);
   const lastSets = last ? last.sets.filter(isLoggedSet) : [];
   const lastSummary = lastTimeText(last, lastSets);
+  const exerciseNote = sess.exerciseNotes && String(sess.exerciseNotes[ex.n] || '').trim();
+  const previousExerciseNote = !exerciseNote ? findLastExerciseNote(state.profile, iso, client, ex.n) : null;
   const timed = isTimedExercise(ex);
   const activeIdx = setsArr.findIndex(s => !isLoggedSet(s));
   const menu = isOpen('exmenu.' + ex.n) ? `<div class="exmenu">
-      <button data-action="addset" data-exercise="${escapeHtml(ex.n)}">Add set</button>
-      <button data-action="swapexercise" data-exercise="${escapeHtml(ex.n)}">Swap exercise</button>
-      <button data-action="edittargets" data-exercise="${escapeHtml(ex.n)}">Edit target sets and reps</button>
-      <button data-action="exercisehelp" data-exercise="${escapeHtml(ex.n)}">How to do this exercise</button>
+       <button data-action="addset" data-exercise="${escapeHtml(ex.n)}">Add set</button>
+       <button data-action="swapexercise" data-exercise="${escapeHtml(ex.n)}">Swap exercise</button>
+       <button data-action="edittargets" data-exercise="${escapeHtml(ex.n)}">Edit target sets and reps</button>
+       <button data-action="editexercisenote" data-exercise="${escapeHtml(ex.n)}">${exerciseNote ? 'Edit' : 'Add'} exercise note</button>
+       <button data-action="editexercise" data-exercise="${escapeHtml(ex.n)}">Edit name and description</button>
+       <button data-action="exercisehelp" data-exercise="${escapeHtml(ex.n)}">How to do this exercise</button>
       <button class="danger" data-action="deleteexercise" data-exercise="${escapeHtml(ex.n)}">Delete exercise</button>
     </div>` : '';
 
@@ -3927,7 +4136,8 @@ function renderExerciseCard(ex, iso, client){
         <button class="exmenubtn" data-action="toggleopen" data-open="exmenu.${escapeHtml(ex.n)}" aria-label="More actions">&#8943;</button>
       </div>
     </div>
-    ${ex.note ? `<div class="exnote">${escapeHtml(ex.note)}</div>` : ''}`;
+    ${ex.note ? `<div class="exnote">${escapeHtml(ex.note)}</div>` : ''}
+    ${exerciseNote ? `<div class="exnote exercise-log-note"><b>Note:</b> ${escapeHtml(exerciseNote)}</div>` : previousExerciseNote ? `<div class="exnote exercise-log-note"><b>Previous note:</b> ${escapeHtml(previousExerciseNote.note)} <span>(${escapeHtml(fmtDayMonth(previousExerciseNote.date))})</span></div>` : ''}`;
 
   if(timed){
     return `<div class="excard">${head}${menu}
@@ -4002,6 +4212,13 @@ function renderSessionHeader(iso, client, showCooldown){
     sess.sleep ? sess.sleep + ' hrs sleep' : '',
     status
   ].filter(Boolean).join(' \u00b7 ');
+  const elapsedControls = sess.startedAt ? `<div class="elapsedcontrols">
+    <span><b data-workout-elapsed>${formatElapsed(sess, iso)}</b>${sess.pausedAt ? ' paused' : sess.finishedAt ? ' complete' : ' elapsed'}</span>
+    <div class="tinyactions">
+      ${!sess.finishedAt ? (sess.pausedAt ? '<button data-action="resumeworkout">Resume</button>' : '<button data-action="pauseworkout">Pause</button>') : ''}
+      <button data-action="resetworkout">Reset</button>
+    </div>
+  </div>` : '';
   return disclose('sessionheader', 'Session details', summary, `
   <div class="sesscard" style="margin-bottom:0">
     <div class="sessrow">
@@ -4026,6 +4243,7 @@ function renderSessionHeader(iso, client, showCooldown){
     <div class="statusrow">
       ${['Scheduled','Complete','Modified','Missed'].map(s => `<button class="pill sm ${status===s?'active':''}" data-action="setstatus" data-val="${s}">${s}</button>`).join('')}
     </div>
+    ${elapsedControls}
     <label class="noteslabel">Workout notes<textarea data-field="notes" placeholder="How it felt, swaps made...">${escapeHtml(sess.notes)}</textarea></label>
   </div>`);
 }
@@ -4547,7 +4765,7 @@ const HELP_TOPICS = [
         <div class="helpitem"><b>User information</b><span>View and update the account name, birthdate, sex, email, and phone number for the person using this app.</span></div>
         <div class="helpitem"><b>Age</b><span>Age is calculated from the saved birthdate and updates automatically.</span></div>
         <div class="helpitem"><b>Friends</b><span>Use the Friends tab to save workout partners, show your QR friend code, scan another user's QR code, receive a code through Nearby, or add a temporary group member for today's workout only.</span></div>
-        <div class="helpitem"><b>Online friend sync</b><span>Enable Online Friend Sync from Friends to create a cloud code. Friends can add each other by scanning the cloud QR code or entering the 8-character code. Knurl syncs streak summaries and encouragement reactions only.</span></div>
+        <div class="helpitem"><b>Online friend sync</b><span>Enable Online Friend Sync from Friends to create a cloud code. Friends can add each other by scanning the cloud QR code or entering the 8-character code. Knurl syncs streak summaries and encouragement reactions only. The You tab shows received reaction totals and unread counts.</span></div>
         <div class="helpitem"><b>Workout groups</b><span>Enable group workout logging when multiple people train together. Select group members, choose whose plan to follow, or merge everyone's exercises for the day.</span></div>
         <div class="helpitem"><b>Workout complete</b><span>At the end of a group workout, tap Workout Complete to mark group entries complete, send today's workout data, and remove temporary members.</span></div>
         <div class="helpitem"><b>Device owner</b><span>Set whose device is being used for a group workout. Trends ignore other members' group data unless it belongs to the selected user or was logged on that user's device.</span></div>
@@ -4559,15 +4777,18 @@ const HELP_TOPICS = [
 <div class="helplist">
         <div class="helpitem"><b>Workout entry</b><span>Use the date controls at the top to move between days. Tap Today to return to the current date after browsing. Enter each set's weight and reps, notes, body weight, sleep, and workout status.</span></div>
         <div class="helpitem"><b>Logging a set</b><span>A set stays a draft until you log it, so typing a value never completes the workout on its own. On the main exercise card press Log set. On timed exercises and group workouts press the Log button on the set row, or stop a running timer with Record. Reps are required and weight is optional, so bodyweight work logs without a weight. Entering 0 lb also displays as BW or Bodyweight.</span></div>
-        <div class="helpitem"><b>Workout time</b><span>Elapsed starts when you log your first set or mark the warm-up done, and stops when the last set of the workout is logged. Reopening a set starts it again. A workout you walk away from stops counting rather than running all day.</span></div>
+        <div class="helpitem"><b>Workout time</b><span>Elapsed starts when you log your first set or mark the warm-up done, and stops when the last set of the workout is logged. Use Pause and Resume in Session details when an interruption should not count. Reset clears only the elapsed clock; logged sets and notes remain saved.</span></div>
         <div class="helpitem"><b>Changing a logged set</b><span>Tap anywhere on a logged set to reopen it. The values come back in the editor with the Log set button, so you can correct a number and log it again. On timed and group rows tap the green check on that row.</span></div>
         <div class="helpitem"><b>Set controls</b><span>On compact set rows, use the clear button to remove the values while keeping the set, or use the delete button to remove the set row. Deleting the only row clears it instead.</span></div>
         <div class="helpitem"><b>Planned sets and reps</b><span>Each exercise card shows the plan's target, such as Target: 3 sets x 10-12, next to the current set counter.</span></div>
         <div class="helpitem"><b>Last time</b><span>Under the target, each exercise lists every set you logged the last time you did it, with the date, for example Last Aug 24: 135x10, 145x8, 145x7. Bodyweight sets show as BW.</span></div>
         <div class="helpitem"><b>Use last</b><span>Tap Use last to copy your previous values for that exercise. In a group workout each member has their own Use last button that copies only that member's history.</span></div>
+        <div class="helpitem"><b>Exercise notes and editing</b><span>Use an exercise menu to add a private note for that exercise, edit its name or description, or change its targets. The note appears the next time the exercise is performed. After editing a name or description, choose whether to update matching weekdays from the selected date forward.</span></div>
         <div class="helpitem"><b>Add or delete exercises</b><span>Add an exercise to the selected day, delete an exercise from that day's workout, clear the prefilled workout, or load a single premade day.</span></div>
         <div class="helpitem"><b>Add to plan</b><span>After changing a day's exercises, use Add to Plan to update that weekday from the selected date forward.</span></div>
         <div class="helpitem"><b>Rest days</b><span>For blank days, mark the day as a rest day so the app knows no workout was planned.</span></div>
+        <div class="helpitem"><b>Rest timer</b><span>Use the timer dock for a 1:00, 1:30, or 2:00 rest interval. Pause, resume, or reset it without leaving the Log screen. The dock flashes at each 30-second mark.</span></div>
+        <div class="helpitem"><b>Timed exercises</b><span>For targets such as 30-45 sec, enter 0 for body-weight and use Start on the set row. Record saves the held time as the reps value; the timer can be paused, resumed, or reset.</span></div>
       </div>
 ` },
   { title:`Progress`, body:`
@@ -4763,8 +4984,10 @@ function renderUsersView(){
         ${field('Email', info.email)}
         ${field('Phone', info.phone)}
       </div>
-      <button class="kedit" data-action="editaccount">Edit information</button>
+       <button class="kedit" data-action="editaccount">Edit information</button>
     </div>
+
+    ${renderReceivedReactionSummary()}
 
     <div class="klist">
       ${krow('theme', 'Appearance', escapeHtml(theme.label), dots, renderThemeBody())}
@@ -5379,11 +5602,41 @@ async function refreshSocialFriends(){
   const social = socialState();
   const friends = await socialFetch('/v1/friends', {auth:true});
   const inbox = await socialFetch('/v1/inbox', {auth:true});
+  let reactionSummary = social.reactionSummary;
+  try {
+    reactionSummary = await socialFetch('/v1/reactions/summary', {auth:true});
+  } catch(error) {
+    // Keep friend sync compatible with an older worker until the summary route is deployed.
+    console.warn('reaction summary unavailable', error);
+  }
   social.cloudFriends = friends.friends || [];
   social.inbox = inbox.reactions || [];
+  social.reactionSummary = {
+    total: Number(reactionSummary && reactionSummary.total || 0),
+    unread: Number(reactionSummary && reactionSummary.unread || 0),
+    byType: (reactionSummary && reactionSummary.byType) || {}
+  };
   social.lastSyncAt = new Date().toISOString();
   social.lastError = '';
   mergeCloudFriendsToLocal();
+}
+
+function renderReceivedReactionSummary(){
+  const social = socialState();
+  const summary = social.reactionSummary || {total:0, unread:0, byType:{}};
+  const byType = summary.byType || {};
+  const thumb = byType.thumb || {total:0, unread:0};
+  const fire = byType.fire || {total:0, unread:0};
+  if(!socialEnabled()) return '';
+  return `<div class="panel"><div class="paneltitle">Friend reactions</div>
+    <div class="kvgrid">
+      <div class="kv"><span>Total received</span><b>${Number(summary.total || 0)}</b></div>
+      <div class="kv"><span>Unread</span><b>${Number(summary.unread || 0)}</b></div>
+      <div class="kv"><span>Thumbs up</span><b>${Number(thumb.total || 0)}</b></div>
+      <div class="kv"><span>Fire</span><b>${Number(fire.total || 0)}</b></div>
+    </div>
+    <div class="muted">Counts include reactions from online friends. The Friends inbox keeps the sender and workout-date details.</div>
+  </div>`;
 }
 
 function mergeCloudFriendsToLocal(){
@@ -5676,6 +5929,7 @@ function render(){
   const shell = document.querySelector('.app-shell');
   if(shell) shell.classList.toggle('timeron', state.tab === 'log' || !!state.timer);
   document.body.classList.toggle('hasdock', state.tab === 'log');
+  syncWorkoutElapsedTick();
 }
 
 function handleInputChange(e){
@@ -6069,6 +6323,12 @@ async function handleClick(e){
   else if(action === 'edittargets'){
     await editExerciseTargets(btn.dataset.exercise);
   }
+  else if(action === 'editexercisenote'){
+    await editExerciseNote(btn.dataset.exercise, btn.dataset.person || '');
+  }
+  else if(action === 'editexercise'){
+    await editExerciseDetails(btn.dataset.exercise);
+  }
   else if(action === 'deleteexercise'){
     deleteExerciseForCurrentDay(btn.dataset.exercise);
   }
@@ -6237,6 +6497,15 @@ async function handleClick(e){
       detail: `Rest for ${formatTimer(seconds)}`
     });
   }
+  else if(action === 'pausetimer'){
+    pauseWorkoutTimer();
+  }
+  else if(action === 'resumetimer'){
+    resumeWorkoutTimer();
+  }
+  else if(action === 'resettimer'){
+    resetWorkoutTimer();
+  }
   else if(action === 'startsettimer'){
     const row = btn.closest('.setrow');
     const exName = row.dataset.exercise;
@@ -6261,6 +6530,15 @@ async function handleClick(e){
   }
   else if(action === 'stoptimer'){
     stopWorkoutTimer(false);
+  }
+  else if(action === 'pauseworkout'){
+    pauseWorkoutElapsed();
+  }
+  else if(action === 'resumeworkout'){
+    resumeWorkoutElapsed();
+  }
+  else if(action === 'resetworkout'){
+    resetWorkoutElapsed();
   }
   else if(action === 'nudge'){
     const row = btn.closest('.setrow');

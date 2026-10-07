@@ -4,10 +4,10 @@ Knurl is a local-first Android workout tracker built around a WebView app shell.
 
 ## Current Baseline
 
-- Current update baseline: `1.9.2`
+- Current update baseline: `1.10`
 - Android package: `com.homeops.gymtracker`
-- Version code: `32`
-- Version name: `1.9.2`
+- Version code: `35`
+- Version name: `1.10`
 - Primary asset: `app/src/main/assets/gym_tracker_app.html`
 
 The v1.0 baseline was cleaned for broader use:

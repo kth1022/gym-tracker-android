@@ -75,45 +75,47 @@ Baseline version for the next build is in `gradle.properties`. Raise `knurlVersi
 for every build that leaves this machine, tester builds included - the build now fails
 if it is not above the published release. See `docs/release-checklist.md`.
 
-## Planned For Next Update
+## Completed In v1.10
 
-These five items are the active batch for the next tester build. They remain unchecked
-until the user verifies the tester APK on a phone.
-
-- [ ] Show received friend reaction counts on the You screen
+- [x] Show received friend reaction counts on the You screen
   - GitHub Issue: #21
   - Category: feature
   - Source: user testing
   - Notes: On the You screen, show how many of each reaction type (for example, thumbs-up and fire) the user has received from online friends. Keep the Friends inbox for sender and workout-date detail.
   - Priority: medium
+  - Shipped: v1.10
 
-- [ ] Rest timer manual controls and 30-second flash markers
+- [x] Rest timer manual controls and 30-second flash markers
   - GitHub Issue: #32
   - Category: feature
   - Source: in-app user feedback
   - Notes: Replace preset rest durations with one open-ended Start Rest control. Add pause, resume, and reset controls plus a visible flash or pulse at each 30-second mark so the user can track rest intervals without leaving the workout screen.
   - Priority: medium
+  - Shipped: v1.10
 
-- [ ] Manual pause and resume for the daily workout elapsed timer
+- [x] Manual pause and resume for the daily workout elapsed timer
   - GitHub Issue: #34
   - Category: feature
   - Source: in-app user feedback
   - Notes: Keep the automatic workout elapsed timer behavior, but add manual pause, resume, and reset controls so the user can correct timing during interruptions or unusual workout flow without deleting logged data. Only exercise logging advances the clock; warm-up completion may start an untouched workout, while weight, sleep, notes, and later warm-up changes do not alter it.
   - Priority: medium
+  - Shipped: v1.10
 
-- [ ] Exercise-specific notes
+- [x] Exercise-specific notes
   - GitHub Issues: #17, #38
   - Category: feature
   - Source: user clarification
   - Notes: Allow a short note on an individual exercise, separate from the existing workout-level notes. It is visible when that exercise is next performed. Issue #38 is a later duplicate/clarification of #17.
   - Priority: medium
+  - Shipped: v1.10; #38 remains a duplicate/clarification of #17
 
-- [ ] Edit exercise name and description, then update the plan
+- [x] Edit exercise name and description, then update the plan
   - GitHub Issue: #18
   - Category: feature
   - Source: user feedback
   - Notes: Let a user rename an exercise and edit its description from the log, then optionally apply that change to the matching weekday going forward. The current swap and target-edit tools do not support arbitrary names or descriptions.
   - Priority: medium
+  - Shipped: v1.10
 
 ## Deferred Project: Accounts And Cloud Recovery
 

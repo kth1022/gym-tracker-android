@@ -1,9 +1,9 @@
 {
-  "versionCode": 32,
-  "versionName": "1.9.2",
+  "versionCode": 35,
+  "versionName": "1.10",
   "channel": "public",
-  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.9.2/gym_tracker_v1_9_2_code32_debug.apk",
-  "sha256": "994EB68F05873773A8EF73FAE568518ABB214E8DEC81A277030681E057A292AB",
-  "size": 3949547,
-  "releaseNotes": "Adds Restore Recovery Snapshot under Plan > Import. A private GymTrackerRecoveryV1 snapshot restores the plan, workout logs, group data, rest-day data, stretch data, and preferences together. Workout-data imports now detect the full date range in the workbook by default, including older Excel date formats. Also includes the Today shortcut, bodyweight set display, separate set-management controls, and native theme color pickers. Users coming from the lost old signing key must use the documented export, uninstall, reinstall, and snapshot restore migration."
+  "apkUrl": "https://github.com/kth1022/gym-tracker-android/releases/download/v1.10/gym_tracker_v1_10_code35_debug.apk",
+  "sha256": "5C5BFCE13A77A58B9BD12DA894CF511F33E50A7FDD6FFC54711A5985BFAE9D80",
+  "size": 3952831,
+  "releaseNotes": "Adds received friend reaction totals on the You screen, open-ended Start Rest timer controls with pause/resume/reset and 30-second markers, manual workout elapsed-time controls, exercise-specific notes, and exercise name/description editing with optional forward plan updates. Only exercise logging advances the workout clock after it starts; body metrics and later warm-up changes do not alter it. Also includes the v1.9.2 recovery and plan-import fixes."
 }

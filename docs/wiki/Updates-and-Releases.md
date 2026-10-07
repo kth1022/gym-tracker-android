@@ -4,10 +4,11 @@ Knurl checks for app updates automatically and from the You tab. The app reads `
 
 ## Current Public Release
 
-Version `1.9.2` is the current public release. It adds recovery-snapshot restore,
-automatically detects the full date range during workout-data imports, and includes the
-previously tested Today shortcut, bodyweight display, set-management controls, and native
-theme color pickers. It also includes the replacement-key migration documentation.
+Version `1.10` is the current public release. It adds received friend reaction totals,
+an open-ended Start Rest timer with pause/resume/reset and 30-second markers, manual
+workout elapsed-time controls, exercise-specific notes, and exercise name/description
+editing with optional forward plan updates. It also includes the recovery-snapshot restore,
+full-range workout-data import, and replacement-key migration support from v1.9.2.
 
 Because the original signing key was lost, users coming from an old-key installation must
 export or save a recovery snapshot, uninstall the old app, install the replacement-signed
